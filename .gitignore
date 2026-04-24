@@ -1,0 +1,39 @@
+# Virtual environment
+.venv/
+venv/
+venv312/
+env/
+
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Environment variables
+.env
+
+# Build / package files
+build/
+dist/
+*.egg-info/
+
+# Local runtime data / artifacts
+result/
+memory_data/
+network/memory_data/
+test/memory_data/
+evaluation_results/
+
+# Jupyter
+.ipynb_checkpoints/
+
+# Logs
+*.log
+
+# VS Code
+.vscode/
+
+# OS files
+.DS_Store
+Thumbs.db
