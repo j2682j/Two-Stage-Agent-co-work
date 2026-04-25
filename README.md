@@ -1,6 +1,6 @@
-# Paper
+# Two-Stage-Agent-co-work
 
-Paper 是一個實驗型的 two-stage agent network 專案，目標是把多個 agent 的候選答案、judge 評分、工具證據、memory 與 RAG 串成一條可觀測的推理與評估流程。
+Two-Stage-Agent-co-work 是一個實驗型的 two-stage agent network 專案，目標是把多個 agent 的候選答案、judge 評分、工具證據、memory 與 RAG 串成一條可觀測的推理與評估流程。
 
 目前專案重點集中在：
 
