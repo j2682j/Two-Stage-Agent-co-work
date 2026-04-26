@@ -208,12 +208,6 @@ def print_stage2_and_final(network):
     )
 
 
-def _compact_single_line(value, default="(none)"):
-    text = str(value or "").strip()
-    if not text:
-        return default
-    return " ".join(text.split())
-
 
 def _write_indented_block(handle, text, indent="    "):
     content = str(text or "").strip()
