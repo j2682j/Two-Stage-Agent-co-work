@@ -8,7 +8,7 @@ class Stage1PromptBuilder(PromptBuilder):
     def gather(self, **kwargs) -> list[PromptPacket]:
         question = self._normalize_text(kwargs.get("question", ""))
         formers = kwargs.get("formers", []) or []
-        tool_context = self._normalize_text(kwargs.get("tool_context", ""))
+        tool_context = str(kwargs.get("tool_context", "") or "").strip()
         reflection_context = self._normalize_text(kwargs.get("reflection_context", ""))
 
         packets = [

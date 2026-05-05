@@ -29,6 +29,7 @@ class AgentNeuron:
         self.stage1_judge_score = 0.0
         self.stage1_judge_adjusted_score = 0.0
         self.stage1_reflection_context = ""
+        self.stage1_attachment_context = ""
 
         self.stage2_reply = None
         self.stage2_answer = ""
@@ -39,8 +40,16 @@ class AgentNeuron:
         self.stage2_search_context = ""
         self.stage2_memory_context = ""
         self.stage2_rag_context = ""
+        self.stage2_attachment_context = ""
 
-    def _build_stage_evidence(self, question: str, stage: str) -> dict[str, Any]:
+    def _build_stage_evidence(
+        self,
+        question: str,
+        stage: str,
+        *,
+        include_routed_tools: bool = True,
+        include_attachment: bool = True,
+    ) -> dict[str, Any]:
         runtime = getattr(self, "runtime", None)
         tool_manager = getattr(runtime, "tool_manager", None)
         builder = getattr(runtime, "evidence_builder", None)
@@ -64,6 +73,8 @@ class AgentNeuron:
             agent_id=getattr(self, "model_name", "unknown_agent"),
             stage=stage,
             router_model_name=self.model_name,
+            include_routed_tools=include_routed_tools,
+            include_attachment=include_attachment,
         )
 
         if runtime is not None:
@@ -106,6 +117,7 @@ class AgentNeuron:
         self.stage1_judge_score = 0.0
         self.stage1_judge_adjusted_score = 0.0
         self.stage1_reflection_context = ""
+        self.stage1_attachment_context = ""
 
         self.stage2_reply = None
         self.stage2_answer = ""
@@ -116,6 +128,7 @@ class AgentNeuron:
         self.stage2_search_context = ""
         self.stage2_memory_context = ""
         self.stage2_rag_context = ""
+        self.stage2_attachment_context = ""
 
     def get_context(self):
         # 先放入 system prompt，再蒐集目前可用的前序 agent 回覆
@@ -143,6 +156,7 @@ class AgentNeuron:
         tool_context = ""
         reflection_context = ""
         self.stage1_reflection_context = ""
+        self.stage1_attachment_context = ""
         runtime = getattr(self, "runtime", None)
         memory_tool = getattr(runtime, "memory_tool", None)
         is_first_round = len(formers) == 0
@@ -161,10 +175,25 @@ class AgentNeuron:
                 print(f"[WARN] stage1 reflection context failed for {self.model_name}: {e}")
         self.stage1_reflection_context = reflection_context.strip()
 
-        if getattr(runtime, "enable_stage1_tools", False):
+        include_stage1_attachment = (
+            runtime.should_include_stage1_attachment(is_first_round)
+            if runtime is not None and hasattr(runtime, "should_include_stage1_attachment")
+            else False
+        )
+        if getattr(runtime, "enable_stage1_tools", False) or include_stage1_attachment:
             try:
-                evidence = self._build_stage_evidence(question, stage="stage1")
+                evidence = self._build_stage_evidence(
+                    question,
+                    stage="stage1",
+                    include_routed_tools=getattr(runtime, "enable_stage1_tools", False),
+                    include_attachment=include_stage1_attachment,
+                )
                 tool_context = evidence.get("tool_context", "") or ""
+                self.stage1_attachment_context = (
+                    evidence.get("attachment_context", "").replace("Attachment evidence:\n", "", 1)
+                )
+                if self.stage1_attachment_context.strip():
+                    print(f"[{self.model_name}] stage1 attachment_context:\n{self.stage1_attachment_context}\n")
             except Exception as e:
                 print(f"[WARN] stage1 evidence building failed for {self.model_name}: {e}")
 
@@ -299,6 +328,7 @@ class AgentNeuron:
         self.stage2_search_context = ""
         self.stage2_memory_context = ""
         self.stage2_rag_context = ""
+        self.stage2_attachment_context = ""
 
         tool_usage = []
         tool_context = ""
@@ -325,10 +355,13 @@ class AgentNeuron:
                 tool_usage = evidence["tool_usage"]
                 tool_context = evidence["tool_context"]
                 self.stage2_tool_usage = tool_usage
+                self.stage2_attachment_context = evidence["attachment_context"].replace("Attachment evidence:\n", "", 1)
                 self.stage2_search_context = evidence["search_context"].replace("Search evidence:\n", "", 1)
                 self.stage2_memory_context = evidence["memory_context"].replace("Memory evidence:\n", "", 1)
                 self.stage2_rag_context = evidence["rag_context"].replace("RAG evidence:\n", "", 1)
 
+                if self.stage2_attachment_context.strip():
+                    print(f"[{self.model_name}] attachment_context:\n{self.stage2_attachment_context}\n")
                 if evidence["search_context"]:
                     print(f"[{self.model_name}] search_context after summary:\n{evidence['search_context']}\n")
                 if self.stage2_memory_context.strip():
@@ -354,6 +387,7 @@ class AgentNeuron:
                 self.stage2_reply = None
                 self.stage2_reasoning = ""
                 self.stage2_answer = ""
+                self.stage2_attachment_context = ""
                 self.stage2_memory_context = ""
                 self.stage2_rag_context = ""
 
@@ -451,5 +485,4 @@ class NeuronEdge:
 
     def zero_weight(self):
         self.weight = 0
-
 

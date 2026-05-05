@@ -184,7 +184,10 @@ class GAIAEvaluator:
 
             # 呼叫智慧代理
             start_time = time.time()
-            response = agent.run(prompt)
+            if hasattr(agent, "run_sample"):
+                response = agent.run_sample(prompt, sample)
+            else:
+                response = agent.run(prompt)
             execution_time = time.time() - start_time
 
             # 提取答案
@@ -253,15 +256,8 @@ class GAIAEvaluator:
         }
 
     def _build_prompt(self, question: str, sample: Dict[str, Any]) -> str:
-        """建構評估提示"""
-        # 建構問題提示
-        prompt = f"{question}"
-
-        # 如果有檔案附件，添加提示
-        if sample.get("file_name"):
-            prompt += f"\n\nNote: This question may require reference to the file: {sample['file_name']}"
-
-        return prompt
+        """Build the prompt from the original GAIA question text only."""
+        return str(question or "").strip()
 
     def _extract_answer(self, response: str) -> str:
         """從回應中提取答案（GAIA格式）

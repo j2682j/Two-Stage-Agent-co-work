@@ -6,6 +6,7 @@ from typing import TYPE_CHECKING, Any
 from network.slm_agent import SLM_4b_Agent
 from parser import try_parse_json
 from utils.network_utils import should_use_calculator, should_use_search
+from .attachment import AttachmentEvidenceBuilder
 
 if TYPE_CHECKING:
     from .search_evidence_builder import SearchEvidenceBuilder
@@ -28,6 +29,7 @@ class EvidenceBuilder:
         self.runtime = runtime
         self.search_query_planner = search_query_planner
         self.search_evidence_builder = search_evidence_builder
+        self.attachment_evidence_builder = AttachmentEvidenceBuilder()
 
         if initialize_search_helpers:
             if self.search_query_planner is None:
@@ -52,6 +54,8 @@ class EvidenceBuilder:
         stage: str = "stage2",
         router_model_name: str | None = None,
         shared_search_bundle: dict[str, Any] | None = None,
+        include_routed_tools: bool = True,
+        include_attachment: bool = True,
     ) -> dict[str, Any]:
         if shared_search_bundle is None and stage == "stage2" and self.runtime is not None:
             runtime_bundle = getattr(self.runtime, "shared_stage2_search_bundle", None)
@@ -59,7 +63,15 @@ class EvidenceBuilder:
                 shared_search_bundle = runtime_bundle
 
         tool_usage = []
-        routing = self._route_tools(question, router_model_name)
+        attachment = self._build_attachment_evidence(question) if include_attachment else self._empty_tool_result()
+        routing = self._route_tools(question, router_model_name) if include_routed_tools else {
+            "use_calculator": False,
+            "use_search": False,
+            "use_memory": False,
+            "use_rag": False,
+        }
+        if attachment["used"] and not self._question_requires_web(question):
+            routing["use_search"] = False
         if shared_search_bundle is not None:
             routing["use_search"] = bool(shared_search_bundle.get("enabled"))
 
@@ -80,19 +92,23 @@ class EvidenceBuilder:
         # Memory is retrieved separately but is not injected into prompt tool evidence.
         tool_context = self._join_contexts(
             [
+                attachment["context"],
                 calc["context"],
                 search["context"],
                 rag["context"],
             ]
         )
 
+        tool_usage.extend(attachment["tool_usage"])
         return {
             "tool_usage": tool_usage,
             "tool_context": tool_context,
+            "attachment_context": attachment["context"],
             "calculator_context": calc["context"],
             "search_context": search["context"],
             "memory_context": memory["context"],
             "rag_context": rag["context"],
+            "used_attachment": attachment["used"],
             "used_calculator": calc["used"],
             "used_search": search["used"],
             "used_memory": memory["used"],
@@ -122,6 +138,8 @@ class EvidenceBuilder:
         }
 
         if self.tool_manager is None or not routing.get("use_search"):
+            return bundle
+        if getattr(self.runtime, "current_attachment", None) and not self._question_requires_web(question):
             return bundle
 
         search = self._build_search_evidence(question, agent_id, stage)
@@ -341,10 +359,108 @@ class EvidenceBuilder:
             "query_plan": query_plan,
         }
 
+    def build_shared_attachment_bundle(
+        self,
+        *,
+        question: str,
+        agent_id: str = "shared_attachment_reader",
+        stage: str = "attachment_shared",
+    ) -> dict[str, Any]:
+        attachment = getattr(self.runtime, "current_attachment", None)
+        bundle = {
+            "enabled": False,
+            "used": False,
+            "attachment_context": "",
+            "tool_usage": [],
+            "metadata": {},
+            "agent_id": agent_id,
+            "stage": stage,
+        }
+        if not attachment:
+            return bundle
+
+        result = self.attachment_evidence_builder.build(question, attachment)
+        bundle.update(
+            {
+                "enabled": bool(result["used"]),
+                "used": bool(result["used"]),
+                "attachment_context": result["context"],
+                "tool_usage": result["tool_usage"],
+                "metadata": result.get("metadata", {}),
+            }
+        )
+        return bundle
+
+    def _build_attachment_evidence(self, question: str) -> dict[str, Any]:
+        runtime_bundle = getattr(self.runtime, "shared_attachment_bundle", None)
+        if isinstance(runtime_bundle, dict) and runtime_bundle.get("used"):
+            return {
+                "tool_usage": [self._build_shared_attachment_reference(runtime_bundle)],
+                "context": str(runtime_bundle.get("attachment_context", "") or ""),
+                "used": True,
+            }
+
+        attachment = getattr(self.runtime, "current_attachment", None)
+        if not attachment:
+            return self._empty_tool_result()
+
+        result = self.attachment_evidence_builder.build(question, attachment)
+        return {
+            "tool_usage": result["tool_usage"],
+            "context": result["context"],
+            "used": result["used"],
+        }
+
+    def _build_shared_attachment_reference(self, shared_attachment_bundle: dict[str, Any]) -> dict[str, Any]:
+        metadata = shared_attachment_bundle.get("metadata") or {}
+        file_path = str(metadata.get("file_path", "") or "")
+        file_type = str(metadata.get("file_type", "") or "")
+        reader = str(metadata.get("reader", "") or "")
+        output_lines = ["[shared attachment evidence reused]"]
+        if file_path:
+            output_lines.append(f"file_path={file_path}")
+        if file_type:
+            output_lines.append(f"file_type={file_type}")
+        if reader:
+            output_lines.append(f"reader={reader}")
+
+        return {
+            "ok": True,
+            "tool_name": "attachment_reader",
+            "output_text": "\n".join(output_lines),
+            "raw_result": {
+                "shared": True,
+                "metadata": metadata,
+                "source_stage": shared_attachment_bundle.get("stage", "attachment_shared"),
+            },
+            "error": None,
+            "shared": True,
+        }
+
     def _make_shared_search_id(self, question: str) -> str:
         normalized = str(question or "").strip().encode("utf-8", errors="ignore")
         digest = hashlib.md5(normalized).hexdigest()[:12]
         return f"stage2-search-{digest}"
+
+    def _question_requires_web(self, question: str) -> bool:
+        normalized = str(question or "").lower()
+        web_markers = [
+            "website",
+            "web site",
+            "webpage",
+            "url",
+            "http://",
+            "https://",
+            "internet",
+            "search",
+            "google",
+            "wikipedia",
+            "latest",
+            "current",
+            "today",
+            "online",
+        ]
+        return any(marker in normalized for marker in web_markers)
 
     def _build_memory_evidence(self, question: str) -> dict[str, Any]:
         memory_tool = (

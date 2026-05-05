@@ -16,7 +16,7 @@ class Stage2PromptBuilder(PromptBuilder):
                 PromptPacket(content=self._normalize_text(importance), packet_type="importance", priority=6.0)
             )
 
-        tool_context = self._normalize_text(kwargs.get("tool_context", ""))
+        tool_context = str(kwargs.get("tool_context", "") or "").strip()
         if self.config.include_tool_evidence and tool_context and tool_context != "No tool result available.":
             packets.append(
                 PromptPacket(content=tool_context, packet_type="tool_context", priority=9.0)

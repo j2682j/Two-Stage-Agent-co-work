@@ -1,5 +1,5 @@
 import random
-from typing import List, Optional
+from typing import Any, List, Optional
 
 from builder.evidence_builder import EvidenceBuilder
 from .agentnetwork_helper import AgentNetworkHelper
@@ -32,6 +32,7 @@ class AgentNetwork:
         memory_config: Optional[MemoryConfig] = None,
         memory_mode: str = "disabled",
         debug_print_stage1_first_round_prompt: bool = False,
+        enable_stage1_attachment_after_first_round: bool = False,
     ):
         self.model_pool = model_pool
         self.agents = agents
@@ -48,6 +49,7 @@ class AgentNetwork:
             )
         self.memory_mode = memory_mode
         self.debug_print_stage1_first_round_prompt = debug_print_stage1_first_round_prompt
+        self.enable_stage1_attachment_after_first_round = enable_stage1_attachment_after_first_round
         
         self.top_k = 3
         self.enable_stage2 = True
@@ -56,6 +58,7 @@ class AgentNetwork:
         self.last_stage2_outputs = []
         self.last_final_decision = None
         self.current_question = None
+        self.current_context: dict[str, Any] = {}
         self.last_stage1_result = None
         self.last_importance = None
         self.last_stage1_activation_trace = []
@@ -127,6 +130,7 @@ class AgentNetwork:
             runtime=runtime,
         )
         runtime.enable_stage1_tools = self.enable_stage1_tools
+        runtime.enable_stage1_attachment_after_first_round = self.enable_stage1_attachment_after_first_round
         return runtime
 
     
@@ -144,6 +148,7 @@ class AgentNetwork:
                         "answer": self.nodes[idx].get_answer(),
                         "reply": self.nodes[idx].get_reply(),
                         "stage1_reflection_context": getattr(self.nodes[idx], "stage1_reflection_context", ""),
+                        "stage1_attachment_context": getattr(self.nodes[idx], "stage1_attachment_context", ""),
                     }
                     for idx in node_indices
                 ],
@@ -348,6 +353,7 @@ class AgentNetwork:
                         "answer": result.get("answer"),
                         "reply": result.get("reply"),
                         "tool_usage": result.get("tool_usage", []),
+                        "attachment_context": getattr(node, "stage2_attachment_context", ""),
                         "search_context": getattr(node, "stage2_search_context", ""),
                         "memory_context": getattr(node, "stage2_memory_context", ""),
                         "rag_context": getattr(node, "stage2_rag_context", ""),
@@ -371,6 +377,7 @@ class AgentNetwork:
                         "answer": None,
                         "reply": None,
                         "tool_usage": [],
+                        "attachment_context": getattr(node, "stage2_attachment_context", ""),
                         "search_context": getattr(node, "stage2_search_context", ""),
                         "memory_context": getattr(node, "stage2_memory_context", ""),
                         "rag_context": getattr(node, "stage2_rag_context", ""),
@@ -385,8 +392,14 @@ class AgentNetwork:
 
         return stage2_outputs
 
-    def forward_two_stage(self, question: str):
+    def forward_two_stage(self, question: str, context: dict[str, Any] | None = None):
         self.current_question = question
+        self.current_context = context or {}
+        if self.runtime is not None:
+            self.runtime.current_context = self.current_context
+            self.runtime.current_attachment = self.current_context.get("attachment")
+            self.runtime.prepare_shared_attachment_evidence(question)
+
         stage1_result, resp_cnt, completions, prompt_tokens, completion_tokens = self.forward(question)
         self.last_stage1_result = stage1_result
         print("Stage 1 result:", stage1_result)

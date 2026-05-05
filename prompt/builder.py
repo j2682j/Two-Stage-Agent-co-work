@@ -42,8 +42,8 @@ class PromptBuildConfig:
     """Prompt 建構設定。"""
 
     max_formers: int = 3
-    max_tool_lines: int = 6
-    max_tool_chars: int = 600
+    max_tool_lines: int = 80
+    max_tool_chars: int = 6000
     max_reasoning_chars: int = 220
     max_candidate_reasoning_chars: int = 160
     short_answer_max_chars: int = 80
@@ -115,11 +115,11 @@ class PromptBuilder:
         return " ".join(kept).strip()
 
     def _compress_multiline_text(self, text: str, max_lines: int, max_chars: int) -> str:
-        normalized = self._normalize_text(text)
-        if not normalized or normalized == "No tool result available.":
+        raw = "" if text is None else str(text).strip()
+        if not raw or raw == "No tool result available.":
             return ""
 
-        lines = [line.strip() for line in str(text).splitlines() if line.strip()]
+        lines = [line.strip() for line in raw.splitlines() if line.strip()]
         kept = lines[:max_lines]
         compressed = "\n".join(kept).strip()
         if len(compressed) > max_chars:

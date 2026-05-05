@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from pathlib import Path
 from typing import Any
 
 from memory.lesson_rule import (
@@ -56,6 +57,45 @@ class GAIAAdapter(BaseBenchmarkAdapter):
             return f"REASONING: {reasoning}\nFINAL ANSWER: {final_answer}"
 
         return f"FINAL ANSWER: {final_answer}"
+
+    def run_sample(self, prompt: str, sample: dict[str, Any]) -> str:
+        normalized_prompt = self.normalize_question(prompt)
+        context = {
+            "benchmark": "GAIA",
+            "task_id": str(sample.get("task_id", "") or ""),
+            "level": sample.get("level"),
+            "attachment": self._build_attachment_context(sample),
+        }
+
+        if self.use_two_stage:
+            result = self.agent.forward_two_stage(normalized_prompt, context=context)
+            final_answer = result.get("final_result", "")
+            reasoning = result.get("stage1_result", "")
+        else:
+            final_answer, *_ = self.agent.forward(normalized_prompt)
+            reasoning = ""
+
+        if self.include_reasoning and reasoning:
+            return f"REASONING: {reasoning}\nFINAL ANSWER: {final_answer}"
+
+        return f"FINAL ANSWER: {final_answer}"
+
+    def _build_attachment_context(self, sample: dict[str, Any]) -> dict[str, Any] | None:
+        file_path_text = str(
+            sample.get("file_name") or sample.get("file_path") or ""
+        ).strip()
+        if not file_path_text:
+            return None
+
+        file_path = Path(file_path_text)
+        return {
+            "task_id": str(sample.get("task_id", "") or ""),
+            "file_path": str(file_path),
+            "file_name": file_path.name,
+            "extension": file_path.suffix.lower(),
+            "exists": file_path.exists(),
+            "is_file": file_path.is_file(),
+        }
 
     def record_evaluation_feedback(
         self,

@@ -47,16 +47,15 @@ class ToolManager:
         self.register_tool(search_tool)
         self.enabled_tools.add(search_tool.name)
 
-        configured_memory_types = self.memory_types or (
-            ["working", "episodic", "semantic"] if self.enable_shared_memory else ["working"]
-        )
-        self.memory_tool = MemoryTool(
-            user_id=self.shared_memory_user_id,
-            memory_config=self.memory_config,
-            memory_types=configured_memory_types,
-        )
-        self.register_tool(self.memory_tool)
-        self.enabled_tools.add(self.memory_tool.name)
+        if self.enable_shared_memory:
+            configured_memory_types = self.memory_types or ["working", "episodic", "semantic"]
+            self.memory_tool = MemoryTool(
+                user_id=self.shared_memory_user_id,
+                memory_config=self.memory_config,
+                memory_types=configured_memory_types,
+            )
+            self.register_tool(self.memory_tool)
+            self.enabled_tools.add(self.memory_tool.name)
 
         try:
             rag_tool = RAGTool()

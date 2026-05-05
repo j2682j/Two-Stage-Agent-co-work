@@ -1,3 +1,4 @@
+from .attachment import AttachmentEvidenceBuilder
 from .evidence_builder import EvidenceBuilder
 from .search_evidence_builder import SearchEvidenceBuilder
 from .search_query_planner import SearchQueryPlanner
@@ -8,6 +9,7 @@ __all__ = [
     "DecisionPromptBuilder",
     "DecisionTraceBuilder",
     "EvidenceBuilder",
+    "AttachmentEvidenceBuilder",
     "SearchEvidenceBuilder",
     "SearchQueryPlanner",
 ]
