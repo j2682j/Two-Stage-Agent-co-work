@@ -9,7 +9,7 @@ from .slm_agent import SLM_4b_Agent
 
 
 class Stage1Judge:
-    def __init__(self, judge_model_name: str = "gpt-oss:20b"):
+    def __init__(self, judge_model_name: str = "qwen3:8b"):
         self.judge_model_name = judge_model_name
 
     def evaluate_stage1_candidate(

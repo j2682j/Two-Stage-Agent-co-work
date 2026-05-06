@@ -1,9 +1,7 @@
+import hashlib
+
 from parser.ranking_parser import RankingParser
-from memory.lesson_rule import (
-    build_retrieval_profile,
-    parse_semantic_lesson_memory,
-    select_relevant_semantic_lessons,
-)
+from memory.lesson_rule import build_retrieval_profile
 from prompt.builder import DEFAULT_STAGE2_SYSTEM_PROMPT, DEFAULT_SYSTEM_PROMPT
 from prompt.repair_prompt_builder import RepairPromptBuilder
 from prompt.ranking_prompt_builder import RankingPromptBuilder
@@ -19,16 +17,20 @@ class AgentNeuronHelper:
 
     def __init__(self, system_prompt=None, stage2_system_prompt=None):
         self.SYSTEM_PROMPT = system_prompt or self.DEFAULT_SYSTEM_PROMPT
-        self.STAGE2_SYSTEM_PROMPT = (
-            stage2_system_prompt or self.DEFAULT_STAGE2_SYSTEM_PROMPT
-        )
+        self.STAGE2_SYSTEM_PROMPT = stage2_system_prompt or self.DEFAULT_STAGE2_SYSTEM_PROMPT
         self.stage1_prompt_builder = Stage1PromptBuilder()
         self.stage2_prompt_builder = Stage2PromptBuilder()
         self.repair_prompt_builder = RepairPromptBuilder()
         self.ranking_prompt_builder = RankingPromptBuilder()
         self.ranking_parser = RankingParser()
 
-    def build_stage1_message(self, question, formers, tool_context: str = "", reflection_context: str = ""):
+    def build_stage1_message(
+        self,
+        question,
+        formers,
+        tool_context: str = "",
+        reflection_context: str = "",
+    ):
         return self.stage1_prompt_builder.build(
             question=question,
             formers=formers,
@@ -37,61 +39,88 @@ class AgentNeuronHelper:
         )
 
     def build_stage1_reflection_context(self, question, memory_tool, runtime=None, limit: int = 2):
-        memory_manager = getattr(memory_tool, "memory_manager", None)
+        """Build stage1 round0 memory guidance from Query/Task + Insight graphs."""
         normalized_question = str(question or "").strip()
-        if memory_manager is None or not normalized_question:
+        if runtime is None or not normalized_question:
             return ""
 
-        profile = (
-            runtime.build_memory_profile(normalized_question)
-            if runtime is not None and hasattr(runtime, "build_memory_profile")
-            else self._build_memory_profile(normalized_question)
-        )
-        lesson_queries = (
-            profile.lesson_queries if hasattr(profile, "lesson_queries") else profile["lesson_queries"]
-        )
-        seen_ids = set()
-        lesson_objects = []
-        for query_text in lesson_queries:
-            try:
-                retrieved = memory_manager.retrieve_memories(
-                    query=query_text,
-                    memory_types=["semantic"],
-                    limit=max(limit * 2, 4),
-                    min_importance=0.0,
-                )
-            except Exception as exc:
-                print(f"[WARN] stage1 reflection memory 檢索失敗: {exc}")
-                continue
-
-            for memory in retrieved:
-                memory_id = str(getattr(memory, "id", "") or "")
-                if memory_id and memory_id in seen_ids:
-                    continue
-                if memory_id:
-                    seen_ids.add(memory_id)
-                lesson = parse_semantic_lesson_memory(memory)
-                if lesson is None:
-                    continue
-                lesson_objects.append(lesson)
-                if len(lesson_objects) >= limit * 6:
-                    break
-            if len(lesson_objects) >= limit * 6:
-                break
-
-        selected = select_relevant_semantic_lessons(
-            lessons=lesson_objects,
-            profile=profile,
-            min_score=1.5,
-            limit=limit,
-        )
-        if not selected:
+        query_graph = getattr(runtime, "query_task_graph", None)
+        insight_graph = getattr(runtime, "insight_graph", None)
+        if query_graph is None or insight_graph is None:
             return ""
-        summaries = [
-            lesson.to_summary().replace("| applicability=", "| use_when=")
-            for lesson, _ in selected
-        ]
-        return "\n".join(f"- {lesson}" for lesson in summaries[:limit])
+
+        try:
+            task_id = self._resolve_stage1_task_id(runtime, normalized_question)
+            attachment_type = self._resolve_attachment_type(runtime)
+
+            query_graph.register_task(
+                task_id,
+                normalized_question,
+                metadata={
+                    "source": "stage1_round0",
+                    "attachment_type": attachment_type,
+                },
+            )
+            classification = query_graph.classify_task(
+                normalized_question,
+                attachment_type=attachment_type,
+            )
+            query_graph.link_task_signals(task_id, classification)
+            retrieval = query_graph.retrieve_for_stage1_round0(
+                task_id,
+                normalized_question,
+                limit=max(limit, 3),
+            )
+            insights = insight_graph.retrieve_insights(
+                task_type=retrieval.get("task_type", "general_reasoning"),
+                trigger_terms=retrieval.get("trigger_terms", []),
+                failure_modes=retrieval.get("failure_modes", []),
+                limit=max(limit, 3),
+            )
+            guidance = query_graph.build_stage1_guidance_prompt(
+                retrieval,
+                insights=insights,
+                max_failures=1,
+            )
+            runtime.record_memory_read(
+                {
+                    "stage": "stage1_round0",
+                    "source": "query_task_graph+insight_graph",
+                    "task_id": task_id,
+                    "task_type": retrieval.get("task_type"),
+                    "trigger_terms": retrieval.get("trigger_terms", []),
+                    "insight_ids": [
+                        item.get("insight_id")
+                        for item in insights
+                        if isinstance(item, dict) and item.get("insight_id")
+                    ],
+                }
+            )
+            return guidance
+        except Exception as exc:
+            print(f"[WARN] stage1 graph memory guidance failed: {exc}")
+            return ""
+
+    def _resolve_stage1_task_id(self, runtime, question: str) -> str:
+        context = getattr(runtime, "current_context", {}) or {}
+        for key in ("task_id", "id", "sample_id"):
+            value = str(context.get(key, "") or "").strip()
+            if value:
+                return value
+
+        digest = hashlib.sha1(question.encode("utf-8", errors="ignore")).hexdigest()[:12]
+        return f"gaia_task_{digest}"
+
+    def _resolve_attachment_type(self, runtime) -> str | None:
+        attachment = getattr(runtime, "current_attachment", None) or {}
+        for key in ("extension", "file_extension", "type"):
+            value = str(attachment.get(key, "") or "").strip().lower().lstrip(".")
+            if value:
+                return value
+        path = str(attachment.get("path", "") or attachment.get("file_path", "") or "").strip()
+        if "." in path:
+            return path.rsplit(".", 1)[-1].lower()
+        return None
 
     def _summarize_reflection_content(self, content: str) -> str:
         normalized = " ".join(str(content or "").split()).strip()
@@ -100,8 +129,16 @@ class AgentNeuronHelper:
 
         import re
 
-        lesson_match = re.search(r"Lesson:\s*(.+?)(?:\s+Tags:|\s+Applicability:|$)", normalized, flags=re.IGNORECASE)
-        error_type_match = re.search(r"Error type:\s*([A-Za-z0-9_\-]+)", normalized, flags=re.IGNORECASE)
+        lesson_match = re.search(
+            r"Lesson:\s*(.+?)(?:\s+Tags:|\s+Applicability:|$)",
+            normalized,
+            flags=re.IGNORECASE,
+        )
+        error_type_match = re.search(
+            r"Error type:\s*([A-Za-z0-9_\-]+)",
+            normalized,
+            flags=re.IGNORECASE,
+        )
         applicability_match = re.search(
             r"Applicability:\s*(.+?)(?:\s+Observed mismatch:|$)",
             normalized,
@@ -163,8 +200,8 @@ class AgentNeuronHelper:
             return content, prompt_tokens, completion_tokens
 
         except Exception as e:
-            print(f"[ERROR] 呼叫 SLM API 失敗: {e}")
-            raise AgentsException(f"SLM 呼叫失敗: {str(e)}")
+            print(f"[ERROR] SLM API failed: {e}")
+            raise AgentsException(f"SLM API failed: {str(e)}")
 
     def listwise_ranker_2(self, responses, question, model_name):
         assert 2 <= len(responses)

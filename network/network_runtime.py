@@ -1,8 +1,10 @@
 from __future__ import annotations
 
+import os
 import re
 from typing import Any
 
+from memory.Graph import InsightGraph, QueryTaskGraph
 from memory.lesson_rule import (
     build_retrieval_profile,
     parse_semantic_lesson_memory,
@@ -55,6 +57,26 @@ class NetworkRuntime:
         self.shared_memory_reads: list[dict[str, Any]] = []
         self.shared_memory_writes: list[dict[str, Any]] = []
         self.shared_stage2_search_bundle: dict[str, Any] | None = None
+        self.query_task_graph: QueryTaskGraph | None = None
+        self.insight_graph: InsightGraph | None = None
+        self._init_gaia_graph_memory()
+
+    def _init_gaia_graph_memory(self) -> None:
+        """Initialize G-Memory-style graph helpers for GAIA memory guidance.
+
+        Neo4j is opt-in here because local GAIA runs should not stall if the
+        graph database is not running. With auto-connect disabled, both graph
+        helpers still provide deterministic in-memory guidance and seeded
+        insights.
+        """
+        auto_connect = os.getenv("GAIA_GRAPH_MEMORY_NEO4J", "0") == "1"
+        try:
+            self.query_task_graph = QueryTaskGraph(auto_connect=auto_connect)
+            self.insight_graph = InsightGraph(auto_connect=auto_connect)
+        except Exception as exc:
+            print(f"[WARN] GAIA graph memory 初始化失敗，改用無 graph guidance: {exc}")
+            self.query_task_graph = None
+            self.insight_graph = None
 
     def record_tool_trace(self, trace: dict[str, Any]) -> None:
         self.shared_tool_traces.append(trace)
