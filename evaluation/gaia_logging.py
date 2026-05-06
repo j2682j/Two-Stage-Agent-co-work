@@ -87,6 +87,7 @@ def print_stage2_and_final(network: Any) -> None:
                 f"success={item.get('success', False)} "
                 f"answer={item.get('answer')!r} "
                 f"tools={tool_names} "
+                f"routing={item.get('routing', {})} "
                 f"error={item.get('error')!r}"
             )
 
@@ -215,7 +216,8 @@ def write_compact_sample_log(handle, sample_index: int, sample: dict[str, Any], 
                 f"model={item.get('model_name')} "
                 f"success={item.get('success', False)} "
                 f"answer={item.get('answer')!r} "
-                f"tools={tool_names}"
+                f"tools={tool_names} "
+                f"routing={item.get('routing', {})}"
             )
             if item.get("attachment_context"):
                 writeln("  attachment:")
@@ -223,10 +225,18 @@ def write_compact_sample_log(handle, sample_index: int, sample: dict[str, Any], 
             if item.get("search_context"):
                 writeln("  search:")
                 _write_indented_block(handle, item.get("search_context", ""), indent="    ")
+            if item.get("solver_context"):
+                writeln("  python_solver:")
+                _write_indented_block(handle, item.get("solver_context", ""), indent="    ")
             if item.get("rag_context"):
                 writeln("  rag:")
                 _write_indented_block(handle, item.get("rag_context", ""), indent="    ")
-            if not item.get("attachment_context") and not item.get("search_context") and not item.get("rag_context"):
+            if (
+                not item.get("attachment_context")
+                and not item.get("search_context")
+                and not item.get("solver_context")
+                and not item.get("rag_context")
+            ):
                 writeln("  attachment/search/rag: (none)")
     else:
         writeln("- stage2: (none)")

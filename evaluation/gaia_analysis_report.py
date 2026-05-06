@@ -62,6 +62,7 @@ def build_sample_analysis_record(
                     for tool in item.get("tool_usage", []) or []
                     if isinstance(tool, dict) and tool.get("tool_name")
                 ],
+                "routing": item.get("routing", {}),
                 "error": item.get("error"),
             }
         )

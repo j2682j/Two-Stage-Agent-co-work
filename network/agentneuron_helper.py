@@ -1,7 +1,6 @@
 import hashlib
 
 from parser.ranking_parser import RankingParser
-from memory.lesson_rule import build_retrieval_profile
 from prompt.builder import DEFAULT_STAGE2_SYSTEM_PROMPT, DEFAULT_SYSTEM_PROMPT
 from prompt.repair_prompt_builder import RepairPromptBuilder
 from prompt.ranking_prompt_builder import RankingPromptBuilder
@@ -156,9 +155,6 @@ class AgentNeuronHelper:
         if len(normalized) > 220:
             return normalized[:217].rstrip() + "..."
         return normalized
-
-    def _build_memory_profile(self, question: str) -> dict:
-        return build_retrieval_profile(question)
 
     def build_repair_prompt(self, expected_weight_count):
         return self.repair_prompt_builder.build(

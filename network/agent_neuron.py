@@ -41,6 +41,8 @@ class AgentNeuron:
         self.stage2_memory_context = ""
         self.stage2_rag_context = ""
         self.stage2_attachment_context = ""
+        self.stage2_solver_context = ""
+        self.stage2_routing = {}
 
     def _build_stage_evidence(
         self,
@@ -129,6 +131,8 @@ class AgentNeuron:
         self.stage2_memory_context = ""
         self.stage2_rag_context = ""
         self.stage2_attachment_context = ""
+        self.stage2_solver_context = ""
+        self.stage2_routing = {}
 
     def get_context(self):
         # 先放入 system prompt，再蒐集目前可用的前序 agent 回覆
@@ -161,7 +165,7 @@ class AgentNeuron:
         memory_tool = getattr(runtime, "memory_tool", None)
         is_first_round = len(formers) == 0
         memory_mode = getattr(runtime, "memory_mode", "disabled")
-        stage1_reflection_enabled = memory_mode in {"stage1_first_round_only", "final_decision"}
+        stage1_reflection_enabled = memory_mode == "stage1_first_round_only"
         if stage1_reflection_enabled and is_first_round:
             try:
                 reflection_context = self.helper.build_stage1_reflection_context(
@@ -329,6 +333,8 @@ class AgentNeuron:
         self.stage2_memory_context = ""
         self.stage2_rag_context = ""
         self.stage2_attachment_context = ""
+        self.stage2_solver_context = ""
+        self.stage2_routing = {}
 
         tool_usage = []
         tool_context = ""
@@ -359,6 +365,8 @@ class AgentNeuron:
                 self.stage2_search_context = evidence["search_context"].replace("Search evidence:\n", "", 1)
                 self.stage2_memory_context = evidence["memory_context"].replace("Memory evidence:\n", "", 1)
                 self.stage2_rag_context = evidence["rag_context"].replace("RAG evidence:\n", "", 1)
+                self.stage2_solver_context = evidence.get("solver_context", "").replace("Python solver guidance:\n", "", 1)
+                self.stage2_routing = evidence.get("routing", {})
 
                 if self.stage2_attachment_context.strip():
                     print(f"[{self.model_name}] attachment_context:\n{self.stage2_attachment_context}\n")
@@ -368,6 +376,8 @@ class AgentNeuron:
                     print(f"[{self.model_name}] memory_context:\n{self.stage2_memory_context}\n")
                 if self.stage2_rag_context.strip():
                     print(f"[{self.model_name}] rag_context:\n{self.stage2_rag_context}\n")
+                if self.stage2_solver_context.strip():
+                    print(f"[{self.model_name}] solver_context:\n{self.stage2_solver_context}\n")
 
                 if runtime is not None:
                     runtime.record_tool_trace(
@@ -389,12 +399,14 @@ class AgentNeuron:
                 self.stage2_answer = ""
                 self.stage2_attachment_context = ""
                 self.stage2_memory_context = ""
+                self.stage2_solver_context = ""
                 self.stage2_rag_context = ""
 
                 return {
                     "answer": None,
                     "reply": None,
                     "tool_usage": tool_usage,
+                    "routing": self.stage2_routing,
                     "success": False,
                     "error": str(e),
                 }
@@ -426,6 +438,7 @@ class AgentNeuron:
                 "answer": self.stage2_answer,
                 "reply": self.stage2_reply,
                 "tool_usage": tool_usage,
+                "routing": self.stage2_routing,
                 "success": True,
                 "error": None,
             }
@@ -444,6 +457,7 @@ class AgentNeuron:
                     "answer": self.stage2_answer,
                     "reply": self.stage2_reply,
                     "tool_usage": tool_usage,
+                    "routing": self.stage2_routing,
                     "success": True,
                     "error": None,
                 }
@@ -459,6 +473,7 @@ class AgentNeuron:
                 "answer": None,
                 "reply": None,
                 "tool_usage": tool_usage,
+                "routing": self.stage2_routing,
                 "success": False,
                 "error": str(e),
             }
@@ -485,4 +500,3 @@ class NeuronEdge:
 
     def zero_weight(self):
         self.weight = 0
-

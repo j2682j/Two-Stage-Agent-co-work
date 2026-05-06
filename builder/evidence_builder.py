@@ -7,6 +7,7 @@ from network.slm_agent import SLM_4b_Agent
 from parser import try_parse_json
 from utils.network_utils import should_use_calculator, should_use_search
 from .attachment import AttachmentEvidenceBuilder
+from .stage2_tool_router import Stage2ToolRouter, Stage2ToolRoutingInput
 
 if TYPE_CHECKING:
     from .search_evidence_builder import SearchEvidenceBuilder
@@ -30,6 +31,7 @@ class EvidenceBuilder:
         self.search_query_planner = search_query_planner
         self.search_evidence_builder = search_evidence_builder
         self.attachment_evidence_builder = AttachmentEvidenceBuilder()
+        self.stage2_tool_router = Stage2ToolRouter()
 
         if initialize_search_helpers:
             if self.search_query_planner is None:
@@ -64,9 +66,10 @@ class EvidenceBuilder:
 
         tool_usage = []
         attachment = self._build_attachment_evidence(question) if include_attachment else self._empty_tool_result()
-        routing = self._route_tools(question, router_model_name) if include_routed_tools else {
+        routing = self._route_tools(question, router_model_name, stage=stage) if include_routed_tools else {
             "use_calculator": False,
             "use_search": False,
+            "use_python_solver": False,
             "use_memory": False,
             "use_rag": False,
         }
@@ -75,7 +78,16 @@ class EvidenceBuilder:
         if shared_search_bundle is not None:
             routing["use_search"] = bool(shared_search_bundle.get("enabled"))
 
-        calc = self._build_calculator_evidence(question, agent_id, stage) if routing["use_calculator"] else self._empty_tool_result()
+        calc = (
+            self._build_calculator_evidence(
+                question,
+                agent_id,
+                stage,
+                expression=routing.get("calculator_expression"),
+            )
+            if routing["use_calculator"]
+            else self._empty_tool_result()
+        )
         if routing["use_search"]:
             if shared_search_bundle is not None:
                 search = self._reuse_shared_search_evidence(shared_search_bundle)
@@ -85,8 +97,14 @@ class EvidenceBuilder:
             search = self._empty_tool_result()
         memory = self._build_memory_evidence(question) if routing["use_memory"] else self._empty_context_result()
         rag = self._build_rag_evidence(question) if routing["use_rag"] else self._empty_context_result()
+        solver = (
+            self._build_python_solver_guidance(question, routing)
+            if routing.get("use_python_solver")
+            else self._empty_context_result()
+        )
 
         tool_usage.extend(calc["tool_usage"])
+        tool_usage.extend(solver.get("tool_usage", []))
         tool_usage.extend(search["tool_usage"])
 
         # Memory is retrieved separately but is not injected into prompt tool evidence.
@@ -94,6 +112,7 @@ class EvidenceBuilder:
             [
                 attachment["context"],
                 calc["context"],
+                solver["context"],
                 search["context"],
                 rag["context"],
             ]
@@ -106,11 +125,13 @@ class EvidenceBuilder:
             "attachment_context": attachment["context"],
             "calculator_context": calc["context"],
             "search_context": search["context"],
+            "solver_context": solver["context"],
             "memory_context": memory["context"],
             "rag_context": rag["context"],
             "used_attachment": attachment["used"],
             "used_calculator": calc["used"],
             "used_search": search["used"],
+            "used_python_solver": solver["used"],
             "used_memory": memory["used"],
             "used_rag": rag["used"],
             "routing": routing,
@@ -124,7 +145,7 @@ class EvidenceBuilder:
         stage: str = "stage2_shared_search",
         router_model_name: str | None = None,
     ) -> dict[str, Any]:
-        routing = self._route_tools(question, router_model_name)
+        routing = self._route_tools(question, router_model_name, stage=stage)
         bundle = {
             "enabled": False,
             "used": False,
@@ -162,12 +183,29 @@ class EvidenceBuilder:
     def _empty_context_result(self) -> dict[str, Any]:
         return {"context": "", "used": False}
 
-    def _route_tools(self, question: str, router_model_name: str | None) -> dict[str, bool]:
+    def _route_tools(
+        self,
+        question: str,
+        router_model_name: str | None,
+        *,
+        stage: str = "stage2",
+    ) -> dict[str, Any]:
+        if stage.startswith("stage2"):
+            graph_decision = self._route_stage2_with_graph(question)
+            if graph_decision is not None:
+                return graph_decision
+
         fallback = {
             "use_calculator": should_use_calculator(question),
             "use_search": should_use_search(question),
+            "use_python_solver": False,
             "use_memory": False,
             "use_rag": False,
+            "calculator_expression": None,
+            "task_type": "legacy_keyword",
+            "trigger_terms": [],
+            "tool_policy": {},
+            "routing_reasons": ["legacy keyword fallback"],
         }
 
         if not router_model_name:
@@ -207,20 +245,111 @@ class EvidenceBuilder:
             return {
                 "use_calculator": bool(parsed.get("use_calculator", fallback["use_calculator"])),
                 "use_search": bool(parsed.get("use_search", fallback["use_search"])),
+                "use_python_solver": bool(parsed.get("use_python_solver", fallback["use_python_solver"])),
                 "use_memory": bool(parsed.get("use_memory", fallback["use_memory"])),
                 "use_rag": bool(parsed.get("use_rag", fallback["use_rag"])),
+                "calculator_expression": parsed.get("calculator_expression"),
+                "task_type": parsed.get("task_type", fallback["task_type"]),
+                "trigger_terms": parsed.get("trigger_terms", []),
+                "tool_policy": parsed.get("tool_policy", {}),
+                "routing_reasons": parsed.get("reasons", fallback["routing_reasons"]),
             }
         except Exception:
             return fallback
 
-    def _build_calculator_evidence(self, question: str, agent_id: str, stage: str) -> dict[str, Any]:
+    def _route_stage2_with_graph(self, question: str) -> dict[str, Any] | None:
+        runtime = getattr(self, "runtime", None)
+        query_graph = getattr(runtime, "query_task_graph", None)
+        if query_graph is None:
+            return None
+
+        try:
+            task_id = self._resolve_task_id(question)
+            attachment_type = self._resolve_attachment_type()
+            query_graph.register_task(
+                task_id,
+                question,
+                metadata={
+                    "source": "stage2_tool_router",
+                    "attachment_type": attachment_type,
+                },
+            )
+            classification = query_graph.classify_task(question, attachment_type=attachment_type)
+            query_graph.link_task_signals(task_id, classification)
+            retrieval = query_graph.retrieve_for_stage1_round0(task_id, question, limit=3)
+            routing_input = Stage2ToolRoutingInput(
+                question=question,
+                task_type=str(retrieval.get("task_type") or "general_reasoning"),
+                trigger_terms=list(retrieval.get("trigger_terms") or []),
+                tool_policy=dict(retrieval.get("tool_policy") or {}),
+                stage1_result=str(getattr(runtime, "current_stage2_stage1_result", "") or "") or None,
+                top_k_answers=list(getattr(runtime, "current_stage2_top_k_answers", []) or []),
+                judge_scores=list(getattr(runtime, "current_stage2_judge_scores", []) or []),
+                has_attachment=bool(getattr(runtime, "current_attachment", None)),
+            )
+            decision = self.stage2_tool_router.route(routing_input).to_dict()
+            decision["use_memory"] = False
+            decision["use_rag"] = False
+            decision["routing_reasons"] = decision.pop("reasons", [])
+            decision["task_id"] = task_id
+            return decision
+        except Exception as exc:
+            print(f"[WARN] stage2 graph tool routing failed: {exc}")
+            return None
+
+    def _resolve_task_id(self, question: str) -> str:
+        runtime = getattr(self, "runtime", None)
+        context = getattr(runtime, "current_context", {}) or {}
+        for key in ("task_id", "id", "sample_id"):
+            value = str(context.get(key, "") or "").strip()
+            if value:
+                return value
+        normalized = str(question or "").strip().encode("utf-8", errors="ignore")
+        digest = hashlib.sha1(normalized).hexdigest()[:12]
+        return f"gaia_task_{digest}"
+
+    def _resolve_attachment_type(self) -> str | None:
+        runtime = getattr(self, "runtime", None)
+        attachment = getattr(runtime, "current_attachment", None) or {}
+        for key in ("extension", "file_extension", "type"):
+            value = str(attachment.get(key, "") or "").strip().lower().lstrip(".")
+            if value:
+                return value
+        path = str(attachment.get("path", "") or attachment.get("file_path", "") or "").strip()
+        if "." in path:
+            return path.rsplit(".", 1)[-1].lower()
+        return None
+
+    def _build_calculator_evidence(
+        self,
+        question: str,
+        agent_id: str,
+        stage: str,
+        expression: str | None = None,
+    ) -> dict[str, Any]:
         if self.tool_manager is None:
             return self._empty_tool_result()
+
+        calculator_expression = expression or self.stage2_tool_router.extract_calculator_expression(question)
+        if not calculator_expression:
+            return {
+                "tool_usage": [
+                    {
+                        "ok": False,
+                        "tool_name": "python_calculator",
+                        "output_text": "",
+                        "raw_result": None,
+                        "error": "No safe calculator expression extracted; raw natural-language calculator call skipped.",
+                    }
+                ],
+                "context": "",
+                "used": False,
+            }
 
         try:
             result = self.tool_manager.execute_tool(
                 "python_calculator",
-                {"expression": question},
+                {"expression": calculator_expression},
                 agent_id=agent_id,
                 stage=stage,
             )
@@ -232,12 +361,14 @@ class EvidenceBuilder:
                 "raw_result": None,
                 "error": str(exc),
             }
+        result["calculator_expression"] = calculator_expression
 
         context = ""
         if result.get("ok"):
             context = (
                 "Calculator evidence:\n"
                 f"Tool used: {result['tool_name']}\n"
+                f"Expression: {calculator_expression}\n"
                 f"Tool output: {result['output_text']}\n"
             )
 
@@ -246,6 +377,31 @@ class EvidenceBuilder:
             "context": context,
             "used": bool(context),
         }
+
+    def _build_python_solver_guidance(self, question: str, routing: dict[str, Any]) -> dict[str, Any]:
+        task_type = str(routing.get("task_type", "general_reasoning") or "general_reasoning")
+        reasons = routing.get("routing_reasons") or routing.get("reasons") or []
+        reason_text = "; ".join(str(item) for item in reasons[:4] if str(item).strip())
+        guidance = (
+            "Python solver guidance:\n"
+            f"Task type: {task_type}\n"
+            "Recommended approach: construct a small explicit model, table, simulation, dynamic program, "
+            "or data-processing plan before choosing the final answer.\n"
+        )
+        if reason_text:
+            guidance += f"Routing reasons: {reason_text}\n"
+        usage = {
+            "ok": True,
+            "tool_name": "python_solver",
+            "output_text": "python_solver recommended as structured solver guidance; no executable solver tool is registered.",
+            "raw_result": {
+                "executed": False,
+                "task_type": task_type,
+                "routing_reasons": list(reasons),
+            },
+            "error": None,
+        }
+        return {"context": guidance, "used": True, "tool_usage": [usage]}
 
     def _build_search_evidence(self, question: str, agent_id: str, stage: str) -> dict[str, Any]:
         if self.tool_manager is None:

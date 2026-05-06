@@ -3,18 +3,11 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Any
 
-from memory.lesson_rule import (
-    SemanticLesson,
-    build_applicability,
-    build_correction_checklist,
-    build_semantic_lesson,
-    build_tags,
-    classify_error_type,
-    classify_failure_mode,
-    normalize_text,
-)
-
 from .benchmark_adapter import BaseBenchmarkAdapter
+
+
+def normalize_text(value: Any) -> str:
+    return " ".join(str(value or "").split()).strip()
 
 
 class GAIAAdapter(BaseBenchmarkAdapter):
@@ -107,10 +100,6 @@ class GAIAAdapter(BaseBenchmarkAdapter):
         if benchmark.upper() != "GAIA":
             return
 
-        memory_tool = getattr(self.agent, "memory_tool", None)
-        if memory_tool is None:
-            return
-
         question = self.normalize_question(sample.get("question", ""))
         if not question:
             return
@@ -150,160 +139,80 @@ class GAIAAdapter(BaseBenchmarkAdapter):
         }
 
         try:
-            if exact_match:
-                success_note = self._build_gaia_success_working_note(
-                    task_id=task_id,
-                    question=question,
-                    predicted=predicted,
-                    score=score,
-                    reflection=reflection,
-                )
-                memory_tool.run(
-                    {
-                        "action": "add",
-                        "content": success_note,
-                        "memory_type": "working",
-                        "importance": 0.55,
-                        "metadata": {
-                            **base_metadata,
-                            "record_type": "gaia_success_reminder",
-                            "lesson": reflection["lesson"],
-                            "correction_checklist": reflection["correction_checklist"],
-                        },
-                    }
-                )
-            else:
-                failure_case_note = self._build_gaia_failure_case_note(
-                    task_id=task_id,
-                    question=question,
-                    predicted=predicted,
-                    expected=expected,
-                    exact_match=exact_match,
-                    partial_match=partial_match,
-                    score=score,
-                    reflection=reflection,
-                )
-                lesson_note, semantic_lesson = self._build_gaia_lesson_note(
-                    task_id=task_id,
-                    question=question,
-                    predicted=predicted,
-                    expected=expected,
-                    reflection=reflection,
-                )
-
-                memory_tool.run(
-                    {
-                        "action": "add",
-                        "content": failure_case_note,
-                        "memory_type": "episodic",
-                        "importance": 0.9,
-                        "metadata": {
-                            **base_metadata,
-                            "record_type": "gaia_failure_case",
-                            "failure_summary": reflection["failure_summary"],
-                            "correction_checklist": reflection["correction_checklist"],
-                        },
-                    }
-                )
-                memory_tool.run(
-                    {
-                        "action": "add",
-                        "content": lesson_note,
-                        "memory_type": "semantic",
-                        "importance": 0.97,
-                        "metadata": {
-                            **base_metadata,
-                            "record_type": "gaia_semantic_lesson",
-                            "semantic_lesson": semantic_lesson.to_dict(),
-                            "correction_checklist": reflection["correction_checklist"],
-                        },
-                    }
-                )
+            self._record_graph_feedback(
+                task_id=task_id,
+                question=question,
+                exact_match=exact_match,
+                partial_match=partial_match,
+                metadata={
+                    **base_metadata,
+                    "failure_summary": reflection["failure_summary"],
+                    "correction_checklist": reflection["correction_checklist"],
+                },
+            )
         except Exception as exc:
-            print(f"[WARN] GAIA feedback memory write failed: {exc}")
+            print(f"[WARN] GAIA graph feedback write failed: {exc}")
 
-    def _build_gaia_success_working_note(
+    def _record_graph_feedback(
         self,
         *,
         task_id: str,
         question: str,
-        predicted: str,
-        score: Any,
-        reflection: dict[str, Any],
-    ) -> str:
-        checklist = reflection.get("correction_checklist") or []
-        checklist_text = " | ".join(checklist) if checklist else reflection["lesson"]
-        return (
-            f"GAIA success reminder for task {task_id or 'unknown'}.\n"
-            f"Question: {question}\n"
-            f"Final answer: {predicted}\n"
-            f"Score: {score}\n"
-            f"Keep-check: {reflection['lesson']}\n"
-            f"Checklist: {checklist_text}\n"
-            f"Use when: {reflection['applicability']}"
-        )
-
-    def _build_gaia_failure_case_note(
-        self,
-        *,
-        task_id: str,
-        question: str,
-        predicted: str,
-        expected: str,
         exact_match: bool,
         partial_match: bool,
-        score: Any,
-        reflection: dict[str, Any],
-    ) -> str:
-        checklist = " | ".join(reflection.get("correction_checklist") or [])
-        return (
-            f"GAIA failure case for task {task_id or 'unknown'}.\n"
-            f"Question: {question}\n"
-            f"Predicted answer: {predicted}\n"
-            f"Expected answer: {expected}\n"
-            f"Exact match: {exact_match}\n"
-            f"Partial match: {partial_match}\n"
-            f"Score: {score}\n"
-            f"Error type: {reflection['error_type']}\n"
-            f"Failure mode: {reflection['failure_mode']}\n"
-            f"Failure stage: {reflection['failure_stage']}\n"
-            f"Severity: {reflection['severity']}\n"
-            f"What went wrong: {reflection['failure_summary']}\n"
-            f"Correction checklist: {checklist}"
-        )
+        metadata: dict[str, Any],
+    ) -> None:
+        runtime = getattr(self.agent, "runtime", None)
+        query_graph = getattr(runtime, "query_task_graph", None)
+        insight_graph = getattr(runtime, "insight_graph", None)
+        if runtime is None or query_graph is None or insight_graph is None:
+            return
 
-    def _build_gaia_lesson_note(
-        self,
-        *,
-        task_id: str,
-        question: str,
-        predicted: str,
-        expected: str,
-        reflection: dict[str, Any],
-    ) -> tuple[str, SemanticLesson]:
-        semantic_lesson = build_semantic_lesson(
-            question=question,
-            task_id=task_id or "unknown",
-            benchmark="GAIA",
-            error_type=reflection["error_type"],
-            lesson=reflection["lesson"],
-            confidence=reflection["confidence"],
+        context = getattr(runtime, "current_context", {}) or {}
+        attachment = context.get("attachment") or {}
+        attachment_type = str(attachment.get("extension", "") or "").strip().lower().lstrip(".") or None
+
+        query_graph.register_task(
+            task_id,
+            question,
             metadata={
-                "predicted": predicted,
-                "expected": expected,
-                "partial_match": reflection["severity"] == "partial",
+                "source": "gaia_feedback",
+                "attachment_type": attachment_type,
+                **metadata,
             },
-            failure_mode=reflection["failure_mode"],
-            failure_stage=reflection["failure_stage"],
-            severity=reflection["severity"],
-            correction_checklist=reflection["correction_checklist"],
         )
-        note = (
-            "GAIA correction lesson\n"
-            f"Observed mismatch: predicted '{predicted}' while expected '{expected}'.\n"
-            f"{semantic_lesson.to_text()}"
+        classification = query_graph.classify_task(question, attachment_type=attachment_type)
+        query_graph.link_task_signals(task_id, classification)
+        insights = insight_graph.retrieve_insights(
+            task_type=classification.task_type,
+            trigger_terms=classification.trigger_terms,
+            failure_modes=classification.failure_modes,
+            limit=3,
         )
-        return note, semantic_lesson
+        stage2_changed_answer = self._stage2_changed_stage1_answer()
+        for insight in insights:
+            insight_id = str(insight.get("insight_id", "") or "").strip()
+            if not insight_id:
+                continue
+            insight_graph.apply_feedback(
+                insight_id,
+                task_id,
+                exact=exact_match,
+                partial=partial_match,
+                stage2_changed_answer=stage2_changed_answer,
+                metadata=metadata,
+            )
+        runtime.record_memory_write(
+            {
+                "memory_type": "insight_graph",
+                "source_stage": "gaia_feedback",
+                "task_id": task_id,
+                "task_type": classification.task_type,
+                "insight_ids": [item.get("insight_id") for item in insights if isinstance(item, dict)],
+                "exact_match": exact_match,
+                "partial_match": partial_match,
+            }
+        )
 
     def _build_gaia_reflection_record(
         self,
@@ -315,7 +224,7 @@ class GAIAAdapter(BaseBenchmarkAdapter):
         partial_match: bool,
     ) -> dict[str, Any]:
         stage2_outputs = getattr(self.agent, "last_stage2_outputs", []) or []
-        error_type = classify_error_type(
+        error_type = self._classify_error_type(
             question=question,
             predicted=predicted,
             expected=expected,
@@ -335,7 +244,7 @@ class GAIAAdapter(BaseBenchmarkAdapter):
             stage2_outputs=stage2_outputs,
             target_answer=expected,
         ) and self._answer_key(predicted) != self._answer_key(expected)
-        failure_mode = classify_failure_mode(
+        failure_mode = self._classify_failure_mode(
             question=question,
             predicted=predicted,
             expected=expected,
@@ -372,13 +281,13 @@ class GAIAAdapter(BaseBenchmarkAdapter):
             }
 
         severity = "partial" if partial_match else "wrong"
-        tags = build_tags(error_type, question, failure_mode=failure_mode)
-        applicability = build_applicability(
+        tags = self._build_tags(error_type, question, failure_mode=failure_mode)
+        applicability = self._build_applicability(
             error_type,
             failure_mode=failure_mode,
             failure_stage=failure_stage,
         )
-        correction_checklist = build_correction_checklist(
+        correction_checklist = self._build_correction_checklist(
             error_type,
             failure_mode,
             partial_match=partial_match,
@@ -466,6 +375,125 @@ class GAIAAdapter(BaseBenchmarkAdapter):
         if error_type:
             summary += f" Error type: {error_type}."
         return summary
+
+    def _classify_error_type(
+        self,
+        *,
+        question: str,
+        predicted: str,
+        expected: str,
+        partial_match: bool,
+    ) -> str:
+        text = normalize_text(question).lower()
+        predicted_key = self._answer_key(predicted)
+        expected_key = self._answer_key(expected)
+        if partial_match:
+            return "format_or_rounding_slip"
+        if self._numeric_value(predicted_key) is not None and self._numeric_value(expected_key) is not None:
+            return "unit_or_scale_mismatch"
+        if any(marker in text for marker in ["how many", "count", "number of", "between", "during"]):
+            return "scope_filter_mismatch"
+        if any(marker in text for marker in ["probability", "random", "odds", "maximize", "state"]):
+            return "reasoning_strategy_mismatch"
+        if any(marker in text for marker in ["who", "when", "where", "published", "website", "source"]):
+            return "insufficient_evidence"
+        return "final_verification_failed"
+
+    def _classify_failure_mode(
+        self,
+        *,
+        question: str,
+        predicted: str,
+        expected: str,
+        error_type: str,
+        failure_stage: str,
+        partial_match: bool,
+        candidate_collapse: bool,
+        overrode_better_candidate: bool,
+    ) -> str:
+        text = normalize_text(question).lower()
+        if overrode_better_candidate:
+            return "overrode_better_candidate"
+        if candidate_collapse:
+            return "candidate_collapse"
+        if partial_match:
+            return "answer_format_mismatch"
+        if any(marker in text for marker in ["attachment", "spreadsheet", "excel", "image", "audio", "file"]):
+            return "missed_attachment_evidence"
+        if any(marker in text for marker in ["probability", "random", "odds", "maximize", "state"]):
+            return "missing_state_transition_model"
+        if error_type == "scope_filter_mismatch":
+            return "scope_filter_mismatch"
+        if failure_stage == "final":
+            return "final_selection_error"
+        return "insufficient_verification"
+
+    def _build_tags(self, error_type: str, question: str, *, failure_mode: str) -> list[str]:
+        tags = [error_type, failure_mode]
+        text = normalize_text(question).lower()
+        for marker, tag in [
+            ("probability", "stochastic_process"),
+            ("random", "stochastic_process"),
+            ("excel", "spreadsheet"),
+            ("image", "image"),
+            ("audio", "audio"),
+            ("website", "search"),
+            ("published", "search"),
+        ]:
+            if marker in text:
+                tags.append(tag)
+        return sorted({tag for tag in tags if tag})
+
+    def _build_applicability(self, error_type: str, *, failure_mode: str, failure_stage: str) -> str:
+        return (
+            f"Use this feedback for similar GAIA tasks with error_type={error_type}, "
+            f"failure_mode={failure_mode}, or failure_stage={failure_stage}."
+        )
+
+    def _build_correction_checklist(
+        self,
+        error_type: str,
+        failure_mode: str,
+        *,
+        partial_match: bool,
+    ) -> list[str]:
+        if partial_match or error_type == "format_or_rounding_slip":
+            return [
+                "Normalize the final answer format to exactly match the requested representation.",
+                "Check rounding, units, and whether the answer should be a raw number or scaled phrase.",
+            ]
+        if failure_mode == "missing_state_transition_model":
+            return [
+                "Build explicit states and transitions before choosing the final answer.",
+                "Use structured Python reasoning for enumeration, simulation, or dynamic programming when needed.",
+            ]
+        if failure_mode == "missed_attachment_evidence":
+            return [
+                "Read and summarize attachment evidence before answering.",
+                "Use the attachment-derived evidence as the primary source for file-based questions.",
+            ]
+        if error_type == "insufficient_evidence":
+            return [
+                "Gather external evidence before finalizing factual claims.",
+                "Prefer cited search evidence over memory-only guesses.",
+            ]
+        return [
+            "Compare stage1, stage2, and expected answer constraints before final selection.",
+            "Verify scope, units, and exact output format before finalizing.",
+        ]
+
+    def _numeric_value(self, value: str) -> float | None:
+        normalized = normalize_text(value).replace(",", "")
+        try:
+            return float(normalized)
+        except ValueError:
+            return None
+
+    def _stage2_changed_stage1_answer(self) -> bool:
+        stage1_key = self._answer_key(getattr(self.agent, "last_stage1_result", ""))
+        decision = getattr(self.agent, "last_final_decision", None) or {}
+        final_key = self._answer_key(str(decision.get("final_result", "") or ""))
+        return bool(stage1_key and final_key and stage1_key != final_key)
 
     def _answer_key(self, answer: str) -> str:
         return normalize_text(answer).lower()

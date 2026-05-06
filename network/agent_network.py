@@ -41,7 +41,7 @@ class AgentNetwork:
         self.rng = random.Random(seed)
         self.enable_shared_memory = enable_shared_memory
         self.shared_memory_user_id = shared_memory_user_id
-        valid_memory_modes = {"disabled", "final_decision", "stage1_first_round_only"}
+        valid_memory_modes = {"disabled", "stage1_first_round_only"}
         if memory_mode not in valid_memory_modes:
             raise ValueError(
                 f"Unsupported memory_mode: {memory_mode}. Expected one of "
@@ -321,6 +321,16 @@ class AgentNetwork:
         shared_search_bundle = None
         if runtime is not None:
             runtime.clear_stage2_shared_state()
+            runtime.current_stage2_stage1_result = stage1_result
+            runtime.current_stage2_top_k_answers = [
+                str(self.nodes[idx].get_answer() or "").strip()
+                for idx in top_k_indices
+                if str(self.nodes[idx].get_answer() or "").strip()
+            ]
+            runtime.current_stage2_judge_scores = [
+                float(getattr(self.nodes[idx], "stage1_judge_score", 0.0) or 0.0)
+                for idx in top_k_indices
+            ]
             shared_search_bundle = runtime.prepare_shared_stage2_search(
                 question=question,
                 router_model_name=None,
@@ -353,8 +363,10 @@ class AgentNetwork:
                         "answer": result.get("answer"),
                         "reply": result.get("reply"),
                         "tool_usage": result.get("tool_usage", []),
+                        "routing": result.get("routing", {}),
                         "attachment_context": getattr(node, "stage2_attachment_context", ""),
                         "search_context": getattr(node, "stage2_search_context", ""),
+                        "solver_context": getattr(node, "stage2_solver_context", ""),
                         "memory_context": getattr(node, "stage2_memory_context", ""),
                         "rag_context": getattr(node, "stage2_rag_context", ""),
                         "success": result.get("success", True),
@@ -377,8 +389,10 @@ class AgentNetwork:
                         "answer": None,
                         "reply": None,
                         "tool_usage": [],
+                        "routing": {},
                         "attachment_context": getattr(node, "stage2_attachment_context", ""),
                         "search_context": getattr(node, "stage2_search_context", ""),
+                        "solver_context": getattr(node, "stage2_solver_context", ""),
                         "memory_context": getattr(node, "stage2_memory_context", ""),
                         "rag_context": getattr(node, "stage2_rag_context", ""),
                         "success": False,

@@ -154,11 +154,6 @@ class AgentNetworkHelper:
     def finalize_stage2_results(self, network, stage2_traces):
         memory_context = ""
         runtime = getattr(network, "runtime", None)
-        memory_mode = getattr(runtime, "memory_mode", "disabled")
-        if memory_mode == "final_decision":
-            memory_context = runtime.build_memory_context_for_final_decision(
-                getattr(network, "current_question", "") or ""
-            )
         decision = network.final_decision_maker.decide(
             question=network.current_question or "",
             stage1_result=network.last_stage1_result,
