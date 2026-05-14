@@ -14,7 +14,22 @@ from ..base import Tool, ToolParameter, tool_action
 
 
 class MemoryTool(Tool):
-    """Memory tool facade for agents and the tool registry."""
+    """
+    負責在 tools.builtin.memory_tool 中封裝 MemoryTool，管理記憶圖、任務紀錄、檢索結果或跨任務經驗的狀態與操作。
+    
+    Args:
+        user_id: 記憶系統提供的檢索結果、寫入資料或操作介面。
+        memory_config: 記憶系統提供的檢索結果、寫入資料或操作介面。
+        memory_types: 記憶系統提供的檢索結果、寫入資料或操作介面。
+        expandable: 記憶系統提供的檢索結果、寫入資料或操作介面。
+        memory_manager: 記憶系統提供的檢索結果、寫入資料或操作介面。
+    
+    Returns:
+        類別本身不直接回傳值；建立實例後可透過其方法操作狀態與流程。
+    
+    限制或副作用:
+        方法可能更新內部狀態、讀寫檔案、呼叫外部服務或產生日誌，需依使用情境確認。
+    """
 
     def __init__(
         self,
@@ -24,6 +39,22 @@ class MemoryTool(Tool):
         expandable: bool = False,
         memory_manager: Optional[MemoryManager] = None,
     ):
+        """
+        負責執行 MemoryTool 中的 __init__ 流程，初始化物件所需的設定、依賴與內部狀態，讓後續方法可以沿用同一份執行上下文。
+        
+        Args:
+            user_id: 記憶系統提供的檢索結果、寫入資料或操作介面。
+            memory_config: 記憶系統提供的檢索結果、寫入資料或操作介面。
+            memory_types: 記憶系統提供的檢索結果、寫入資料或操作介面。
+            expandable: 記憶系統提供的檢索結果、寫入資料或操作介面。
+            memory_manager: 記憶系統提供的檢索結果、寫入資料或操作介面。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 未標註。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         super().__init__(
             name="memory",
             description=(
@@ -51,7 +82,18 @@ class MemoryTool(Tool):
         self.conversation_count = 0
 
     def run(self, parameters: Dict[str, Any]) -> str:
-        """Execute a memory action."""
+        """
+        負責執行 MemoryTool 中的 run 流程，啟動主要執行流程，串接輸入準備、核心處理與結果輸出。
+        
+        Args:
+            parameters: 記憶系統提供的檢索結果、寫入資料或操作介面。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 str。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         if not self.validate_parameters(parameters):
             return "[ERROR] 參數驗證失敗，請檢查必填欄位與型別。"
 
@@ -103,7 +145,18 @@ class MemoryTool(Tool):
         return f"[ERROR] 不支援的 action: {action}"
 
     def get_parameters(self) -> List[ToolParameter]:
-        """Return tool parameter definitions."""
+        """
+        負責執行 MemoryTool 中的 get_parameters 流程，依照 MemoryTool 的流程需求處理 get_parameters 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            無。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 List[ToolParameter]。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         return [
             ToolParameter(
                 name="action",
@@ -225,7 +278,23 @@ class MemoryTool(Tool):
         modality: str = None,
         metadata: Dict[str, Any] = None,
     ) -> str:
-        """Add a memory item."""
+        """
+        負責執行 MemoryTool 中的 _add_memory 流程，依照 MemoryTool 的流程需求處理 _add_memory 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            content: 記憶系統提供的檢索結果、寫入資料或操作介面。
+            memory_type: 記憶系統提供的檢索結果、寫入資料或操作介面。
+            importance: 記憶系統提供的檢索結果、寫入資料或操作介面。
+            file_path: 要讀取或寫入的檔案或目錄路徑。
+            modality: 記憶系統提供的檢索結果、寫入資料或操作介面。
+            metadata: 目前流程所需的上下文、狀態或附加資訊。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 str。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         record_metadata: Dict[str, Any] = dict(metadata or {})
         try:
             if self.current_session_id is None:
@@ -258,7 +327,18 @@ class MemoryTool(Tool):
             return f"[ERROR] 新增記憶失敗: {str(e)}"
 
     def _infer_modality(self, path: str) -> str:
-        """Infer modality from file extension."""
+        """
+        負責執行 MemoryTool 中的 _infer_modality 流程，依照 MemoryTool 的流程需求處理 _infer_modality 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            path: 要讀取或寫入的檔案或目錄路徑。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 str。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         try:
             ext = (path.rsplit(".", 1)[-1] or "").lower()
             if ext in {"png", "jpg", "jpeg", "bmp", "gif", "webp"}:
@@ -277,7 +357,21 @@ class MemoryTool(Tool):
         memory_type: str = None,
         min_importance: float = 0.1,
     ) -> str:
-        """Search memories."""
+        """
+        負責執行 MemoryTool 中的 _search_memory 流程，依照 MemoryTool 的流程需求處理 _search_memory 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            query: 目前要處理的任務、問題或查詢文字。
+            limit: 控制檢索、篩選或輸出數量的數值參數。
+            memory_type: 已整理好的搜尋結果、共享資料包或可重用證據內容。
+            min_importance: 控制檢索、篩選或輸出數量的數值參數。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 str。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         try:
             memory_types = [memory_type] if memory_type else None
             results = self.memory_manager.retrieve_memories(
@@ -314,7 +408,18 @@ class MemoryTool(Tool):
 
     @tool_action("memory_summary", "取得記憶摘要")
     def _get_summary(self, limit: int = 10) -> str:
-        """Return a memory summary."""
+        """
+        負責執行 MemoryTool 中的 _get_summary 流程，依照 MemoryTool 的流程需求處理 _get_summary 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            limit: 控制檢索、篩選或輸出數量的數值參數。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 str。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         try:
             stats = self.memory_manager.get_memory_stats()
             summary_parts = [
@@ -380,7 +485,18 @@ class MemoryTool(Tool):
 
     @tool_action("memory_stats", "取得記憶統計")
     def _get_stats(self) -> str:
-        """Return memory stats."""
+        """
+        負責執行 MemoryTool 中的 _get_stats 流程，依照 MemoryTool 的流程需求處理 _get_stats 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            無。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 str。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         try:
             stats = self.memory_manager.get_memory_stats()
             stats_info = [
@@ -395,7 +511,19 @@ class MemoryTool(Tool):
             return f"[ERROR] 取得統計失敗: {str(e)}"
 
     def auto_record_conversation(self, user_input: str, agent_response: str):
-        """Automatically record a conversation turn."""
+        """
+        負責執行 MemoryTool 中的 auto_record_conversation 流程，依照 MemoryTool 的流程需求處理 auto_record_conversation 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            user_input: 記憶系統提供的檢索結果、寫入資料或操作介面。
+            agent_response: 記憶系統提供的檢索結果、寫入資料或操作介面。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 未標註。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         self.conversation_count += 1
 
         self._add_memory(
@@ -424,7 +552,20 @@ class MemoryTool(Tool):
     def _update_memory(
         self, memory_id: str, content: str = None, importance: float = None
     ) -> str:
-        """Update a memory item."""
+        """
+        負責執行 MemoryTool 中的 _update_memory 流程，依照 MemoryTool 的流程需求處理 _update_memory 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            memory_id: 記憶系統提供的檢索結果、寫入資料或操作介面。
+            content: 記憶系統提供的檢索結果、寫入資料或操作介面。
+            importance: 記憶系統提供的檢索結果、寫入資料或操作介面。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 str。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         try:
             success = self.memory_manager.update_memory(
                 memory_id=memory_id,
@@ -440,7 +581,18 @@ class MemoryTool(Tool):
 
     @tool_action("memory_remove", "刪除指定記憶")
     def _remove_memory(self, memory_id: str) -> str:
-        """Remove a memory item."""
+        """
+        負責執行 MemoryTool 中的 _remove_memory 流程，依照 MemoryTool 的流程需求處理 _remove_memory 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            memory_id: 記憶系統提供的檢索結果、寫入資料或操作介面。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 str。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         try:
             success = self.memory_manager.remove_memory(memory_id)
             if success:
@@ -456,7 +608,20 @@ class MemoryTool(Tool):
         threshold: float = 0.1,
         max_age_days: int = 30,
     ) -> str:
-        """Forget memories by strategy."""
+        """
+        負責執行 MemoryTool 中的 _forget 流程，依照 MemoryTool 的流程需求處理 _forget 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            strategy: 記憶系統提供的檢索結果、寫入資料或操作介面。
+            threshold: 控制檢索、篩選或輸出數量的數值參數。
+            max_age_days: 控制檢索、篩選或輸出數量的數值參數。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 str。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         try:
             count = self.memory_manager.forget_memories(
                 strategy=strategy,
@@ -474,7 +639,20 @@ class MemoryTool(Tool):
         to_type: str = "episodic",
         importance_threshold: float = 0.7,
     ) -> str:
-        """Consolidate memories across types."""
+        """
+        負責執行 MemoryTool 中的 _consolidate 流程，依照 MemoryTool 的流程需求處理 _consolidate 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            from_type: 記憶系統提供的檢索結果、寫入資料或操作介面。
+            to_type: 記憶系統提供的檢索結果、寫入資料或操作介面。
+            importance_threshold: 控制檢索、篩選或輸出數量的數值參數。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 str。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         try:
             count = self.memory_manager.consolidate_memories(
                 from_type=from_type,
@@ -490,7 +668,18 @@ class MemoryTool(Tool):
 
     @tool_action("memory_clear", "清除全部記憶")
     def _clear_all(self) -> str:
-        """Clear all memories."""
+        """
+        負責執行 MemoryTool 中的 _clear_all 流程，依照 MemoryTool 的流程需求處理 _clear_all 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            無。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 str。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         try:
             self.memory_manager.clear_all_memories()
             return "[OK] 已清除全部記憶"
@@ -498,7 +687,19 @@ class MemoryTool(Tool):
             return f"[ERROR] 清除記憶失敗: {str(e)}"
 
     def add_knowledge(self, content: str, importance: float = 0.9):
-        """Add a knowledge-like memory."""
+        """
+        負責執行 MemoryTool 中的 add_knowledge 流程，更新記憶圖、互動狀態、節點邊關係或追蹤紀錄。
+        
+        Args:
+            content: 記憶系統提供的檢索結果、寫入資料或操作介面。
+            importance: 記憶系統提供的檢索結果、寫入資料或操作介面。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 未標註。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         return self._add_memory(
             content=content,
             memory_type="working",
@@ -506,7 +707,19 @@ class MemoryTool(Tool):
         )
 
     def get_context_for_query(self, query: str, limit: int = 3) -> str:
-        """Build a compact memory context string for a query."""
+        """
+        負責執行 MemoryTool 中的 get_context_for_query 流程，依照 MemoryTool 的流程需求處理 get_context_for_query 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            query: 目前要處理的任務、問題或查詢文字。
+            limit: 控制檢索、篩選或輸出數量的數值參數。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 str。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         results = self.memory_manager.retrieve_memories(
             query=query,
             limit=limit,
@@ -522,7 +735,18 @@ class MemoryTool(Tool):
         return "\n".join(context_parts)
 
     def clear_session(self):
-        """Reset current session metadata and clear working memory."""
+        """
+        負責執行 MemoryTool 中的 clear_session 流程，清除或移除指定資源、狀態或註冊資料，維持後續流程的一致性。
+        
+        Args:
+            無。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 未標註。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         self.current_session_id = None
         self.conversation_count = 0
 
@@ -535,11 +759,33 @@ class MemoryTool(Tool):
             wm.clear()
 
     def consolidate_memories(self):
-        """Consolidate memories with manager defaults."""
+        """
+        負責執行 MemoryTool 中的 consolidate_memories 流程，依照 MemoryTool 的流程需求處理 consolidate_memories 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            無。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 未標註。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         return self.memory_manager.consolidate_memories()
 
     def forget_old_memories(self, max_age_days: int = 30):
-        """Forget old memories using time-based strategy."""
+        """
+        負責執行 MemoryTool 中的 forget_old_memories 流程，依照 MemoryTool 的流程需求處理 forget_old_memories 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            max_age_days: 控制檢索、篩選或輸出數量的數值參數。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 未標註。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         return self.memory_manager.forget_memories(
             strategy="time_based",
             max_age_days=max_age_days,

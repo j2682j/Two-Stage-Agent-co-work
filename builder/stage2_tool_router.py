@@ -7,10 +7,35 @@ from typing import Any
 
 
 def _clean(value: Any) -> str:
+    """
+    負責執行 builder.stage2_tool_router 中的 _clean 流程，依照 builder.stage2_tool_router 的流程需求處理 _clean 對應的資料轉換、狀態操作或結果產生。
+    
+    Args:
+        value: 此流程需要使用的輸入資料。
+    
+    Returns:
+        執行結果；若函式標註回傳型別，預期型別為 str。
+    
+    限制或副作用:
+        可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+    """
     return re.sub(r"\s+", " ", str(value or "")).strip()
 
 
 def _slug(value: Any, default: str = "general_reasoning") -> str:
+    """
+    負責執行 builder.stage2_tool_router 中的 _slug 流程，依照 builder.stage2_tool_router 的流程需求處理 _slug 對應的資料轉換、狀態操作或結果產生。
+    
+    Args:
+        value: 此流程需要使用的輸入資料。
+        default: 此流程需要使用的輸入資料。
+    
+    Returns:
+        執行結果；若函式標註回傳型別，預期型別為 str。
+    
+    限制或副作用:
+        可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+    """
     text = _clean(value).lower()
     text = re.sub(r"[^a-z0-9_./:-]+", "_", text).strip("_")
     return text or default
@@ -18,6 +43,18 @@ def _slug(value: Any, default: str = "general_reasoning") -> str:
 
 @dataclass(slots=True)
 class Stage2ToolRoutingInput:
+    """
+    負責在 builder.stage2_tool_router 中封裝 Stage2ToolRoutingInput，封裝工具呼叫、參數處理與工具結果回傳流程。
+    
+    Args:
+        無明確建構參數，可能透過 dataclass 欄位或預設值建立物件。
+    
+    Returns:
+        類別本身不直接回傳值；建立實例後可透過其方法操作狀態與流程。
+    
+    限制或副作用:
+        方法可能更新內部狀態、讀寫檔案、呼叫外部服務或產生日誌，需依使用情境確認。
+    """
     question: str
     task_type: str = "general_reasoning"
     trigger_terms: list[str] = field(default_factory=list)
@@ -30,6 +67,18 @@ class Stage2ToolRoutingInput:
 
 @dataclass(slots=True)
 class Stage2ToolRoutingDecision:
+    """
+    負責在 builder.stage2_tool_router 中封裝 Stage2ToolRoutingDecision，封裝工具呼叫、參數處理與工具結果回傳流程。
+    
+    Args:
+        無明確建構參數，可能透過 dataclass 欄位或預設值建立物件。
+    
+    Returns:
+        類別本身不直接回傳值；建立實例後可透過其方法操作狀態與流程。
+    
+    限制或副作用:
+        方法可能更新內部狀態、讀寫檔案、呼叫外部服務或產生日誌，需依使用情境確認。
+    """
     use_search: bool = False
     use_calculator: bool = False
     use_python_solver: bool = False
@@ -44,6 +93,18 @@ class Stage2ToolRoutingDecision:
     reasons: list[str] = field(default_factory=list)
 
     def to_dict(self) -> dict[str, Any]:
+        """
+        負責執行 Stage2ToolRoutingDecision 中的 to_dict 流程，將內部資料整理成日誌、提示詞、摘要或指定的輸出格式。
+        
+        Args:
+            無。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 dict[str, Any]。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         return {
             "use_search": self.use_search,
             "use_calculator": self.use_calculator,
@@ -65,11 +126,17 @@ class Stage2ToolRoutingDecision:
 
 
 class Stage2ToolRouter:
-    """Task-type-first stage2 tool router.
-
-    The router intentionally avoids calling calculator on raw natural-language
-    questions. Calculator is enabled only after an explicit expression is
-    extracted and parsed as a safe Python expression.
+    """
+    負責在 builder.stage2_tool_router 中封裝 Stage2ToolRouter，封裝工具呼叫、參數處理與工具結果回傳流程。
+    
+    Args:
+        無明確建構參數，可能透過 dataclass 欄位或預設值建立物件。
+    
+    Returns:
+        類別本身不直接回傳值；建立實例後可透過其方法操作狀態與流程。
+    
+    限制或副作用:
+        方法可能更新內部狀態、讀寫檔案、呼叫外部服務或產生日誌，需依使用情境確認。
     """
 
     FACTUAL_TASKS = {"factual_search", "source_lookup", "counting_scope"}
@@ -79,6 +146,18 @@ class Stage2ToolRouter:
     CALC_TASKS = {"unit_conversion", "simple_arithmetic"}
 
     def route(self, routing_input: Stage2ToolRoutingInput) -> Stage2ToolRoutingDecision:
+        """
+        負責執行 Stage2ToolRouter 中的 route 流程，根據任務特徵、候選答案或評分結果選擇後續節點、工具或流程分支。
+        
+        Args:
+            routing_input: 此流程需要使用的輸入資料。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 Stage2ToolRoutingDecision。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         question = _clean(routing_input.question)
         task_type = _slug(routing_input.task_type)
         policy = self._normalize_policy(routing_input.tool_policy)
@@ -163,6 +242,18 @@ class Stage2ToolRouter:
         return decision
 
     def extract_calculator_expression(self, question: str) -> str | None:
+        """
+        負責執行 Stage2ToolRouter 中的 extract_calculator_expression 流程，解析輸入內容並萃取後續流程需要使用的結構化資料。
+        
+        Args:
+            question: 目前要處理的任務、問題或查詢文字。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 str | None。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         text = _clean(question)
         if not text:
             return None
@@ -193,6 +284,18 @@ class Stage2ToolRouter:
         return None
 
     def _normalize_policy(self, policy: dict[str, Any] | None) -> dict[str, list[str]]:
+        """
+        負責執行 Stage2ToolRouter 中的 _normalize_policy 流程，依照 Stage2ToolRouter 的流程需求處理 _normalize_policy 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            policy: 此流程需要使用的輸入資料。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 dict[str, list[str]]。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         data = policy or {}
         return {
             "prefer": [_slug(item, default="") for item in data.get("prefer", []) if _slug(item, default="")],
@@ -201,6 +304,18 @@ class Stage2ToolRouter:
         }
 
     def _normalize_expression(self, value: str) -> str:
+        """
+        負責執行 Stage2ToolRouter 中的 _normalize_expression 流程，依照 Stage2ToolRouter 的流程需求處理 _normalize_expression 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            value: 此流程需要使用的輸入資料。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 str。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         expression = _clean(value)
         expression = expression.replace("^", "**")
         expression = expression.replace("×", "*").replace("÷", "/")
@@ -208,6 +323,18 @@ class Stage2ToolRouter:
         return expression
 
     def _is_safe_expression(self, expression: str) -> bool:
+        """
+        負責執行 Stage2ToolRouter 中的 _is_safe_expression 流程，依照 Stage2ToolRouter 的流程需求處理 _is_safe_expression 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            expression: 此流程需要使用的輸入資料。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 bool。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         expression = self._normalize_expression(expression)
         if not expression:
             return False
@@ -224,12 +351,36 @@ class Stage2ToolRouter:
         return True
 
     def _looks_like_direct_calculation(self, question: str) -> bool:
+        """
+        負責執行 Stage2ToolRouter 中的 _looks_like_direct_calculation 流程，依照 Stage2ToolRouter 的流程需求處理 _looks_like_direct_calculation 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            question: 目前要處理的任務、問題或查詢文字。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 bool。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         text = _clean(question).lower()
         if len(text.split()) <= 8 and any(op in text for op in ["+", "-", "*", "/", "%"]):
             return True
         return any(marker in text for marker in ["calculate:", "compute:", "evaluate:"])
 
     def _question_requires_external_evidence(self, question: str) -> bool:
+        """
+        負責執行 Stage2ToolRouter 中的 _question_requires_external_evidence 流程，依照 Stage2ToolRouter 的流程需求處理 _question_requires_external_evidence 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            question: 目前要處理的任務、問題或查詢文字。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 bool。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         text = _clean(question).lower()
         markers = [
             "who",
@@ -249,6 +400,18 @@ class Stage2ToolRouter:
         return any(marker in text for marker in markers)
 
     def _question_needs_numeric_model(self, question: str) -> bool:
+        """
+        負責執行 Stage2ToolRouter 中的 _question_needs_numeric_model 流程，依照 Stage2ToolRouter 的流程需求處理 _question_needs_numeric_model 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            question: 目前要處理的任務、問題或查詢文字。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 bool。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         text = _clean(question).lower()
         markers = [
             "probability",
@@ -270,5 +433,17 @@ class Stage2ToolRouter:
         return any(marker in text for marker in markers)
 
     def _answers_disagree(self, answers: list[str]) -> bool:
+        """
+        負責執行 Stage2ToolRouter 中的 _answers_disagree 流程，依照 Stage2ToolRouter 的流程需求處理 _answers_disagree 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            answers: 此流程需要使用的輸入資料。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 bool。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         normalized = {re.sub(r"\W+", "", str(answer or "").lower()) for answer in answers if str(answer or "").strip()}
         return len(normalized) > 1

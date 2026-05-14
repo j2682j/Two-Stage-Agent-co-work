@@ -7,10 +7,20 @@ from trl import apply_chat_template
 
 
 class GSM8KDataset:
-    """GSM8K數學推理資料集
-
-    GSM8K (Grade School Math 8K) 是一個包含8500個高品質小學數學問題的資料集。
-    每個問題都需要2-8步的推理過程來解決。
+    """
+    負責在 rl.datasets 中封裝 GSM8KDataset，封裝此模組的狀態資料與主要操作流程。
+    
+    Args:
+        split: 此流程需要使用的輸入資料。
+        max_samples: 控制檢索、篩選或輸出數量的數值參數。
+        format_type: 此流程需要使用的輸入資料。
+        tokenizer: 此流程需要使用的輸入資料。
+    
+    Returns:
+        類別本身不直接回傳值；建立實例後可透過其方法操作狀態與流程。
+    
+    限制或副作用:
+        方法可能更新內部狀態、讀寫檔案、呼叫外部服務或產生日誌，需依使用情境確認。
     """
 
     def __init__(
@@ -21,13 +31,19 @@ class GSM8KDataset:
         tokenizer = None  # 用於RL格式應用chat template
     ):
         """
-        初始化GSM8K資料集
-
+        負責執行 GSM8KDataset 中的 __init__ 流程，初始化物件所需的設定、依賴與內部狀態，讓後續方法可以沿用同一份執行上下文。
+        
         Args:
-            split: 資料集分割 ("train" 或 "test")
-            max_samples: 最大樣本數（用於快速測試）
-            format_type: 資料格式類型 ("sft" 用於監督學習, "rl" 用於強化學習)
-            tokenizer: Tokenizer對象,用於RL格式應用chat template
+            split: 此流程需要使用的輸入資料。
+            max_samples: 控制檢索、篩選或輸出數量的數值參數。
+            format_type: 此流程需要使用的輸入資料。
+            tokenizer: 此流程需要使用的輸入資料。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 未標註。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
         """
         self.split = split
         self.max_samples = max_samples
@@ -45,13 +61,16 @@ class GSM8KDataset:
     
     def format_for_sft(self, example: Dict[str, Any]) -> Dict[str, str]:
         """
-        格式化為SFT訓練格式
+        負責執行 GSM8KDataset 中的 format_for_sft 流程，將內部資料整理成日誌、提示詞、摘要或指定的輸出格式。
         
         Args:
-            example: 原始資料樣本
-            
+            example: 此流程需要使用的輸入資料。
+        
         Returns:
-            格式化後的樣本，包含 "prompt" 和 "completion"
+            執行結果；若函式標註回傳型別，預期型別為 Dict[str, str]。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
         """
         question = example["question"]
         answer = example["answer"]
@@ -77,17 +96,16 @@ class GSM8KDataset:
     
     def format_for_rl(self, example: Dict[str, Any]) -> Dict[str, Any]:
         """
-        格式化為RL訓練格式(Standard Format with Chat Template Applied)
-
+        負責執行 GSM8KDataset 中的 format_for_rl 流程，將內部資料整理成日誌、提示詞、摘要或指定的輸出格式。
+        
         Args:
-            example: 原始資料樣本
-
+            example: 此流程需要使用的輸入資料。
+        
         Returns:
-            格式化後的樣本，使用standard format (已應用chat template)
-            - prompt: 應用chat template後的文字字串
-            - ground_truth: 正確答案
-            - question: 原始問題
-            - full_answer: 完整答案
+            執行結果；若函式標註回傳型別，預期型別為 Dict[str, Any]。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
         """
         question = example["question"]
         answer = example["answer"]
@@ -123,10 +141,16 @@ class GSM8KDataset:
     
     def get_dataset(self) -> Dataset:
         """
-        取得格式化後的資料集
-
+        負責執行 GSM8KDataset 中的 get_dataset 流程，依照 GSM8KDataset 的流程需求處理 get_dataset 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            無。
+        
         Returns:
-            HuggingFace Dataset對象
+            執行結果；若函式標註回傳型別，預期型別為 Dataset。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
         """
         if self.format_type == "sft":
             formatted_dataset = self.dataset.map(
@@ -144,11 +168,33 @@ class GSM8KDataset:
         return formatted_dataset
     
     def __len__(self) -> int:
-        """回傳資料集大小"""
+        """
+        負責執行 GSM8KDataset 中的 __len__ 流程，依照 GSM8KDataset 的流程需求處理 __len__ 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            無。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 int。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         return len(self.dataset)
     
     def __getitem__(self, idx: int) -> Dict[str, Any]:
-        """取得單個樣本"""
+        """
+        負責執行 GSM8KDataset 中的 __getitem__ 流程，依照 GSM8KDataset 的流程需求處理 __getitem__ 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            idx: 此流程需要使用的輸入資料。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 Dict[str, Any]。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         example = self.dataset[idx]
         if self.format_type == "sft":
             return self.format_for_sft(example)
@@ -164,17 +210,20 @@ def create_math_dataset(
     tokenizer = None
 ) -> Dataset:
     """
-    建立數學推理資料集
-
+    負責執行 rl.datasets 中的 create_math_dataset 流程，建立後續流程需要的物件、資料結構或輸出區塊。
+    
     Args:
-        dataset_name: 資料集名稱（目前僅支援 "gsm8k"）
-        split: 資料集分割
-        max_samples: 最大樣本數
-        format_type: 資料格式類型
-        tokenizer: Tokenizer對象,用於RL格式應用chat template
-
+        dataset_name: 此流程需要使用的輸入資料。
+        split: 此流程需要使用的輸入資料。
+        max_samples: 控制檢索、篩選或輸出數量的數值參數。
+        format_type: 此流程需要使用的輸入資料。
+        tokenizer: 此流程需要使用的輸入資料。
+    
     Returns:
-        格式化後的資料集
+        執行結果；若函式標註回傳型別，預期型別為 Dataset。
+    
+    限制或副作用:
+        可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
     """
     if dataset_name.lower() == "gsm8k":
         dataset_wrapper = GSM8KDataset(
@@ -194,15 +243,18 @@ def format_math_dataset(
     model_name: str = "Qwen/Qwen3-0.6B"
 ) -> Dataset:
     """
-    將自定義資料集轉換為訓練格式
-
+    負責執行 rl.datasets 中的 format_math_dataset 流程，將內部資料整理成日誌、提示詞、摘要或指定的輸出格式。
+    
     Args:
-        dataset: 原始資料集,必須包含 'question' 和 'answer' 字段
-        format_type: 格式類型 ("sft" 或 "rl")
-        model_name: 模型名稱,用於載入tokenizer
-
+        dataset: 此流程需要使用的輸入資料。
+        format_type: 此流程需要使用的輸入資料。
+        model_name: 用來呼叫模型或外部服務的模型名稱、客戶端或相關設定。
+    
     Returns:
-        格式化後的資料集
+        執行結果；若函式標註回傳型別，預期型別為 Dataset。
+    
+    限制或副作用:
+        可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
     """
     from transformers import AutoTokenizer
 
@@ -211,7 +263,18 @@ def format_math_dataset(
 
     # 定義格式化函式
     def format_sft_sample(example: Dict[str, Any]) -> Dict[str, str]:
-        """格式化為SFT格式"""
+        """
+        負責執行 rl.datasets 中的 format_sft_sample 流程，將內部資料整理成日誌、提示詞、摘要或指定的輸出格式。
+        
+        Args:
+            example: 此流程需要使用的輸入資料。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 Dict[str, str]。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         question = example["question"]
         answer = example["answer"]
 
@@ -235,7 +298,18 @@ def format_math_dataset(
         }
 
     def format_rl_sample(example: Dict[str, Any]) -> Dict[str, Any]:
-        """格式化為RL格式"""
+        """
+        負責執行 rl.datasets 中的 format_rl_sample 流程，將內部資料整理成日誌、提示詞、摘要或指定的輸出格式。
+        
+        Args:
+            example: 此流程需要使用的輸入資料。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 Dict[str, Any]。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         question = example["question"]
         answer = example["answer"]
 
@@ -286,14 +360,17 @@ def create_sft_dataset(
     split: str = "train"
 ) -> Dataset:
     """
-    建立SFT訓練資料集（便捷函式）
-
+    負責執行 rl.datasets 中的 create_sft_dataset 流程，建立後續流程需要的物件、資料結構或輸出區塊。
+    
     Args:
-        max_samples: 最大樣本數
-        split: 資料集分割
-
+        max_samples: 控制檢索、篩選或輸出數量的數值參數。
+        split: 此流程需要使用的輸入資料。
+    
     Returns:
-        SFT格式的資料集
+        執行結果；若函式標註回傳型別，預期型別為 Dataset。
+    
+    限制或副作用:
+        可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
     """
     return create_math_dataset(
         dataset_name="gsm8k",
@@ -309,15 +386,18 @@ def create_rl_dataset(
     model_name: str = "Qwen/Qwen3-0.6B"
 ) -> Dataset:
     """
-    建立RL訓練資料集（便捷函式）
-
+    負責執行 rl.datasets 中的 create_rl_dataset 流程，建立後續流程需要的物件、資料結構或輸出區塊。
+    
     Args:
-        max_samples: 最大樣本數
-        split: 資料集分割
-        model_name: 模型名稱,用於應用chat template
-
+        max_samples: 控制檢索、篩選或輸出數量的數值參數。
+        split: 此流程需要使用的輸入資料。
+        model_name: 用來呼叫模型或外部服務的模型名稱、客戶端或相關設定。
+    
     Returns:
-        RL格式的資料集（已應用chat template）
+        執行結果；若函式標註回傳型別，預期型別為 Dataset。
+    
+    限制或副作用:
+        可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
     """
     # 載入tokenizer
     print(f"📝 載入tokenizer (model={model_name})...")
@@ -334,11 +414,17 @@ def create_rl_dataset(
 
 def preview_dataset(dataset: Dataset, num_samples: int = 3) -> None:
     """
-    預覽資料集樣本
+    負責執行 rl.datasets 中的 preview_dataset 流程，依照 rl.datasets 的流程需求處理 preview_dataset 對應的資料轉換、狀態操作或結果產生。
     
     Args:
-        dataset: 資料集
-        num_samples: 預覽樣本數
+        dataset: 此流程需要使用的輸入資料。
+        num_samples: 此流程需要使用的輸入資料。
+    
+    Returns:
+        執行結果；若函式標註回傳型別，預期型別為 None。
+    
+    限制或副作用:
+        可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
     """
     print(f"\n📋 資料集預覽（前 {num_samples} 個樣本）:")
     print("="*80)

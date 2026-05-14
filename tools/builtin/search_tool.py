@@ -97,6 +97,19 @@ LOW_TRUST_DOMAINS = (
 
 
 def _limit_text(text: str, token_limit: int) -> str:
+    """
+    負責執行 tools.builtin.search_tool 中的 _limit_text 流程，依照 tools.builtin.search_tool 的流程需求處理 _limit_text 對應的資料轉換、狀態操作或結果產生。
+    
+    Args:
+        text: 控制檢索、篩選或輸出數量的數值參數。
+        token_limit: 控制檢索、篩選或輸出數量的數值參數。
+    
+    Returns:
+        執行結果；若函式標註回傳型別，預期型別為 str。
+    
+    限制或副作用:
+        可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+    """
     char_limit = token_limit * CHARS_PER_TOKEN
     if len(text) <= char_limit:
         return text
@@ -104,6 +117,18 @@ def _limit_text(text: str, token_limit: int) -> str:
 
 
 def _fetch_raw_content(url: str) -> str | None:
+    """
+    負責執行 tools.builtin.search_tool 中的 _fetch_raw_content 流程，依照 tools.builtin.search_tool 的流程需求處理 _fetch_raw_content 對應的資料轉換、狀態操作或結果產生。
+    
+    Args:
+        url: 已整理好的搜尋結果、共享資料包或可重用證據內容。
+    
+    Returns:
+        執行結果；若函式標註回傳型別，預期型別為 str | None。
+    
+    限制或副作用:
+        可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+    """
     try:
         response = requests.get(url, timeout=10)
         response.raise_for_status()
@@ -126,6 +151,21 @@ def _normalized_result(
     content: str,
     raw_content: str | None,
 ) -> Dict[str, str]:
+    """
+    負責執行 tools.builtin.search_tool 中的 _normalized_result 流程，依照 tools.builtin.search_tool 的流程需求處理 _normalized_result 對應的資料轉換、狀態操作或結果產生。
+    
+    Args:
+        title: 已整理好的搜尋結果、共享資料包或可重用證據內容。
+        url: 已整理好的搜尋結果、共享資料包或可重用證據內容。
+        content: 已整理好的搜尋結果、共享資料包或可重用證據內容。
+        raw_content: 已整理好的搜尋結果、共享資料包或可重用證據內容。
+    
+    Returns:
+        執行結果；若函式標註回傳型別，預期型別為 Dict[str, str]。
+    
+    限制或副作用:
+        可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+    """
     payload: Dict[str, str] = {
         "title": title or url,
         "url": url,
@@ -143,6 +183,21 @@ def _structured_payload(
     answer: str | None = None,
     notices: Iterable[str] | None = None,
 ) -> Dict[str, Any]:
+    """
+    負責執行 tools.builtin.search_tool 中的 _structured_payload 流程，依照 tools.builtin.search_tool 的流程需求處理 _structured_payload 對應的資料轉換、狀態操作或結果產生。
+    
+    Args:
+        results: 已整理好的搜尋結果、共享資料包或可重用證據內容。
+        backend: 已整理好的搜尋結果、共享資料包或可重用證據內容。
+        answer: 模型、節點或工具產生的候選回覆內容。
+        notices: 已整理好的搜尋結果、共享資料包或可重用證據內容。
+    
+    Returns:
+        執行結果；若函式標註回傳型別，預期型別為 Dict[str, Any]。
+    
+    限制或副作用:
+        可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+    """
     return {
         "results": list(results),
         "backend": backend,
@@ -152,7 +207,21 @@ def _structured_payload(
 
 
 class SearchTool(Tool):
-    """支援多後端、可回傳結構化結果的搜尋工具。"""
+    """
+    負責在 tools.builtin.search_tool 中封裝 SearchTool，封裝工具呼叫、參數處理與工具結果回傳流程。
+    
+    Args:
+        backend: 已整理好的搜尋結果、共享資料包或可重用證據內容。
+        tavily_key: 已整理好的搜尋結果、共享資料包或可重用證據內容。
+        serpapi_key: 已整理好的搜尋結果、共享資料包或可重用證據內容。
+        perplexity_key: 已整理好的搜尋結果、共享資料包或可重用證據內容。
+    
+    Returns:
+        類別本身不直接回傳值；建立實例後可透過其方法操作狀態與流程。
+    
+    限制或副作用:
+        方法可能更新內部狀態、讀寫檔案、呼叫外部服務或產生日誌，需依使用情境確認。
+    """
 
     def __init__(
         self,
@@ -161,6 +230,21 @@ class SearchTool(Tool):
         serpapi_key: str | None = None,
         perplexity_key: str | None = None,
     ) -> None:
+        """
+        負責執行 SearchTool 中的 __init__ 流程，初始化物件所需的設定、依賴與內部狀態，讓後續方法可以沿用同一份執行上下文。
+        
+        Args:
+            backend: 已整理好的搜尋結果、共享資料包或可重用證據內容。
+            tavily_key: 已整理好的搜尋結果、共享資料包或可重用證據內容。
+            serpapi_key: 已整理好的搜尋結果、共享資料包或可重用證據內容。
+            perplexity_key: 已整理好的搜尋結果、共享資料包或可重用證據內容。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 None。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         super().__init__(
             name="search",
             description=(
@@ -181,6 +265,18 @@ class SearchTool(Tool):
     # Public API
     # ------------------------------------------------------------------
     def run(self, parameters: Dict[str, Any]) -> str | Dict[str, Any]:  # type: ignore[override]
+        """
+        負責執行 SearchTool 中的 run 流程，啟動主要執行流程，串接輸入準備、核心處理與結果輸出。
+        
+        Args:
+            parameters: 已整理好的搜尋結果、共享資料包或可重用證據內容。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 str | Dict[str, Any]。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         query = (parameters.get("input") or parameters.get("query") or "").strip()
         if not query:
             return "錯誤：搜尋查詢不能為空"
@@ -220,6 +316,18 @@ class SearchTool(Tool):
         return self._format_text_response(query=query, payload=payload)
 
     def get_parameters(self) -> List[ToolParameter]:
+        """
+        負責執行 SearchTool 中的 get_parameters 流程，依照 SearchTool 的流程需求處理 get_parameters 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            無。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 List[ToolParameter]。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         return [
             ToolParameter(
                 name="input",
@@ -233,6 +341,18 @@ class SearchTool(Tool):
     # Internal helpers
     # ------------------------------------------------------------------
     def _setup_backends(self) -> None:
+        """
+        負責執行 SearchTool 中的 _setup_backends 流程，依照 SearchTool 的流程需求處理 _setup_backends 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            無。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 None。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         if self.tavily_key and TavilyClient is not None:
             try:
                 self.tavily_client = TavilyClient(api_key=self.tavily_key)
@@ -286,6 +406,25 @@ class SearchTool(Tool):
         loop_count: int,
     ) -> Dict[str, Any]:
         # 統一將 hybrid 視作 advanced，以保持向後相容的優先順序邏輯
+        """
+        負責執行 SearchTool 中的 _structured_search 流程，依照 SearchTool 的流程需求處理 _structured_search 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            query: 目前要處理的任務、問題或查詢文字。
+            backend: 已整理好的搜尋結果、共享資料包或可重用證據內容。
+            fetch_full_page: 已整理好的搜尋結果、共享資料包或可重用證據內容。
+            conditional_fetch: 已整理好的搜尋結果、共享資料包或可重用證據內容。
+            max_results: 控制檢索、篩選或輸出數量的數值參數。
+            max_tokens: 控制檢索、篩選或輸出數量的數值參數。
+            max_full_page_results: 控制檢索、篩選或輸出數量的數值參數。
+            loop_count: 已整理好的搜尋結果、共享資料包或可重用證據內容。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 Dict[str, Any]。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         target_backend = "advanced" if backend == "hybrid" else backend
 
         if target_backend == "tavily":
@@ -393,6 +532,23 @@ class SearchTool(Tool):
         max_tokens: int,
         max_full_page_results: int,
     ) -> Dict[str, Any]:
+        """
+        負責執行 SearchTool 中的 _finalize_payload 流程，依照 SearchTool 的流程需求處理 _finalize_payload 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            query: 目前要處理的任務、問題或查詢文字。
+            payload: 已整理好的搜尋結果、共享資料包或可重用證據內容。
+            max_results: 控制檢索、篩選或輸出數量的數值參數。
+            conditional_fetch: 已整理好的搜尋結果、共享資料包或可重用證據內容。
+            max_tokens: 控制檢索、篩選或輸出數量的數值參數。
+            max_full_page_results: 控制檢索、篩選或輸出數量的數值參數。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 Dict[str, Any]。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         finalized = dict(payload)
         reranked_results = self._rerank_results(
             query=query,
@@ -416,6 +572,19 @@ class SearchTool(Tool):
         return finalized
 
     def _should_conditional_fetch(self, *, query: str, results: List[Dict[str, Any]]) -> bool:
+        """
+        負責執行 SearchTool 中的 _should_conditional_fetch 流程，依照 SearchTool 的流程需求處理 _should_conditional_fetch 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            query: 目前要處理的任務、問題或查詢文字。
+            results: 已整理好的搜尋結果、共享資料包或可重用證據內容。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 bool。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         if not results:
             return False
 
@@ -451,6 +620,21 @@ class SearchTool(Tool):
         max_tokens: int,
         max_full_page_results: int,
     ) -> tuple[List[Dict[str, Any]], int]:
+        """
+        負責執行 SearchTool 中的 _conditionally_fetch_full_pages 流程，依照 SearchTool 的流程需求處理 _conditionally_fetch_full_pages 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            query: 目前要處理的任務、問題或查詢文字。
+            results: 已整理好的搜尋結果、共享資料包或可重用證據內容。
+            max_tokens: 控制檢索、篩選或輸出數量的數值參數。
+            max_full_page_results: 控制檢索、篩選或輸出數量的數值參數。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 tuple[List[Dict[str, Any]], int]。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         enriched_results: list[Dict[str, Any]] = []
         fetched_count = 0
         for index, item in enumerate(results):
@@ -482,6 +666,20 @@ class SearchTool(Tool):
         results: List[Dict[str, Any]],
         max_results: int,
     ) -> List[Dict[str, Any]]:
+        """
+        負責執行 SearchTool 中的 _rerank_results 流程，依照 SearchTool 的流程需求處理 _rerank_results 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            query: 目前要處理的任務、問題或查詢文字。
+            results: 已整理好的搜尋結果、共享資料包或可重用證據內容。
+            max_results: 控制檢索、篩選或輸出數量的數值參數。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 List[Dict[str, Any]]。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         if not results:
             return []
 
@@ -542,6 +740,19 @@ class SearchTool(Tool):
         return [item for _, _, item in scored[:max_results]]
 
     def _score_domain(self, domain: str, query_lower: str) -> float:
+        """
+        負責執行 SearchTool 中的 _score_domain 流程，依照 SearchTool 的流程需求處理 _score_domain 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            domain: 已整理好的搜尋結果、共享資料包或可重用證據內容。
+            query_lower: 已整理好的搜尋結果、共享資料包或可重用證據內容。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 float。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         if not domain:
             return 0.0
 
@@ -562,6 +773,18 @@ class SearchTool(Tool):
         return score
 
     def _extract_domain(self, url: str) -> str:
+        """
+        負責執行 SearchTool 中的 _extract_domain 流程，依照 SearchTool 的流程需求處理 _extract_domain 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            url: 已整理好的搜尋結果、共享資料包或可重用證據內容。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 str。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         if not url:
             return ""
         try:
@@ -570,6 +793,18 @@ class SearchTool(Tool):
             return ""
 
     def _extract_query_terms(self, query: str) -> List[str]:
+        """
+        負責執行 SearchTool 中的 _extract_query_terms 流程，依照 SearchTool 的流程需求處理 _extract_query_terms 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            query: 目前要處理的任務、問題或查詢文字。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 List[str]。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         normalized = re.sub(r"site:[^\s]+", " ", query.lower())
         normalized = re.sub(r"[^\w\s]", " ", normalized)
         terms: list[str] = []
@@ -588,6 +823,21 @@ class SearchTool(Tool):
         max_results: int,
         max_tokens: int,
     ) -> Dict[str, Any]:
+        """
+        負責執行 SearchTool 中的 _search_tavily 流程，依照 SearchTool 的流程需求處理 _search_tavily 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            query: 目前要處理的任務、問題或查詢文字。
+            fetch_full_page: 已整理好的搜尋結果、共享資料包或可重用證據內容。
+            max_results: 控制檢索、篩選或輸出數量的數值參數。
+            max_tokens: 控制檢索、篩選或輸出數量的數值參數。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 Dict[str, Any]。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         if not self.tavily_client:
             message = "TAVILY_API_KEY 未設定或 tavily 未安裝"
             raise RuntimeError(message)
@@ -626,6 +876,21 @@ class SearchTool(Tool):
         max_results: int,
         max_tokens: int,
     ) -> Dict[str, Any]:
+        """
+        負責執行 SearchTool 中的 _search_serpapi 流程，依照 SearchTool 的流程需求處理 _search_serpapi 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            query: 目前要處理的任務、問題或查詢文字。
+            fetch_full_page: 已整理好的搜尋結果、共享資料包或可重用證據內容。
+            max_results: 控制檢索、篩選或輸出數量的數值參數。
+            max_tokens: 控制檢索、篩選或輸出數量的數值參數。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 Dict[str, Any]。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         if not self.serpapi_key:
             raise RuntimeError("SERPAPI_API_KEY 未設定，無法使用 SerpApi 搜尋")
         if GoogleSearch is None:
@@ -669,6 +934,21 @@ class SearchTool(Tool):
         max_results: int,
         max_tokens: int,
     ) -> Dict[str, Any]:
+        """
+        負責執行 SearchTool 中的 _search_duckduckgo 流程，依照 SearchTool 的流程需求處理 _search_duckduckgo 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            query: 目前要處理的任務、問題或查詢文字。
+            fetch_full_page: 已整理好的搜尋結果、共享資料包或可重用證據內容。
+            max_results: 控制檢索、篩選或輸出數量的數值參數。
+            max_tokens: 控制檢索、篩選或輸出數量的數值參數。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 Dict[str, Any]。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         if DDGS is None:
             raise RuntimeError("未安裝 ddgs，無法使用 DuckDuckGo 搜尋")
 
@@ -715,6 +995,21 @@ class SearchTool(Tool):
         max_results: int,
         max_tokens: int,
     ) -> Dict[str, Any]:
+        """
+        負責執行 SearchTool 中的 _search_searxng 流程，依照 SearchTool 的流程需求處理 _search_searxng 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            query: 目前要處理的任務、問題或查詢文字。
+            fetch_full_page: 已整理好的搜尋結果、共享資料包或可重用證據內容。
+            max_results: 控制檢索、篩選或輸出數量的數值參數。
+            max_tokens: 控制檢索、篩選或輸出數量的數值參數。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 Dict[str, Any]。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         host = os.getenv("SEARXNG_URL", "http://localhost:8888").rstrip("/")
         endpoint = f"{host}/search"
 
@@ -767,6 +1062,22 @@ class SearchTool(Tool):
         max_tokens: int,
         loop_count: int,
     ) -> Dict[str, Any]:
+        """
+        負責執行 SearchTool 中的 _search_perplexity 流程，依照 SearchTool 的流程需求處理 _search_perplexity 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            query: 目前要處理的任務、問題或查詢文字。
+            fetch_full_page: 已整理好的搜尋結果、共享資料包或可重用證據內容。
+            max_results: 控制檢索、篩選或輸出數量的數值參數。
+            max_tokens: 控制檢索、篩選或輸出數量的數值參數。
+            loop_count: 已整理好的搜尋結果、共享資料包或可重用證據內容。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 Dict[str, Any]。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         if not self.perplexity_key:
             raise RuntimeError("PERPLEXITY_API_KEY 未設定，無法使用 Perplexity 搜尋")
 
@@ -822,6 +1133,22 @@ class SearchTool(Tool):
         max_tokens: int,
         loop_count: int,
     ) -> Dict[str, Any]:
+        """
+        負責執行 SearchTool 中的 _search_advanced 流程，依照 SearchTool 的流程需求處理 _search_advanced 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            query: 目前要處理的任務、問題或查詢文字。
+            fetch_full_page: 已整理好的搜尋結果、共享資料包或可重用證據內容。
+            max_results: 控制檢索、篩選或輸出數量的數值參數。
+            max_tokens: 控制檢索、篩選或輸出數量的數值參數。
+            loop_count: 已整理好的搜尋結果、共享資料包或可重用證據內容。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 Dict[str, Any]。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         notices: List[str] = []
         aggregated: List[Dict[str, Any]] = []
         answer: str | None = None
@@ -877,6 +1204,19 @@ class SearchTool(Tool):
         )
 
     def _format_text_response(self, *, query: str, payload: Dict[str, Any]) -> str:
+        """
+        負責執行 SearchTool 中的 _format_text_response 流程，依照 SearchTool 的流程需求處理 _format_text_response 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            query: 目前要處理的任務、問題或查詢文字。
+            payload: 已整理好的搜尋結果、共享資料包或可重用證據內容。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 str。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         answer = payload.get("answer")
         notices = payload.get("notices") or []
         results = payload.get("results") or []
@@ -912,20 +1252,69 @@ class SearchTool(Tool):
 # 便捷函式
 
 def search(query: str, backend: str = "hybrid") -> str:
+    """
+    負責執行 tools.builtin.search_tool 中的 search 流程，執行搜尋查詢並整理外部資訊來源供回答使用。
+    
+    Args:
+        query: 目前要處理的任務、問題或查詢文字。
+        backend: 已整理好的搜尋結果、共享資料包或可重用證據內容。
+    
+    Returns:
+        執行結果；若函式標註回傳型別，預期型別為 str。
+    
+    限制或副作用:
+        可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+    """
     tool = SearchTool(backend=backend)
     return tool.run({"input": query, "backend": backend})  # type: ignore[return-value]
 
 
 def search_tavily(query: str) -> str:
+    """
+    負責執行 tools.builtin.search_tool 中的 search_tavily 流程，執行搜尋查詢並整理外部資訊來源供回答使用。
+    
+    Args:
+        query: 目前要處理的任務、問題或查詢文字。
+    
+    Returns:
+        執行結果；若函式標註回傳型別，預期型別為 str。
+    
+    限制或副作用:
+        可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+    """
     tool = SearchTool(backend="tavily")
     return tool.run({"input": query, "backend": "tavily"})  # type: ignore[return-value]
 
 
 def search_serpapi(query: str) -> str:
+    """
+    負責執行 tools.builtin.search_tool 中的 search_serpapi 流程，執行搜尋查詢並整理外部資訊來源供回答使用。
+    
+    Args:
+        query: 目前要處理的任務、問題或查詢文字。
+    
+    Returns:
+        執行結果；若函式標註回傳型別，預期型別為 str。
+    
+    限制或副作用:
+        可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+    """
     tool = SearchTool(backend="serpapi")
     return tool.run({"input": query, "backend": "serpapi"})  # type: ignore[return-value]
 
 
 def search_hybrid(query: str) -> str:
+    """
+    負責執行 tools.builtin.search_tool 中的 search_hybrid 流程，執行搜尋查詢並整理外部資訊來源供回答使用。
+    
+    Args:
+        query: 目前要處理的任務、問題或查詢文字。
+    
+    Returns:
+        執行結果；若函式標註回傳型別，預期型別為 str。
+    
+    限制或副作用:
+        可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+    """
     tool = SearchTool(backend="hybrid")
     return tool.run({"input": query, "backend": "hybrid"})  # type: ignore[return-value]

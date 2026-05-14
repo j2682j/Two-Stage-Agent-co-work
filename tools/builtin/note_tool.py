@@ -44,32 +44,20 @@ from ..base import Tool, ToolParameter, tool_action
 
 
 class NoteTool(Tool):
-    """筆記工具
+    """
+    負責在 tools.builtin.note_tool 中封裝 NoteTool，封裝工具呼叫、參數處理與工具結果回傳流程。
     
-    為Agent提供結構化筆記管理能力，支援多種筆記類型：
-    - task_state: 任務狀態
-    - conclusion: 關鍵結論
-    - blocker: 阻塞項
-    - action: 行動計劃
-    - reference: 參考資料
-    - general: 通用筆記
+    Args:
+        workspace: 此流程需要使用的輸入資料。
+        auto_backup: 此流程需要使用的輸入資料。
+        max_notes: 控制檢索、篩選或輸出數量的數值參數。
+        expandable: 此流程需要使用的輸入資料。
     
-    使用範例：
-    ```python
-    note_tool = NoteTool(workspace="./project_notes")
+    Returns:
+        類別本身不直接回傳值；建立實例後可透過其方法操作狀態與流程。
     
-    # 建立筆記
-    note_tool.run({
-        "action": "create",
-        "title": "項目進展",
-        "content": "已完成需求分析，下一步：設計方案",
-        "note_type": "task_state",
-        "tags": ["milestone", "phase1"]
-    })
-    
-    # 讀取筆記
-    notes = note_tool.run({"action": "list", "note_type": "task_state"})
-    ```
+    限制或副作用:
+        方法可能更新內部狀態、讀寫檔案、呼叫外部服務或產生日誌，需依使用情境確認。
     """
     
     def __init__(
@@ -79,6 +67,21 @@ class NoteTool(Tool):
         max_notes: int = 1000,
         expandable: bool = False
     ):
+        """
+        負責執行 NoteTool 中的 __init__ 流程，初始化物件所需的設定、依賴與內部狀態，讓後續方法可以沿用同一份執行上下文。
+        
+        Args:
+            workspace: 此流程需要使用的輸入資料。
+            auto_backup: 此流程需要使用的輸入資料。
+            max_notes: 控制檢索、篩選或輸出數量的數值參數。
+            expandable: 此流程需要使用的輸入資料。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 未標註。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         super().__init__(
             name="note",
             description="筆記工具 - 建立、讀取、更新、刪除結構化筆記，支援任務狀態、結論、阻塞項等類型",
@@ -97,7 +100,18 @@ class NoteTool(Tool):
         self._load_index()
     
     def _load_index(self):
-        """載入筆記索引"""
+        """
+        負責執行 NoteTool 中的 _load_index 流程，依照 NoteTool 的流程需求處理 _load_index 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            無。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 未標註。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         if self.index_file.exists():
             with open(self.index_file, 'r', encoding='utf-8') as f:
                 self.notes_index = json.load(f)
@@ -112,22 +126,66 @@ class NoteTool(Tool):
             self._save_index()
     
     def _save_index(self):
-        """保存筆記索引"""
+        """
+        負責執行 NoteTool 中的 _save_index 流程，依照 NoteTool 的流程需求處理 _save_index 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            無。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 未標註。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         with open(self.index_file, 'w', encoding='utf-8') as f:
             json.dump(self.notes_index, f, ensure_ascii=False, indent=2)
     
     def _generate_note_id(self) -> str:
-        """生成筆記ID"""
+        """
+        負責執行 NoteTool 中的 _generate_note_id 流程，依照 NoteTool 的流程需求處理 _generate_note_id 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            無。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 str。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
         count = len(self.notes_index["notes"])
         return f"note_{timestamp}_{count}"
     
     def _get_note_path(self, note_id: str) -> Path:
-        """取得筆記檔案路徑"""
+        """
+        負責執行 NoteTool 中的 _get_note_path 流程，依照 NoteTool 的流程需求處理 _get_note_path 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            note_id: 此流程需要使用的輸入資料。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 Path。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         return self.workspace / f"{note_id}.md"
     
     def _note_to_markdown(self, note: Dict[str, Any]) -> str:
-        """將筆記對象轉換為Markdown格式"""
+        """
+        負責執行 NoteTool 中的 _note_to_markdown 流程，依照 NoteTool 的流程需求處理 _note_to_markdown 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            note: 此流程需要使用的輸入資料。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 str。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         # YAML前置元資料
         frontmatter = "---\n"
         frontmatter += f"id: {note['id']}\n"
@@ -147,7 +205,18 @@ class NoteTool(Tool):
         return frontmatter + content
     
     def _markdown_to_note(self, markdown_text: str) -> Dict[str, Any]:
-        """將Markdown文字解析為筆記對象"""
+        """
+        負責執行 NoteTool 中的 _markdown_to_note 流程，依照 NoteTool 的流程需求處理 _markdown_to_note 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            markdown_text: 此流程需要使用的輸入資料。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 Dict[str, Any]。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         # 提取YAML前置元資料
         frontmatter_match = re.match(r'^---\s*\n(.*?)\n---\s*\n', markdown_text, re.DOTALL)
         
@@ -192,7 +261,18 @@ class NoteTool(Tool):
         return note
     
     def run(self, parameters: Dict[str, Any]) -> str:
-        """執行工具（非展開模式）"""
+        """
+        負責執行 NoteTool 中的 run 流程，啟動主要執行流程，串接輸入準備、核心處理與結果輸出。
+        
+        Args:
+            parameters: 此流程需要使用的輸入資料。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 str。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         if not self.validate_parameters(parameters):
             return "[ERROR] 參數驗證失敗"
 
@@ -234,7 +314,18 @@ class NoteTool(Tool):
             return f"[ERROR] 不支援的操作: {action}"
     
     def get_parameters(self) -> List[ToolParameter]:
-        """取得工具參數定義"""
+        """
+        負責執行 NoteTool 中的 get_parameters 流程，依照 NoteTool 的流程需求處理 get_parameters 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            無。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 List[ToolParameter]。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         return [
             ToolParameter(
                 name="action",
@@ -296,16 +387,20 @@ class NoteTool(Tool):
     
     @tool_action("note_create", "建立一條新的結構化筆記")
     def _create_note(self, title: str, content: str, note_type: str = "general", tags: List[str] = None) -> str:
-        """建立筆記
-
+        """
+        負責執行 NoteTool 中的 _create_note 流程，依照 NoteTool 的流程需求處理 _create_note 對應的資料轉換、狀態操作或結果產生。
+        
         Args:
-            title: 筆記標題
-            content: 筆記內容
-            note_type: 筆記類型 (task_state, conclusion, blocker, action, reference, general)
-            tags: 標簽列表
-
+            title: 此流程需要使用的輸入資料。
+            content: 此流程需要使用的輸入資料。
+            note_type: 此流程需要使用的輸入資料。
+            tags: 此流程需要使用的輸入資料。
+        
         Returns:
-            建立結果
+            執行結果；若函式標註回傳型別，預期型別為 str。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
         """
         if not title or not content:
             return "[ERROR] 建立筆記需要提供 title 和 content"
@@ -353,13 +448,17 @@ class NoteTool(Tool):
     
     @tool_action("note_read", "讀取指定ID的筆記")
     def _read_note(self, note_id: str) -> str:
-        """讀取筆記
-
+        """
+        負責執行 NoteTool 中的 _read_note 流程，依照 NoteTool 的流程需求處理 _read_note 對應的資料轉換、狀態操作或結果產生。
+        
         Args:
-            note_id: 筆記ID
-
+            note_id: 此流程需要使用的輸入資料。
+        
         Returns:
-            筆記內容
+            執行結果；若函式標註回傳型別，預期型別為 str。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
         """
         if not note_id:
             return "[ERROR] 讀取筆記需要提供 note_id"
@@ -377,17 +476,21 @@ class NoteTool(Tool):
     
     @tool_action("note_update", "更新已存在的筆記")
     def _update_note(self, note_id: str, title: str = None, content: str = None, note_type: str = None, tags: List[str] = None) -> str:
-        """更新筆記
-
+        """
+        負責執行 NoteTool 中的 _update_note 流程，依照 NoteTool 的流程需求處理 _update_note 對應的資料轉換、狀態操作或結果產生。
+        
         Args:
-            note_id: 筆記ID
-            title: 新標題（可選）
-            content: 新內容（可選）
-            note_type: 新類型（可選）
-            tags: 新標簽列表（可選）
-
+            note_id: 此流程需要使用的輸入資料。
+            title: 此流程需要使用的輸入資料。
+            content: 此流程需要使用的輸入資料。
+            note_type: 此流程需要使用的輸入資料。
+            tags: 此流程需要使用的輸入資料。
+        
         Returns:
-            更新結果
+            執行結果；若函式標註回傳型別，預期型別為 str。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
         """
         if not note_id:
             return "[ERROR] 更新筆記需要提供 note_id"
@@ -432,13 +535,17 @@ class NoteTool(Tool):
     
     @tool_action("note_delete", "刪除指定ID的筆記")
     def _delete_note(self, note_id: str) -> str:
-        """刪除筆記
-
+        """
+        負責執行 NoteTool 中的 _delete_note 流程，依照 NoteTool 的流程需求處理 _delete_note 對應的資料轉換、狀態操作或結果產生。
+        
         Args:
-            note_id: 筆記ID
-
+            note_id: 此流程需要使用的輸入資料。
+        
         Returns:
-            刪除結果
+            執行結果；若函式標註回傳型別，預期型別為 str。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
         """
         if not note_id:
             return "[ERROR] 刪除筆記需要提供 note_id"
@@ -461,14 +568,18 @@ class NoteTool(Tool):
     
     @tool_action("note_list", "列出所有筆記或指定類型的筆記")
     def _list_notes(self, note_type: str = None, limit: int = 10) -> str:
-        """列出筆記
-
+        """
+        負責執行 NoteTool 中的 _list_notes 流程，依照 NoteTool 的流程需求處理 _list_notes 對應的資料轉換、狀態操作或結果產生。
+        
         Args:
-            note_type: 筆記類型過濾（可選）
-            limit: 回傳結果數量限制
-
+            note_type: 此流程需要使用的輸入資料。
+            limit: 控制檢索、篩選或輸出數量的數值參數。
+        
         Returns:
-            筆記列表
+            執行結果；若函式標註回傳型別，預期型別為 str。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
         """
         # 過濾筆記
         filtered_notes = self.notes_index["notes"]
@@ -493,14 +604,18 @@ class NoteTool(Tool):
     
     @tool_action("note_search", "搜尋包含關鍵詞的筆記")
     def _search_notes(self, query: str, limit: int = 10) -> str:
-        """搜尋筆記
-
+        """
+        負責執行 NoteTool 中的 _search_notes 流程，依照 NoteTool 的流程需求處理 _search_notes 對應的資料轉換、狀態操作或結果產生。
+        
         Args:
-            query: 搜尋關鍵詞
-            limit: 回傳結果數量限制
-
+            query: 目前要處理的任務、問題或查詢文字。
+            limit: 控制檢索、篩選或輸出數量的數值參數。
+        
         Returns:
-            搜尋結果
+            執行結果；若函式標註回傳型別，預期型別為 str。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
         """
         if not query:
             return "[ERROR] 搜尋需要提供 query"
@@ -541,10 +656,17 @@ class NoteTool(Tool):
     
     @tool_action("note_summary", "取得筆記系統的摘要統計資訊")
     def _get_summary(self) -> str:
-        """取得筆記摘要
-
+        """
+        負責執行 NoteTool 中的 _get_summary 流程，依照 NoteTool 的流程需求處理 _get_summary 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            無。
+        
         Returns:
-            摘要資訊
+            執行結果；若函式標註回傳型別，預期型別為 str。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
         """
         total = len(self.notes_index["notes"])
         
@@ -563,7 +685,19 @@ class NoteTool(Tool):
         return result
     
     def _format_note(self, note: Dict[str, Any], compact: bool = False) -> str:
-        """格式化筆記輸出"""
+        """
+        負責執行 NoteTool 中的 _format_note 流程，依照 NoteTool 的流程需求處理 _format_note 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            note: 此流程需要使用的輸入資料。
+            compact: 此流程需要使用的輸入資料。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 str。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         if compact:
             return (
                 f"[{note['type']}] {note['title']}\n"

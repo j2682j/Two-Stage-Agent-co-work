@@ -12,31 +12,18 @@ from pathlib import Path
 
 
 class BFCLDataset:
-    """BFCL 資料集載入器
-
-    支援從BFCL官方資料目錄載入資料集，包括測試資料與 ground truth。
-
-    資料集類別（BFCL v4）:
-    - simple_python: 簡單Python函式呼叫
-    - simple_java: 簡單Java函式呼叫
-    - simple_javascript: 簡單JavaScript函式呼叫
-    - multiple: 多函式呼叫
-    - parallel: 平行函式呼叫
-    - parallel_multiple: 平行多函式呼叫
-    - irrelevance: 無關檢測
-    - live_simple: 使用者貢獻的簡單函式呼叫
-    - live_multiple: 使用者貢獻的多函式呼叫
-    - live_parallel: 使用者貢獻的平行函式呼叫
-    - multi_turn_base: 多輪對話基礎
-    - multi_turn_miss_func: 多輪對話缺失函式
-    - multi_turn_miss_param: 多輪對話缺失參數
-    - multi_turn_long_context: 多輪對話長上下文
-
-    Attributes:
-        bfcl_data_dir: BFCL官方資料目錄路徑
-        category: 評估類別
-        data: 載入的測試資料清單
-        ground_truth: ground truth 字典，key為樣本id
+    """
+    負責在 evaluation.benchmarks.bfcl.dataset 中封裝 BFCLDataset，封裝 benchmark 評估、答案判定、分數計算或報告資料整理流程。
+    
+    Args:
+        bfcl_data_dir: 此流程需要使用的輸入資料。
+        category: 此流程需要使用的輸入資料。
+    
+    Returns:
+        類別本身不直接回傳值；建立實例後可透過其方法操作狀態與流程。
+    
+    限制或副作用:
+        方法可能更新內部狀態、讀寫檔案、呼叫外部服務或產生日誌，需依使用情境確認。
     """
 
     # BFCL v4 資料集的標準類別對應
@@ -67,11 +54,18 @@ class BFCLDataset:
         bfcl_data_dir: Union[str, Path] = "./temp_gorilla/berkeley-function-call-leaderboard/bfcl_eval/data",
         category: Optional[str] = None
     ):
-        """初始化 BFCL 資料集載入器
-
+        """
+        負責執行 BFCLDataset 中的 __init__ 流程，初始化物件所需的設定、依賴與內部狀態，讓後續方法可以沿用同一份執行上下文。
+        
         Args:
-            bfcl_data_dir: BFCL官方資料目錄路徑（包含BFCL_v4_*.json檔案）
-            category: 評估類別，如'simple_python', 'multiple'等
+            bfcl_data_dir: 此流程需要使用的輸入資料。
+            category: 此流程需要使用的輸入資料。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 未標註。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
         """
         self.bfcl_data_dir = Path(bfcl_data_dir)
         self.category = category
@@ -89,10 +83,17 @@ class BFCLDataset:
             print(f"   [WARN] Ground truth目錄不存在: {self.answer_dir}")
 
     def load(self) -> List[Dict[str, Any]]:
-        """載入資料集（包括測試資料與 ground truth）
-
+        """
+        負責執行 BFCLDataset 中的 load 流程，讀取本地或外部資料來源並轉換成系統可處理的格式。
+        
+        Args:
+            無。
+        
         Returns:
-            資料集列表，每個元素包含問題、函式定義、ground truth等
+            執行結果；若函式標註回傳型別，預期型別為 List[Dict[str, Any]]。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
         """
         if not self.bfcl_data_dir.exists():
             print(f"   [WARN] 資料目錄不存在，無法載入資料")
@@ -122,13 +123,17 @@ class BFCLDataset:
         return self.data
     
     def _load_category(self, filename: str) -> List[Dict[str, Any]]:
-        """載入指定類別的資料（包括測試資料與 ground truth）
-
+        """
+        負責執行 BFCLDataset 中的 _load_category 流程，依照 BFCLDataset 的流程需求處理 _load_category 對應的資料轉換、狀態操作或結果產生。
+        
         Args:
-            filename: 檔名（不含.json后綴），如'BFCL_v4_simple_python'
-
+            filename: 此流程需要使用的輸入資料。
+        
         Returns:
-            測試資料列表
+            執行結果；若函式標註回傳型別，預期型別為 List[Dict[str, Any]]。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
         """
         # 載入測試資料
         test_file = self.bfcl_data_dir / f"{filename}.json"
@@ -161,13 +166,17 @@ class BFCLDataset:
         return test_data
 
     def _load_jsonl_file(self, file_path: Path) -> List[Dict[str, Any]]:
-        """載入JSONL檔案（每行一個JSON對象）
-
+        """
+        負責執行 BFCLDataset 中的 _load_jsonl_file 流程，依照 BFCLDataset 的流程需求處理 _load_jsonl_file 對應的資料轉換、狀態操作或結果產生。
+        
         Args:
-            file_path: JSON/JSONL檔案路徑
-
+            file_path: 要讀取或寫入的檔案或目錄路徑。
+        
         Returns:
-            資料列表
+            執行結果；若函式標註回傳型別，預期型別為 List[Dict[str, Any]]。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
         """
         data = []
         with open(file_path, 'r', encoding='utf-8') as f:
@@ -183,45 +192,82 @@ class BFCLDataset:
         return data
 
     def get_ground_truth(self, sample_id: str) -> List[Dict[str, Any]]:
-        """取得指定樣本的ground truth
-
+        """
+        負責執行 BFCLDataset 中的 get_ground_truth 流程，依照 BFCLDataset 的流程需求處理 get_ground_truth 對應的資料轉換、狀態操作或結果產生。
+        
         Args:
-            sample_id: 樣本ID
-
+            sample_id: 此流程需要使用的輸入資料。
+        
         Returns:
-            Ground truth列表
+            執行結果；若函式標註回傳型別，預期型別為 List[Dict[str, Any]]。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
         """
         return self.ground_truth.get(sample_id, [])
 
     def get_sample(self, index: int) -> Dict[str, Any]:
-        """取得單個樣本
-
+        """
+        負責執行 BFCLDataset 中的 get_sample 流程，依照 BFCLDataset 的流程需求處理 get_sample 對應的資料轉換、狀態操作或結果產生。
+        
         Args:
-            index: 樣本索引
-
+            index: 此流程需要使用的輸入資料。
+        
         Returns:
-            樣本資料
+            執行結果；若函式標註回傳型別，預期型別為 Dict[str, Any]。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
         """
         if not self.data:
             self.load()
         return self.data[index] if index < len(self.data) else {}
 
     def get_available_categories(self) -> List[str]:
-        """取得所有可用的類別
-
+        """
+        負責執行 BFCLDataset 中的 get_available_categories 流程，依照 BFCLDataset 的流程需求處理 get_available_categories 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            無。
+        
         Returns:
-            類別列表
+            執行結果；若函式標註回傳型別，預期型別為 List[str]。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
         """
         return list(self.CATEGORY_MAPPING.keys())
 
     def __len__(self) -> int:
-        """回傳資料集大小"""
+        """
+        負責執行 BFCLDataset 中的 __len__ 流程，依照 BFCLDataset 的流程需求處理 __len__ 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            無。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 int。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         if not self.data:
             self.load()
         return len(self.data)
 
     def __iter__(self):
-        """迭代器"""
+        """
+        負責執行 BFCLDataset 中的 __iter__ 流程，依照 BFCLDataset 的流程需求處理 __iter__ 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            無。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 未標註。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         if not self.data:
             self.load()
         return iter(self.data)

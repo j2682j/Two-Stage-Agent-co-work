@@ -20,7 +20,21 @@ except ImportError:
 
 
 class A2AServer:
-    """A2A 伺服器（使用 Flask 提供 HTTP API）"""
+    """
+    負責在 protocols.a2a.implementation 中封裝 A2AServer，封裝此模組的狀態資料與主要操作流程。
+    
+    Args:
+        name: 此流程需要使用的輸入資料。
+        description: 此流程需要使用的輸入資料。
+        version: 此流程需要使用的輸入資料。
+        capabilities: 此流程需要使用的輸入資料。
+    
+    Returns:
+        類別本身不直接回傳值；建立實例後可透過其方法操作狀態與流程。
+    
+    限制或副作用:
+        方法可能更新內部狀態、讀寫檔案、呼叫外部服務或產生日誌，需依使用情境確認。
+    """
 
     def __init__(
         self,
@@ -30,13 +44,19 @@ class A2AServer:
         capabilities: Optional[Dict[str, Any]] = None
     ):
         """
-        初始化 A2A 伺服器
-
+        負責執行 A2AServer 中的 __init__ 流程，初始化物件所需的設定、依賴與內部狀態，讓後續方法可以沿用同一份執行上下文。
+        
         Args:
-            name: Agent 名稱
-            description: Agent 描述
-            version: Agent 版本
-            capabilities: Agent 能力描述
+            name: 此流程需要使用的輸入資料。
+            description: 此流程需要使用的輸入資料。
+            version: 此流程需要使用的輸入資料。
+            capabilities: 此流程需要使用的輸入資料。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 未標註。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
         """
         self.name = name
         self.description = description
@@ -45,19 +65,66 @@ class A2AServer:
         self.skills = {}
 
     def add_skill(self, skill_name: str, func):
-        """添加技能到伺服器"""
+        """
+        負責執行 A2AServer 中的 add_skill 流程，將新的輸入資料合併到目前物件狀態或流程紀錄中。
+        
+        Args:
+            skill_name: 此流程需要使用的輸入資料。
+            func: 此流程需要使用的輸入資料。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 未標註。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         self.skills[skill_name] = func
         return func
 
     def skill(self, skill_name: str):
-        """裝飾器方式添加技能"""
+        """
+        負責執行 A2AServer 中的 skill 流程，依照 A2AServer 的流程需求處理 skill 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            skill_name: 此流程需要使用的輸入資料。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 未標註。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         def decorator(func):
+            """
+            負責執行 A2AServer 中的 decorator 流程，依照 A2AServer 的流程需求處理 decorator 對應的資料轉換、狀態操作或結果產生。
+            
+            Args:
+                func: 此流程需要使用的輸入資料。
+            
+            Returns:
+                執行結果；若函式標註回傳型別，預期型別為 未標註。
+            
+            限制或副作用:
+                可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+            """
             self.add_skill(skill_name, func)
             return func
         return decorator
 
     def run(self, host: str = "0.0.0.0", port: int = 5000):
-        """執行伺服器（使用 Flask 提供 HTTP API）"""
+        """
+        負責執行 A2AServer 中的 run 流程，啟動主要執行流程，串接輸入準備、核心處理與結果輸出。
+        
+        Args:
+            host: 此流程需要使用的輸入資料。
+            port: 此流程需要使用的輸入資料。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 未標註。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         try:
             from flask import Flask, request, jsonify
         except ImportError:
@@ -74,12 +141,34 @@ class A2AServer:
 
         @app.route('/info', methods=['GET'])
         def get_info():
-            """取得 Agent 資訊"""
+            """
+            負責執行 A2AServer 中的 get_info 流程，依照 A2AServer 的流程需求處理 get_info 對應的資料轉換、狀態操作或結果產生。
+            
+            Args:
+                無。
+            
+            Returns:
+                執行結果；若函式標註回傳型別，預期型別為 未標註。
+            
+            限制或副作用:
+                可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+            """
             return jsonify(self.get_info())
 
         @app.route('/skills', methods=['GET'])
         def list_skills():
-            """列出所有技能"""
+            """
+            負責執行 A2AServer 中的 list_skills 流程，依照 A2AServer 的流程需求處理 list_skills 對應的資料轉換、狀態操作或結果產生。
+            
+            Args:
+                無。
+            
+            Returns:
+                執行結果；若函式標註回傳型別，預期型別為 未標註。
+            
+            限制或副作用:
+                可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+            """
             return jsonify({
                 "skills": list(self.skills.keys()),
                 "count": len(self.skills)
@@ -87,7 +176,18 @@ class A2AServer:
 
         @app.route('/execute/<skill_name>', methods=['POST'])
         def execute_skill(skill_name):
-            """執行指定技能"""
+            """
+            負責執行 A2AServer 中的 execute_skill 流程，依照 A2AServer 的流程需求處理 execute_skill 對應的資料轉換、狀態操作或結果產生。
+            
+            Args:
+                skill_name: 此流程需要使用的輸入資料。
+            
+            Returns:
+                執行結果；若函式標註回傳型別，預期型別為 未標註。
+            
+            限制或副作用:
+                可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+            """
             if skill_name not in self.skills:
                 return jsonify({
                     "error": f"Skill '{skill_name}' not found",
@@ -115,7 +215,18 @@ class A2AServer:
 
         @app.route('/ask', methods=['POST'])
         def ask():
-            """通用問答介面（自動選擇技能）"""
+            """
+            負責執行 A2AServer 中的 ask 流程，依照 A2AServer 的流程需求處理 ask 對應的資料轉換、狀態操作或結果產生。
+            
+            Args:
+                無。
+            
+            Returns:
+                執行結果；若函式標註回傳型別，預期型別為 未標註。
+            
+            限制或副作用:
+                可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+            """
             try:
                 data = request.get_json() or {}
                 question = data.get('question', data.get('text', ''))
@@ -145,7 +256,18 @@ class A2AServer:
 
         @app.route('/health', methods=['GET'])
         def health():
-            """健康檢查"""
+            """
+            負責執行 A2AServer 中的 health 流程，依照 A2AServer 的流程需求處理 health 對應的資料轉換、狀態操作或結果產生。
+            
+            Args:
+                無。
+            
+            Returns:
+                執行結果；若函式標註回傳型別，預期型別為 未標註。
+            
+            限制或副作用:
+                可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+            """
             return jsonify({"status": "healthy", "agent": self.name})
 
         # 啟動伺服器
@@ -163,7 +285,18 @@ class A2AServer:
         app.run(host=host, port=port, debug=False)
 
     def get_info(self) -> Dict[str, Any]:
-        """取得伺服器資訊"""
+        """
+        負責執行 A2AServer 中的 get_info 流程，依照 A2AServer 的流程需求處理 get_info 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            無。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 Dict[str, Any]。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         return {
             "name": self.name,
             "description": self.description,
@@ -175,26 +308,46 @@ class A2AServer:
 
 
 class A2AClient:
-    """A2A 客戶端（通過 HTTP 與 A2AServer 通信）"""
+    """
+    負責在 protocols.a2a.implementation 中封裝 A2AClient，封裝此模組的狀態資料與主要操作流程。
+    
+    Args:
+        server_url: 用來呼叫模型或外部服務的模型名稱、客戶端或相關設定。
+    
+    Returns:
+        類別本身不直接回傳值；建立實例後可透過其方法操作狀態與流程。
+    
+    限制或副作用:
+        方法可能更新內部狀態、讀寫檔案、呼叫外部服務或產生日誌，需依使用情境確認。
+    """
 
     def __init__(self, server_url: str):
         """
-        初始化 A2A 客戶端
-
+        負責執行 A2AClient 中的 __init__ 流程，初始化物件所需的設定、依賴與內部狀態，讓後續方法可以沿用同一份執行上下文。
+        
         Args:
-            server_url: 伺服器 URL（例如：http://localhost:5000）
+            server_url: 用來呼叫模型或外部服務的模型名稱、客戶端或相關設定。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 未標註。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
         """
         self.server_url = server_url.rstrip('/')
 
     def ask(self, question: str) -> str:
         """
-        向 Agent 提問（通用介面）
-
+        負責執行 A2AClient 中的 ask 流程，依照 A2AClient 的流程需求處理 ask 對應的資料轉換、狀態操作或結果產生。
+        
         Args:
-            question: 問題文字
-
+            question: 目前要處理的任務、問題或查詢文字。
+        
         Returns:
-            Agent 的回答
+            執行結果；若函式標註回傳型別，預期型別為 str。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
         """
         try:
             import requests
@@ -210,14 +363,17 @@ class A2AClient:
 
     def execute_skill(self, skill_name: str, text: str = "") -> Dict[str, Any]:
         """
-        執行指定技能
-
+        負責執行 A2AClient 中的 execute_skill 流程，依照 A2AClient 的流程需求處理 execute_skill 對應的資料轉換、狀態操作或結果產生。
+        
         Args:
-            skill_name: 技能名稱
-            text: 輸入文字
-
+            skill_name: 用來呼叫模型或外部服務的模型名稱、客戶端或相關設定。
+            text: 用來呼叫模型或外部服務的模型名稱、客戶端或相關設定。
+        
         Returns:
-            執行結果
+            執行結果；若函式標註回傳型別，預期型別為 Dict[str, Any]。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
         """
         try:
             import requests
@@ -232,7 +388,18 @@ class A2AClient:
             return {"error": f"Failed to execute skill: {str(e)}", "status": "error"}
 
     def get_info(self) -> Dict[str, Any]:
-        """取得 Agent 資訊"""
+        """
+        負責執行 A2AClient 中的 get_info 流程，依照 A2AClient 的流程需求處理 get_info 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            無。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 Dict[str, Any]。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         try:
             import requests
             response = requests.get(f"{self.server_url}/info", timeout=10)
@@ -242,7 +409,18 @@ class A2AClient:
             return {"error": f"Failed to get agent info: {str(e)}"}
 
     def list_skills(self) -> List[str]:
-        """列出 Agent 的技能"""
+        """
+        負責執行 A2AClient 中的 list_skills 流程，依照 A2AClient 的流程需求處理 list_skills 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            無。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 List[str]。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         try:
             import requests
             response = requests.get(f"{self.server_url}/skills", timeout=10)
@@ -253,37 +431,63 @@ class A2AClient:
 
 
 class AgentNetwork:
-    """基於官方 a2a-sdk 庫的 Agent 網路（概念性實現）"""
+    """
+    負責在 protocols.a2a.implementation 中封裝 AgentNetwork，管理記憶圖、任務紀錄、檢索結果或跨任務經驗的狀態與操作。
+    
+    Args:
+        name: 此流程需要使用的輸入資料。
+    
+    Returns:
+        類別本身不直接回傳值；建立實例後可透過其方法操作狀態與流程。
+    
+    限制或副作用:
+        方法可能更新內部狀態、讀寫檔案、呼叫外部服務或產生日誌，需依使用情境確認。
+    """
 
     def __init__(self, name: str = "Agent Network"):
         """
-        初始化 Agent 網路
-
+        負責執行 AgentNetwork 中的 __init__ 流程，初始化物件所需的設定、依賴與內部狀態，讓後續方法可以沿用同一份執行上下文。
+        
         Args:
-            name: 網路名稱
+            name: 此流程需要使用的輸入資料。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 未標註。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
         """
         self.name = name
         self.agents = {}  # agent_name -> agent_url
 
     def add_agent(self, agent_name: str, agent_url: str):
         """
-        添加 Agent 到網路
-
+        負責執行 AgentNetwork 中的 add_agent 流程，將新的輸入資料合併到目前物件狀態或流程紀錄中。
+        
         Args:
-            agent_name: Agent 名稱
-            agent_url: Agent URL
+            agent_name: 目前執行或需要記錄的代理節點識別資訊。
+            agent_url: 此流程需要使用的輸入資料。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 未標註。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
         """
         self.agents[agent_name] = agent_url
 
     def get_agent(self, agent_name: str) -> A2AClient:
         """
-        取得網路中的 Agent
-
+        負責執行 AgentNetwork 中的 get_agent 流程，依照 AgentNetwork 的流程需求處理 get_agent 對應的資料轉換、狀態操作或結果產生。
+        
         Args:
-            agent_name: Agent 名稱
-
+            agent_name: 目前執行或需要記錄的代理節點識別資訊。
+        
         Returns:
-            A2A 客戶端實例
+            執行結果；若函式標註回傳型別，預期型別為 A2AClient。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
         """
         if agent_name not in self.agents:
             raise ValueError(f"Agent '{agent_name}' not found in network")
@@ -291,7 +495,18 @@ class AgentNetwork:
         return A2AClient(self.agents[agent_name])
 
     def list_agents(self) -> List[Dict[str, Any]]:
-        """列出所有 Agent"""
+        """
+        負責執行 AgentNetwork 中的 list_agents 流程，依照 AgentNetwork 的流程需求處理 list_agents 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            無。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 List[Dict[str, Any]]。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         return [
             {"name": name, "url": url}
             for name, url in self.agents.items()
@@ -299,13 +514,16 @@ class AgentNetwork:
 
     def discover_agents(self, urls: List[str]) -> int:
         """
-        從 URL 列表中發現 Agent
-
+        負責執行 AgentNetwork 中的 discover_agents 流程，依照 AgentNetwork 的流程需求處理 discover_agents 對應的資料轉換、狀態操作或結果產生。
+        
         Args:
-            urls: URL 列表
-
+            urls: 此流程需要使用的輸入資料。
+        
         Returns:
-            發現的 Agent 數量
+            執行結果；若函式標註回傳型別，預期型別為 int。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
         """
         discovered = 0
         for url in urls:
@@ -321,22 +539,53 @@ class AgentNetwork:
 
 
 class AgentRegistry:
-    """基於官方 a2a-sdk 庫的 Agent 註冊中心（概念性實現）"""
+    """
+    負責在 protocols.a2a.implementation 中封裝 AgentRegistry，封裝代理節點的推理、工具使用、訊息傳遞或協作控制邏輯。
+    
+    Args:
+        name: 此流程需要使用的輸入資料。
+        description: 此流程需要使用的輸入資料。
+    
+    Returns:
+        類別本身不直接回傳值；建立實例後可透過其方法操作狀態與流程。
+    
+    限制或副作用:
+        方法可能更新內部狀態、讀寫檔案、呼叫外部服務或產生日誌，需依使用情境確認。
+    """
 
     def __init__(self, name: str = "Agent Registry", description: str = "Central agent registry"):
         """
-        初始化 Agent 註冊中心
-
+        負責執行 AgentRegistry 中的 __init__ 流程，初始化物件所需的設定、依賴與內部狀態，讓後續方法可以沿用同一份執行上下文。
+        
         Args:
-            name: 註冊中心名稱
-            description: 註冊中心描述
+            name: 此流程需要使用的輸入資料。
+            description: 此流程需要使用的輸入資料。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 未標註。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
         """
         self.name = name
         self.description = description
         self.registered_agents = {}
 
     def register_agent(self, agent_name: str, agent_url: str, metadata: Optional[Dict[str, Any]] = None):
-        """註冊 Agent"""
+        """
+        負責執行 AgentRegistry 中的 register_agent 流程，依照 AgentRegistry 的流程需求處理 register_agent 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            agent_name: 目前執行或需要記錄的代理節點識別資訊。
+            agent_url: 此流程需要使用的輸入資料。
+            metadata: 目前流程所需的上下文、狀態或附加資訊。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 未標註。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         self.registered_agents[agent_name] = {
             "url": agent_url,
             "metadata": metadata or {},
@@ -344,23 +593,67 @@ class AgentRegistry:
         }
 
     def unregister_agent(self, agent_name: str):
-        """注銷 Agent"""
+        """
+        負責執行 AgentRegistry 中的 unregister_agent 流程，依照 AgentRegistry 的流程需求處理 unregister_agent 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            agent_name: 目前執行或需要記錄的代理節點識別資訊。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 未標註。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         if agent_name in self.registered_agents:
             del self.registered_agents[agent_name]
 
     def list_agents(self) -> List[Dict[str, Any]]:
-        """列出所有註冊的 Agent"""
+        """
+        負責執行 AgentRegistry 中的 list_agents 流程，依照 AgentRegistry 的流程需求處理 list_agents 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            無。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 List[Dict[str, Any]]。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         return [
             {"name": name, **info}
             for name, info in self.registered_agents.items()
         ]
 
     def find_agent(self, agent_name: str) -> Optional[Dict[str, Any]]:
-        """查找特定 Agent"""
+        """
+        負責執行 AgentRegistry 中的 find_agent 流程，依照查詢條件找出符合需求的資料並回傳給呼叫端。
+        
+        Args:
+            agent_name: 目前執行或需要記錄的代理節點識別資訊。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 Optional[Dict[str, Any]]。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         return self.registered_agents.get(agent_name)
 
     def get_info(self) -> Dict[str, Any]:
-        """取得註冊中心資訊"""
+        """
+        負責執行 AgentRegistry 中的 get_info 流程，依照 AgentRegistry 的流程需求處理 get_info 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            無。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 Dict[str, Any]。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         return {
             "name": self.name,
             "description": self.description,
@@ -372,7 +665,18 @@ class AgentRegistry:
 
 # 範例：建立一個簡單的 A2A Agent
 def create_example_agent() -> A2AServer:
-    """建立一個範例 A2A Agent"""
+    """
+    負責執行 protocols.a2a.implementation 中的 create_example_agent 流程，建立後續流程需要的物件、資料結構或輸出區塊。
+    
+    Args:
+        無。
+    
+    Returns:
+        執行結果；若函式標註回傳型別，預期型別為 A2AServer。
+    
+    限制或副作用:
+        可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+    """
     if not A2A_AVAILABLE:
         raise ImportError(
             "Cannot create example agent: a2a-sdk library not available. "
@@ -388,7 +692,18 @@ def create_example_agent() -> A2AServer:
 
     # 添加計算技能
     def calculator_skill(text: str) -> str:
-        """計算數學表達式"""
+        """
+        負責執行 protocols.a2a.implementation 中的 calculator_skill 流程，依照 protocols.a2a.implementation 的流程需求處理 calculator_skill 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            text: 此流程需要使用的輸入資料。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 str。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         # 從文字中提取表達式
         import re
         match = re.search(r'calculate\s+(.+)', text, re.IGNORECASE)
@@ -409,7 +724,18 @@ def create_example_agent() -> A2AServer:
 
     # 添加問候技能
     def greeting_skill(text: str) -> str:
-        """生成問候語"""
+        """
+        負責執行 protocols.a2a.implementation 中的 greeting_skill 流程，依照 protocols.a2a.implementation 的流程需求處理 greeting_skill 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            text: 此流程需要使用的輸入資料。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 str。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         import re
         match = re.search(r'hello|hi|greet', text, re.IGNORECASE)
         if match:

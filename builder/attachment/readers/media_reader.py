@@ -15,10 +15,47 @@ AUDIO_EXTENSIONS = {".mp3", ".m4a", ".wav", ".flac", ".ogg"}
 
 
 class MediaAttachmentReader:
+    """
+    負責在 builder.attachment.readers.media_reader 中封裝 MediaAttachmentReader，封裝附件讀取與內容萃取流程，將檔案轉成可推理的證據。
+    
+    Args:
+        config: 控制此流程行為的設定資料。
+    
+    Returns:
+        類別本身不直接回傳值；建立實例後可透過其方法操作狀態與流程。
+    
+    限制或副作用:
+        方法可能更新內部狀態、讀寫檔案、呼叫外部服務或產生日誌，需依使用情境確認。
+    """
     def __init__(self, config: AttachmentReaderConfig) -> None:
+        """
+        負責執行 MediaAttachmentReader 中的 __init__ 流程，初始化物件所需的設定、依賴與內部狀態，讓後續方法可以沿用同一份執行上下文。
+        
+        Args:
+            config: 控制此流程行為的設定資料。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 None。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         self.config = config
 
     def read_image(self, question: str, file_path: Path) -> str:
+        """
+        負責執行 MediaAttachmentReader 中的 read_image 流程，讀取圖片附件並轉成可放入證據或模型上下文的文字描述。
+        
+        Args:
+            question: 目前要處理的任務、問題或查詢文字。
+            file_path: 要讀取或寫入的檔案或目錄路徑。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 str。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         image_bytes = file_path.read_bytes()
         image_b64 = base64.b64encode(image_bytes).decode("ascii")
         endpoint = self._ollama_chat_endpoint()
@@ -72,6 +109,18 @@ class MediaAttachmentReader:
         return f"Ollama vision model: {self.config.vision_model}\n{content}"
 
     def _ollama_chat_endpoint(self) -> str:
+        """
+        負責執行 MediaAttachmentReader 中的 _ollama_chat_endpoint 流程，依照 MediaAttachmentReader 的流程需求處理 _ollama_chat_endpoint 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            無。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 str。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         base_url = (
             os.getenv("OLLAMA_NATIVE_BASE_URL")
             or os.getenv("OLLAMA_BASE_URL")
@@ -83,6 +132,19 @@ class MediaAttachmentReader:
         return base_url.rstrip("/") + "/api/chat"
 
     def analyze_audio(self, question: str, file_path: Path) -> str:
+        """
+        負責執行 MediaAttachmentReader 中的 analyze_audio 流程，依照 MediaAttachmentReader 的流程需求處理 analyze_audio 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            question: 目前要處理的任務、問題或查詢文字。
+            file_path: 要讀取或寫入的檔案或目錄路徑。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 str。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         try:
             from faster_whisper import WhisperModel
         except ImportError as exc:

@@ -1,0 +1,920 @@
+from __future__ import annotations
+
+from pathlib import Path
+from typing import Any
+
+from evaluation.benchmark_adapter import BaseBenchmarkAdapter
+
+
+def normalize_text(value: Any) -> str:
+    """
+    負責執行 evaluation.gaia_adapter 中的 normalize_text 流程，整理呼叫端傳入的資料，清理格式並轉換為後續流程可使用的內容。
+    
+    Args:
+        value: 此流程需要使用的輸入資料。
+    
+    Returns:
+        執行結果；若函式標註回傳型別，預期型別為 str。
+    
+    限制或副作用:
+        可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+    """
+    return " ".join(str(value or "").split()).strip()
+
+
+class GAIAAdapter(BaseBenchmarkAdapter):
+    """
+    負責在 evaluation.gaia_adapter 中封裝 GAIAAdapter，封裝 benchmark 評估、答案判定、分數計算或報告資料整理流程。
+    
+    Args:
+        agent: 此流程需要使用的輸入資料。
+        use_two_stage: 此流程需要使用的輸入資料。
+        include_reasoning: 控制是否啟用此項資料、功能或處理分支的布林開關。
+        name: 此流程需要使用的輸入資料。
+    
+    Returns:
+        類別本身不直接回傳值；建立實例後可透過其方法操作狀態與流程。
+    
+    限制或副作用:
+        方法可能更新內部狀態、讀寫檔案、呼叫外部服務或產生日誌，需依使用情境確認。
+    """
+
+    def __init__(
+        self,
+        agent: Any,
+        use_two_stage: bool = True,
+        include_reasoning: bool = False,
+        name: str | None = None,
+    ):
+        """
+        負責執行 GAIAAdapter 中的 __init__ 流程，初始化物件所需的設定、依賴與內部狀態，讓後續方法可以沿用同一份執行上下文。
+        
+        Args:
+            agent: 此流程需要使用的輸入資料。
+            use_two_stage: 此流程需要使用的輸入資料。
+            include_reasoning: 控制是否啟用此項資料、功能或處理分支的布林開關。
+            name: 此流程需要使用的輸入資料。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 未標註。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
+        super().__init__(agent=agent, name=name or "AgentNetwork")
+        self.use_two_stage = use_two_stage
+        self.include_reasoning = include_reasoning
+
+    def normalize_question(self, question: str) -> str:
+        """
+        負責執行 GAIAAdapter 中的 normalize_question 流程，整理呼叫端傳入的資料，清理格式並轉換為後續流程可使用的內容。
+        
+        Args:
+            question: 目前要處理的任務、問題或查詢文字。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 str。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
+        if not question:
+            return ""
+
+        text = question.strip()
+        file_note = "\n\nNote: This question may require reference to the file:"
+        if file_note in text:
+            text = text.split(file_note, 1)[0].strip()
+
+        return text
+
+    def run(self, prompt: str) -> str:
+        """
+        負責執行 GAIAAdapter 中的 run 流程，啟動主要執行流程，串接輸入準備、核心處理與結果輸出。
+        
+        Args:
+            prompt: 此流程需要使用的輸入資料。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 str。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
+        normalized_prompt = self.normalize_question(prompt)
+
+        if self.use_two_stage:
+            result = self.agent.forward_two_stage(normalized_prompt)
+            final_answer = result.get("final_result", "")
+            reasoning = result.get("stage1_result", "")
+        else:
+            final_answer, *_ = self.agent.forward(normalized_prompt)
+            reasoning = ""
+
+        if self.include_reasoning and reasoning:
+            return f"REASONING: {reasoning}\nFINAL ANSWER: {final_answer}"
+
+        return f"FINAL ANSWER: {final_answer}"
+
+    def run_sample(self, prompt: str, sample: dict[str, Any]) -> str:
+        """
+        負責執行 GAIAAdapter 中的 run_sample 流程，依照 GAIAAdapter 的流程需求處理 run_sample 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            prompt: 此流程需要使用的輸入資料。
+            sample: 此流程需要使用的輸入資料。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 str。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
+        normalized_prompt = self.normalize_question(prompt)
+        context = {
+            "benchmark": "GAIA",
+            "task_id": str(sample.get("task_id", "") or ""),
+            "level": sample.get("level"),
+            "attachment": self._build_attachment_context(sample),
+        }
+
+        if self.use_two_stage:
+            result = self.agent.forward_two_stage(normalized_prompt, context=context)
+            final_answer = result.get("final_result", "")
+            reasoning = result.get("stage1_result", "")
+        else:
+            final_answer, *_ = self.agent.forward(normalized_prompt)
+            reasoning = ""
+
+        if self.include_reasoning and reasoning:
+            return f"REASONING: {reasoning}\nFINAL ANSWER: {final_answer}"
+
+        return f"FINAL ANSWER: {final_answer}"
+
+    def _build_attachment_context(self, sample: dict[str, Any]) -> dict[str, Any] | None:
+        """
+        負責執行 GAIAAdapter 中的 _build_attachment_context 流程，依照 GAIAAdapter 的流程需求處理 _build_attachment_context 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            sample: 此流程需要使用的輸入資料。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 dict[str, Any] | None。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
+        file_path_text = str(
+            sample.get("file_name") or sample.get("file_path") or ""
+        ).strip()
+        if not file_path_text:
+            return None
+
+        file_path = Path(file_path_text)
+        return {
+            "task_id": str(sample.get("task_id", "") or ""),
+            "file_path": str(file_path),
+            "file_name": file_path.name,
+            "extension": file_path.suffix.lower(),
+            "exists": file_path.exists(),
+            "is_file": file_path.is_file(),
+        }
+
+    def record_evaluation_feedback(
+        self,
+        *,
+        benchmark: str,
+        sample: dict[str, Any],
+        sample_result: dict[str, Any],
+    ) -> None:
+        """
+        負責執行 GAIAAdapter 中的 record_evaluation_feedback 流程，將新的輸入資料合併到目前物件狀態或流程紀錄中。
+        
+        Args:
+            benchmark: 此流程需要使用的輸入資料。
+            sample: 此流程需要使用的輸入資料。
+            sample_result: 評估、推理或工具執行後產生的結果與分數資料。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 None。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
+        if benchmark.upper() != "GAIA":
+            return
+
+        question = self.normalize_question(sample.get("question", ""))
+        if not question:
+            return
+
+        predicted = str(
+            sample_result.get("predicted", sample_result.get("predicted_answer", "")) or ""
+        ).strip() or "(empty)"
+        expected = str(
+            sample_result.get("expected", sample_result.get("expected_answer", "")) or ""
+        ).strip() or "(unknown)"
+        task_id = str(sample.get("task_id", "") or "").strip() or "unknown"
+        exact_match = bool(sample_result.get("exact_match", False))
+        partial_match = bool(sample_result.get("partial_match", False))
+        score = sample_result.get("score", 0.0)
+
+        reflection = self._build_gaia_reflection_record(
+            question=question,
+            predicted=predicted,
+            expected=expected,
+            exact_match=exact_match,
+            partial_match=partial_match,
+        )
+        base_metadata = {
+            "record_type": "gaia_feedback",
+            "benchmark": "GAIA",
+            "task_id": task_id,
+            "question_excerpt": normalize_text(question)[:220],
+            "predicted": predicted,
+            "expected": expected,
+            "exact_match": exact_match,
+            "partial_match": partial_match,
+            "score": score,
+            "error_type": reflection["error_type"],
+            "failure_mode": reflection["failure_mode"],
+            "failure_stage": reflection["failure_stage"],
+            "severity": reflection["severity"],
+        }
+
+        try:
+            runtime = getattr(self.agent, "runtime", None)
+            graph_memory = getattr(runtime, "graph_memory", None)
+            if graph_memory is None:
+                return
+            attachment = self._build_attachment_context(sample) or {}
+            write_result = graph_memory.record_task_result(
+                task_id=task_id,
+                input_text=question,
+                source="gaia",
+                benchmark="GAIA",
+                predicted=predicted,
+                expected=expected,
+                exact_match=exact_match,
+                partial_match=partial_match,
+                score=score,
+                metadata={
+                    **base_metadata,
+                    "failure_summary": reflection["failure_summary"],
+                    "correction_checklist": reflection["correction_checklist"],
+                },
+                network=self.agent,
+                sample={**sample, "benchmark": "GAIA"},
+                sample_result=sample_result,
+                attachment_type=str(attachment.get("extension", "") or "").strip().lower().lstrip(".") or None,
+            )
+            runtime.record_memory_write(
+                {
+                    "memory_type": "graph_memory",
+                    "source_stage": "evaluation_feedback",
+                    **write_result,
+                }
+            )
+        except Exception as exc:
+            print(f"[WARN] GAIA graph feedback write failed: {exc}")
+
+    def _record_interaction_graph(
+        self,
+        *,
+        sample: dict[str, Any],
+        sample_result: dict[str, Any],
+    ) -> None:
+        """
+        負責執行 GAIAAdapter 中的 _record_interaction_graph 流程，依照 GAIAAdapter 的流程需求處理 _record_interaction_graph 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            sample: 圖結構中的節點、邊或相關識別資料。
+            sample_result: 圖結構中的節點、邊或相關識別資料。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 None。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
+        runtime = getattr(self.agent, "runtime", None)
+        graph_memory = getattr(runtime, "graph_memory", None)
+        if runtime is None or graph_memory is None:
+            return
+
+        task_record = graph_memory.record_interaction_from_network(
+            network=self.agent,
+            sample=sample,
+            sample_result=sample_result,
+            source="gaia",
+        )
+        runtime.record_memory_write(
+            {
+                "memory_type": "interaction_graph",
+                "source_stage": "gaia_feedback",
+                "task_id": task_record.task_id,
+                "label": task_record.label,
+                "state_count": len(task_record.state_chain),
+            }
+        )
+
+    def _record_graph_feedback(
+        self,
+        *,
+        task_id: str,
+        question: str,
+        exact_match: bool,
+        partial_match: bool,
+        metadata: dict[str, Any],
+    ) -> None:
+        """
+        負責執行 GAIAAdapter 中的 _record_graph_feedback 流程，依照 GAIAAdapter 的流程需求處理 _record_graph_feedback 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            task_id: 圖結構中的節點、邊或相關識別資料。
+            question: 目前要處理的任務、問題或查詢文字。
+            exact_match: 圖結構中的節點、邊或相關識別資料。
+            partial_match: 圖結構中的節點、邊或相關識別資料。
+            metadata: 目前流程所需的上下文、狀態或附加資訊。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 None。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
+        runtime = getattr(self.agent, "runtime", None)
+        graph_memory = getattr(runtime, "graph_memory", None)
+        if runtime is None or graph_memory is None:
+            return
+
+        context = getattr(runtime, "current_context", {}) or {}
+        attachment = context.get("attachment") or {}
+        attachment_type = str(attachment.get("extension", "") or "").strip().lower().lstrip(".") or None
+
+        write_result = graph_memory.record_task_result(
+            task_id=task_id,
+            input_text=question,
+            source=str(metadata.get("benchmark") or "system").lower(),
+            benchmark=metadata.get("benchmark"),
+            predicted=str(metadata.get("predicted") or ""),
+            expected=str(metadata.get("expected") or ""),
+            exact_match=exact_match,
+            partial_match=partial_match,
+            score=metadata.get("score"),
+            metadata=metadata,
+            network=self.agent,
+            attachment_type=attachment_type,
+        )
+        runtime.record_memory_write(
+            {
+                "memory_type": "graph_memory",
+                "source_stage": "gaia_feedback",
+                **write_result,
+            }
+        )
+
+    def _build_gaia_reflection_record(
+        self,
+        *,
+        question: str,
+        predicted: str,
+        expected: str,
+        exact_match: bool,
+        partial_match: bool,
+    ) -> dict[str, Any]:
+        """
+        負責執行 GAIAAdapter 中的 _build_gaia_reflection_record 流程，依照 GAIAAdapter 的流程需求處理 _build_gaia_reflection_record 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            question: 目前要處理的任務、問題或查詢文字。
+            predicted: 此流程需要使用的輸入資料。
+            expected: 此流程需要使用的輸入資料。
+            exact_match: 此流程需要使用的輸入資料。
+            partial_match: 此流程需要使用的輸入資料。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 dict[str, Any]。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
+        stage2_outputs = getattr(self.agent, "last_stage2_outputs", []) or []
+        error_type = self._classify_error_type(
+            question=question,
+            predicted=predicted,
+            expected=expected,
+            partial_match=partial_match,
+        )
+        failure_stage = self._infer_failure_stage(
+            predicted=predicted,
+            expected=expected,
+            exact_match=exact_match,
+            stage2_outputs=stage2_outputs,
+        )
+        candidate_collapse = self._has_candidate_collapse(
+            stage2_outputs=stage2_outputs,
+            expected=expected,
+        )
+        overrode_better_candidate = self._has_stage2_candidate(
+            stage2_outputs=stage2_outputs,
+            target_answer=expected,
+        ) and self._answer_key(predicted) != self._answer_key(expected)
+        failure_mode = self._classify_failure_mode(
+            question=question,
+            predicted=predicted,
+            expected=expected,
+            error_type=error_type,
+            failure_stage=failure_stage,
+            partial_match=partial_match,
+            candidate_collapse=candidate_collapse,
+            overrode_better_candidate=overrode_better_candidate,
+        )
+
+        if exact_match:
+            success_checklist = [
+                "Keep the successful reasoning pattern.",
+                "Still verify units, scope, and final formatting before finalizing.",
+                "Only change the answer if new evidence clearly improves it.",
+            ]
+            return {
+                "error_type": "confirmed_reasoning",
+                "failure_mode": "confirmed_reasoning",
+                "failure_stage": "confirmed",
+                "severity": "confirmed",
+                "lesson": (
+                    "Keep the successful reasoning pattern, but still verify units, scope, "
+                    "and final formatting before finalizing."
+                ),
+                "tags": ["confirmed_reasoning", "verification"],
+                "applicability": (
+                    "Use this reminder for similar questions when the answer seems clear but "
+                    "still benefits from a final consistency check."
+                ),
+                "failure_summary": "No failure. The reasoning path produced the expected answer.",
+                "correction_checklist": success_checklist,
+                "confidence": 0.55,
+            }
+
+        severity = "partial" if partial_match else "wrong"
+        tags = self._build_tags(error_type, question, failure_mode=failure_mode)
+        applicability = self._build_applicability(
+            error_type,
+            failure_mode=failure_mode,
+            failure_stage=failure_stage,
+        )
+        correction_checklist = self._build_correction_checklist(
+            error_type,
+            failure_mode,
+            partial_match=partial_match,
+        )
+
+        return {
+            "error_type": error_type,
+            "failure_mode": failure_mode,
+            "failure_stage": failure_stage,
+            "severity": severity,
+            "lesson": correction_checklist[0],
+            "tags": tags,
+            "applicability": applicability,
+            "failure_summary": self._build_failure_summary(
+                error_type=error_type,
+                failure_mode=failure_mode,
+                failure_stage=failure_stage,
+                predicted=predicted,
+                expected=expected,
+            ),
+            "correction_checklist": correction_checklist,
+            "confidence": 0.92 if partial_match else 0.97,
+        }
+
+    def _build_failure_summary(
+        self,
+        *,
+        error_type: str,
+        failure_mode: str,
+        failure_stage: str,
+        predicted: str,
+        expected: str,
+    ) -> str:
+        """
+        負責執行 GAIAAdapter 中的 _build_failure_summary 流程，依照 GAIAAdapter 的流程需求處理 _build_failure_summary 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            error_type: 此流程需要使用的輸入資料。
+            failure_mode: 此流程需要使用的輸入資料。
+            failure_stage: 此流程需要使用的輸入資料。
+            predicted: 此流程需要使用的輸入資料。
+            expected: 此流程需要使用的輸入資料。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 str。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
+        summaries = {
+            "unit_or_scale_mismatch": (
+                "The answer likely stayed in the wrong unit, scale, or numeric format instead "
+                "of matching the requested output representation."
+            ),
+            "format_or_rounding_slip": (
+                "The reasoning was close, but the final formatting, rounding, or output string "
+                "did not match the requested representation."
+            ),
+            "scope_filter_mismatch": (
+                "The answer likely counted items outside the allowed range or included items "
+                "that did not satisfy every requested filter."
+            ),
+            "boundary_condition_slip": (
+                "The answer appears close, but the start or end boundary was likely handled "
+                "incorrectly."
+            ),
+            "surface_form_shortcut": (
+                "The answer appears to rely on surface wording or token appearance rather than "
+                "explicit evidence from the task."
+            ),
+            "candidate_collapse": (
+                "Stage2 candidates converged on an unsupported answer, so the final step did not "
+                "receive a strong alternative to recover from."
+            ),
+            "final_overrode_better_candidate": (
+                "A stronger stage2 candidate likely existed, but the final decision overrode it "
+                "with a worse answer."
+            ),
+            "final_answer_selection": (
+                "The final decision step likely chose or revised the answer poorly despite the "
+                "available candidates."
+            ),
+            "insufficient_commitment": (
+                "The system backed away from a resolvable answer instead of using the available "
+                "evidence."
+            ),
+            "insufficient_verification": (
+                "The answer appears to have been finalized before enough evidence or verification "
+                "was collected."
+            ),
+        }
+        summary = summaries.get(
+            failure_mode,
+            (
+                f"The predicted answer '{predicted}' did not match the expected answer "
+                f"'{expected}', which suggests that the final verification step was insufficient."
+            ),
+        )
+        if failure_stage not in {"", "unknown"}:
+            summary += f" Likely failure stage: {failure_stage}."
+        if error_type:
+            summary += f" Error type: {error_type}."
+        return summary
+
+    def _classify_error_type(
+        self,
+        *,
+        question: str,
+        predicted: str,
+        expected: str,
+        partial_match: bool,
+    ) -> str:
+        """
+        負責執行 GAIAAdapter 中的 _classify_error_type 流程，依照 GAIAAdapter 的流程需求處理 _classify_error_type 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            question: 目前要處理的任務、問題或查詢文字。
+            predicted: 此流程需要使用的輸入資料。
+            expected: 此流程需要使用的輸入資料。
+            partial_match: 此流程需要使用的輸入資料。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 str。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
+        text = normalize_text(question).lower()
+        predicted_key = self._answer_key(predicted)
+        expected_key = self._answer_key(expected)
+        if partial_match:
+            return "format_or_rounding_slip"
+        if self._numeric_value(predicted_key) is not None and self._numeric_value(expected_key) is not None:
+            return "unit_or_scale_mismatch"
+        if any(marker in text for marker in ["how many", "count", "number of", "between", "during"]):
+            return "scope_filter_mismatch"
+        if any(marker in text for marker in ["probability", "random", "odds", "maximize", "state"]):
+            return "reasoning_strategy_mismatch"
+        if any(marker in text for marker in ["who", "when", "where", "published", "website", "source"]):
+            return "insufficient_evidence"
+        return "final_verification_failed"
+
+    def _classify_failure_mode(
+        self,
+        *,
+        question: str,
+        predicted: str,
+        expected: str,
+        error_type: str,
+        failure_stage: str,
+        partial_match: bool,
+        candidate_collapse: bool,
+        overrode_better_candidate: bool,
+    ) -> str:
+        """
+        負責執行 GAIAAdapter 中的 _classify_failure_mode 流程，依照 GAIAAdapter 的流程需求處理 _classify_failure_mode 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            question: 目前要處理的任務、問題或查詢文字。
+            predicted: 此流程需要使用的輸入資料。
+            expected: 此流程需要使用的輸入資料。
+            error_type: 此流程需要使用的輸入資料。
+            failure_stage: 此流程需要使用的輸入資料。
+            partial_match: 此流程需要使用的輸入資料。
+            candidate_collapse: 此流程需要使用的輸入資料。
+            overrode_better_candidate: 此流程需要使用的輸入資料。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 str。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
+        text = normalize_text(question).lower()
+        if overrode_better_candidate:
+            return "overrode_better_candidate"
+        if candidate_collapse:
+            return "candidate_collapse"
+        if partial_match:
+            return "answer_format_mismatch"
+        if any(marker in text for marker in ["attachment", "spreadsheet", "excel", "image", "audio", "file"]):
+            return "missed_attachment_evidence"
+        if any(marker in text for marker in ["probability", "random", "odds", "maximize", "state"]):
+            return "missing_state_transition_model"
+        if error_type == "scope_filter_mismatch":
+            return "scope_filter_mismatch"
+        if failure_stage == "final":
+            return "final_selection_error"
+        return "insufficient_verification"
+
+    def _build_tags(self, error_type: str, question: str, *, failure_mode: str) -> list[str]:
+        """
+        負責執行 GAIAAdapter 中的 _build_tags 流程，依照 GAIAAdapter 的流程需求處理 _build_tags 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            error_type: 此流程需要使用的輸入資料。
+            question: 目前要處理的任務、問題或查詢文字。
+            failure_mode: 此流程需要使用的輸入資料。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 list[str]。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
+        tags = [error_type, failure_mode]
+        text = normalize_text(question).lower()
+        for marker, tag in [
+            ("probability", "stochastic_process"),
+            ("random", "stochastic_process"),
+            ("excel", "spreadsheet"),
+            ("image", "image"),
+            ("audio", "audio"),
+            ("website", "search"),
+            ("published", "search"),
+        ]:
+            if marker in text:
+                tags.append(tag)
+        return sorted({tag for tag in tags if tag})
+
+    def _build_applicability(self, error_type: str, *, failure_mode: str, failure_stage: str) -> str:
+        """
+        負責執行 GAIAAdapter 中的 _build_applicability 流程，依照 GAIAAdapter 的流程需求處理 _build_applicability 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            error_type: 此流程需要使用的輸入資料。
+            failure_mode: 此流程需要使用的輸入資料。
+            failure_stage: 此流程需要使用的輸入資料。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 str。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
+        return (
+            f"Use this feedback for similar GAIA tasks with error_type={error_type}, "
+            f"failure_mode={failure_mode}, or failure_stage={failure_stage}."
+        )
+
+    def _build_correction_checklist(
+        self,
+        error_type: str,
+        failure_mode: str,
+        *,
+        partial_match: bool,
+    ) -> list[str]:
+        """
+        負責執行 GAIAAdapter 中的 _build_correction_checklist 流程，依照 GAIAAdapter 的流程需求處理 _build_correction_checklist 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            error_type: 此流程需要使用的輸入資料。
+            failure_mode: 此流程需要使用的輸入資料。
+            partial_match: 此流程需要使用的輸入資料。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 list[str]。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
+        if partial_match or error_type == "format_or_rounding_slip":
+            return [
+                "Normalize the final answer format to exactly match the requested representation.",
+                "Check rounding, units, and whether the answer should be a raw number or scaled phrase.",
+            ]
+        if failure_mode == "missing_state_transition_model":
+            return [
+                "Build explicit states and transitions before choosing the final answer.",
+                "Use structured Python reasoning for enumeration, simulation, or dynamic programming when needed.",
+            ]
+        if failure_mode == "missed_attachment_evidence":
+            return [
+                "Read and summarize attachment evidence before answering.",
+                "Use the attachment-derived evidence as the primary source for file-based questions.",
+            ]
+        if error_type == "insufficient_evidence":
+            return [
+                "Gather external evidence before finalizing factual claims.",
+                "Prefer cited search evidence over memory-only guesses.",
+            ]
+        return [
+            "Compare stage1, stage2, and expected answer constraints before final selection.",
+            "Verify scope, units, and exact output format before finalizing.",
+        ]
+
+    def _numeric_value(self, value: str) -> float | None:
+        """
+        負責執行 GAIAAdapter 中的 _numeric_value 流程，依照 GAIAAdapter 的流程需求處理 _numeric_value 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            value: 此流程需要使用的輸入資料。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 float | None。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
+        normalized = normalize_text(value).replace(",", "")
+        try:
+            return float(normalized)
+        except ValueError:
+            return None
+
+    def _stage2_changed_stage1_answer(self) -> bool:
+        """
+        負責執行 GAIAAdapter 中的 _stage2_changed_stage1_answer 流程，依照 GAIAAdapter 的流程需求處理 _stage2_changed_stage1_answer 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            無。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 bool。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
+        stage1_key = self._answer_key(getattr(self.agent, "last_stage1_result", ""))
+        decision = getattr(self.agent, "last_final_decision", None) or {}
+        final_key = self._answer_key(str(decision.get("final_result", "") or ""))
+        return bool(stage1_key and final_key and stage1_key != final_key)
+
+    def _answer_key(self, answer: str) -> str:
+        """
+        負責執行 GAIAAdapter 中的 _answer_key 流程，依照 GAIAAdapter 的流程需求處理 _answer_key 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            answer: 模型、節點或工具產生的候選回覆內容。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 str。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
+        return normalize_text(answer).lower()
+
+    def _successful_stage2_answers(self, stage2_outputs: list[dict[str, Any]]) -> list[str]:
+        """
+        負責執行 GAIAAdapter 中的 _successful_stage2_answers 流程，依照 GAIAAdapter 的流程需求處理 _successful_stage2_answers 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            stage2_outputs: 此流程需要使用的輸入資料。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 list[str]。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
+        answers: list[str] = []
+        for output in stage2_outputs or []:
+            if not output.get("success", False):
+                continue
+            answer = self._answer_key(str(output.get("answer", "") or ""))
+            if answer:
+                answers.append(answer)
+        return answers
+
+    def _has_stage2_candidate(
+        self,
+        *,
+        stage2_outputs: list[dict[str, Any]],
+        target_answer: str,
+    ) -> bool:
+        """
+        負責執行 GAIAAdapter 中的 _has_stage2_candidate 流程，依照 GAIAAdapter 的流程需求處理 _has_stage2_candidate 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            stage2_outputs: 此流程需要使用的輸入資料。
+            target_answer: 此流程需要使用的輸入資料。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 bool。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
+        target_key = self._answer_key(target_answer)
+        if not target_key:
+            return False
+        return any(answer == target_key for answer in self._successful_stage2_answers(stage2_outputs))
+
+    def _has_candidate_collapse(
+        self,
+        *,
+        stage2_outputs: list[dict[str, Any]],
+        expected: str,
+    ) -> bool:
+        """
+        負責執行 GAIAAdapter 中的 _has_candidate_collapse 流程，依照 GAIAAdapter 的流程需求處理 _has_candidate_collapse 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            stage2_outputs: 此流程需要使用的輸入資料。
+            expected: 此流程需要使用的輸入資料。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 bool。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
+        answers = self._successful_stage2_answers(stage2_outputs)
+        if not answers:
+            return False
+        unique_answers = set(answers)
+        if len(unique_answers) != 1:
+            return False
+        return next(iter(unique_answers)) != self._answer_key(expected)
+
+    def _infer_failure_stage(
+        self,
+        *,
+        predicted: str,
+        expected: str,
+        exact_match: bool,
+        stage2_outputs: list[dict[str, Any]],
+    ) -> str:
+        """
+        負責執行 GAIAAdapter 中的 _infer_failure_stage 流程，依照 GAIAAdapter 的流程需求處理 _infer_failure_stage 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            predicted: 此流程需要使用的輸入資料。
+            expected: 此流程需要使用的輸入資料。
+            exact_match: 此流程需要使用的輸入資料。
+            stage2_outputs: 此流程需要使用的輸入資料。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 str。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
+        if exact_match:
+            return "confirmed"
+
+        predicted_key = self._answer_key(predicted)
+        expected_key = self._answer_key(expected)
+        stage1_key = self._answer_key(getattr(self.agent, "last_stage1_result", ""))
+        stage2_answers = self._successful_stage2_answers(stage2_outputs)
+
+        if stage2_answers:
+            if expected_key and any(answer == expected_key for answer in stage2_answers):
+                return "final"
+            if stage1_key and stage1_key == expected_key and predicted_key != expected_key:
+                return "final"
+            if self._has_candidate_collapse(stage2_outputs=stage2_outputs, expected=expected):
+                return "stage2"
+            if stage1_key and stage1_key == predicted_key and predicted_key != expected_key:
+                return "stage1"
+            return "stage2"
+
+        return "stage1"

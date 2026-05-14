@@ -12,30 +12,55 @@ try:
     from transformers import TrainerCallback
 
     class DetailedLoggingCallback(TrainerCallback):
-        """詳細日誌回調
-
-        在訓練過程中輸出更詳細的日誌資訊,包括:
-        - Epoch/Step進度
-        - Loss
-        - Learning Rate
-        - Reward (GRPO)
-        - KL散度 (GRPO)
+        """
+        負責在 rl.trainers 中封裝 DetailedLoggingCallback，封裝此模組的狀態資料與主要操作流程。
+        
+        Args:
+            total_steps: 此流程需要使用的輸入資料。
+            num_epochs: 此流程需要使用的輸入資料。
+        
+        Returns:
+            類別本身不直接回傳值；建立實例後可透過其方法操作狀態與流程。
+        
+        限制或副作用:
+            方法可能更新內部狀態、讀寫檔案、呼叫外部服務或產生日誌，需依使用情境確認。
         """
 
         def __init__(self, total_steps: int = None, num_epochs: int = None):
             """
-            初始化回調
-
+            負責執行 DetailedLoggingCallback 中的 __init__ 流程，初始化物件所需的設定、依賴與內部狀態，讓後續方法可以沿用同一份執行上下文。
+            
             Args:
-                total_steps: 總步數
-                num_epochs: 總輪數
+                total_steps: 此流程需要使用的輸入資料。
+                num_epochs: 此流程需要使用的輸入資料。
+            
+            Returns:
+                執行結果；若函式標註回傳型別，預期型別為 未標註。
+            
+            限制或副作用:
+                可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
             """
             self.total_steps = total_steps
             self.num_epochs = num_epochs
             self.current_epoch = 0
 
         def on_log(self, args, state, control, logs=None, **kwargs):
-            """日誌回調"""
+            """
+            負責執行 DetailedLoggingCallback 中的 on_log 流程，依照 DetailedLoggingCallback 的流程需求處理 on_log 對應的資料轉換、狀態操作或結果產生。
+            
+            Args:
+                args: 此流程需要使用的輸入資料。
+                state: 目前流程所需的上下文、狀態或附加資訊。
+                control: 此流程需要使用的輸入資料。
+                logs: 此流程需要使用的輸入資料。
+                **kwargs: 此流程需要使用的輸入資料。
+            
+            Returns:
+                執行結果；若函式標註回傳型別，預期型別為 未標註。
+            
+            限制或副作用:
+                可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+            """
             if logs is None:
                 return
 
@@ -75,7 +100,21 @@ try:
                 print(" | ".join(log_parts))
 
         def on_epoch_end(self, args, state, control, **kwargs):
-            """Epoch結束回調"""
+            """
+            負責執行 DetailedLoggingCallback 中的 on_epoch_end 流程，依照 DetailedLoggingCallback 的流程需求處理 on_epoch_end 對應的資料轉換、狀態操作或結果產生。
+            
+            Args:
+                args: 此流程需要使用的輸入資料。
+                state: 目前流程所需的上下文、狀態或附加資訊。
+                control: 此流程需要使用的輸入資料。
+                **kwargs: 此流程需要使用的輸入資料。
+            
+            Returns:
+                執行結果；若函式標註回傳型別，預期型別為 未標註。
+            
+            限制或副作用:
+                可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+            """
             print(f"{'='*80}")
             print(f"✅ Epoch {self.current_epoch + 1} 完成")
             print(f"{'='*80}\n")
@@ -83,19 +122,62 @@ try:
 except ImportError:
     # 如果transformers未安裝,建立一個空的回調類
     class DetailedLoggingCallback:
+        """
+        負責在 rl.trainers 中封裝 DetailedLoggingCallback，封裝此模組的狀態資料與主要操作流程。
+        
+        Args:
+            *args: 此流程需要使用的輸入資料。
+            **kwargs: 此流程需要使用的輸入資料。
+        
+        Returns:
+            類別本身不直接回傳值；建立實例後可透過其方法操作狀態與流程。
+        
+        限制或副作用:
+            方法可能更新內部狀態、讀寫檔案、呼叫外部服務或產生日誌，需依使用情境確認。
+        """
         def __init__(self, *args, **kwargs):
+            """
+            負責執行 DetailedLoggingCallback 中的 __init__ 流程，初始化物件所需的設定、依賴與內部狀態，讓後續方法可以沿用同一份執行上下文。
+            
+            Args:
+                *args: 此流程需要使用的輸入資料。
+                **kwargs: 此流程需要使用的輸入資料。
+            
+            Returns:
+                執行結果；若函式標註回傳型別，預期型別為 未標註。
+            
+            限制或副作用:
+                可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+            """
             pass
 
 
 class BaseTrainerWrapper:
-    """訓練器基類"""
+    """
+    負責在 rl.trainers 中封裝 BaseTrainerWrapper，封裝此模組的狀態資料與主要操作流程。
+    
+    Args:
+        config: 控制此流程行為的設定資料。
+    
+    Returns:
+        類別本身不直接回傳值；建立實例後可透過其方法操作狀態與流程。
+    
+    限制或副作用:
+        方法可能更新內部狀態、讀寫檔案、呼叫外部服務或產生日誌，需依使用情境確認。
+    """
     
     def __init__(self, config: Optional[TrainingConfig] = None):
         """
-        初始化訓練器
+        負責執行 BaseTrainerWrapper 中的 __init__ 流程，初始化物件所需的設定、依賴與內部狀態，讓後續方法可以沿用同一份執行上下文。
         
         Args:
-            config: 訓練設定
+            config: 控制此流程行為的設定資料。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 未標註。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
         """
         # 檢查TRL是否安裝
         if not check_trl_installation():
@@ -107,19 +189,47 @@ class BaseTrainerWrapper:
         self.tokenizer = None
     
     def setup_model(self):
-        """設定模型和tokenizer"""
+        """
+        負責執行 BaseTrainerWrapper 中的 setup_model 流程，將新的輸入資料合併到目前物件狀態或流程紀錄中。
+        
+        Args:
+            無。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 未標註。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         raise NotImplementedError
     
     def train(self):
-        """開始訓練"""
+        """
+        負責執行 BaseTrainerWrapper 中的 train 流程，依照 BaseTrainerWrapper 的流程需求處理 train 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            無。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 未標註。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         raise NotImplementedError
     
     def save_model(self, output_dir: Optional[str] = None):
         """
-        保存模型
+        負責執行 BaseTrainerWrapper 中的 save_model 流程，將目前處理結果、設定或狀態寫入指定儲存位置。
         
         Args:
-            output_dir: 輸出目錄
+            output_dir: 用來呼叫模型或外部服務的模型名稱、客戶端或相關設定。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 未標註。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
         """
         save_dir = output_dir or self.config.output_dir
         if self.trainer:
@@ -130,9 +240,18 @@ class BaseTrainerWrapper:
 
 
 class SFTTrainerWrapper(BaseTrainerWrapper):
-    """SFT (Supervised Fine-Tuning) 訓練器封裝
+    """
+    負責在 rl.trainers 中封裝 SFTTrainerWrapper，封裝此模組的狀態資料與主要操作流程。
     
-    用於監督微調，讓模型學會遵循指令和基本的推理格式。
+    Args:
+        config: 控制此流程行為的設定資料。
+        dataset: 此流程需要使用的輸入資料。
+    
+    Returns:
+        類別本身不直接回傳值；建立實例後可透過其方法操作狀態與流程。
+    
+    限制或副作用:
+        方法可能更新內部狀態、讀寫檔案、呼叫外部服務或產生日誌，需依使用情境確認。
     """
     
     def __init__(
@@ -141,17 +260,34 @@ class SFTTrainerWrapper(BaseTrainerWrapper):
         dataset = None
     ):
         """
-        初始化SFT訓練器
+        負責執行 SFTTrainerWrapper 中的 __init__ 流程，初始化物件所需的設定、依賴與內部狀態，讓後續方法可以沿用同一份執行上下文。
         
         Args:
-            config: 訓練設定
-            dataset: 訓練資料集
+            config: 控制此流程行為的設定資料。
+            dataset: 此流程需要使用的輸入資料。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 未標註。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
         """
         super().__init__(config)
         self.dataset = dataset
     
     def setup_model(self):
-        """設定模型和tokenizer"""
+        """
+        負責執行 SFTTrainerWrapper 中的 setup_model 流程，將新的輸入資料合併到目前物件狀態或流程紀錄中。
+        
+        Args:
+            無。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 未標註。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         from transformers import AutoModelForCausalLM, AutoTokenizer
         
         print(f"📦 載入模型: {self.config.model_name}")
@@ -174,7 +310,18 @@ class SFTTrainerWrapper(BaseTrainerWrapper):
         print("✅ 模型載入完成")
     
     def train(self):
-        """開始SFT訓練"""
+        """
+        負責執行 SFTTrainerWrapper 中的 train 流程，依照 SFTTrainerWrapper 的流程需求處理 train 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            無。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 未標註。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         from trl import SFTConfig, SFTTrainer
         
         if self.model is None:
@@ -240,10 +387,19 @@ class SFTTrainerWrapper(BaseTrainerWrapper):
 
 
 class GRPOTrainerWrapper(BaseTrainerWrapper):
-    """GRPO (Group Relative Policy Optimization) 訓練器封裝
+    """
+    負責在 rl.trainers 中封裝 GRPOTrainerWrapper，封裝此模組的狀態資料與主要操作流程。
     
-    用於強化學習訓練，優化模型的推理能力。
-    GRPO相比PPO更簡單，不需要Value Model。
+    Args:
+        config: 控制此流程行為的設定資料。
+        dataset: 此流程需要使用的輸入資料。
+        reward_fn: 此流程需要使用的輸入資料。
+    
+    Returns:
+        類別本身不直接回傳值；建立實例後可透過其方法操作狀態與流程。
+    
+    限制或副作用:
+        方法可能更新內部狀態、讀寫檔案、呼叫外部服務或產生日誌，需依使用情境確認。
     """
     
     def __init__(
@@ -253,19 +409,36 @@ class GRPOTrainerWrapper(BaseTrainerWrapper):
         reward_fn: Optional[Callable] = None
     ):
         """
-        初始化GRPO訓練器
+        負責執行 GRPOTrainerWrapper 中的 __init__ 流程，初始化物件所需的設定、依賴與內部狀態，讓後續方法可以沿用同一份執行上下文。
         
         Args:
-            config: 訓練設定
-            dataset: 訓練資料集
-            reward_fn: 獎勵函式
+            config: 控制此流程行為的設定資料。
+            dataset: 此流程需要使用的輸入資料。
+            reward_fn: 此流程需要使用的輸入資料。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 未標註。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
         """
         super().__init__(config)
         self.dataset = dataset
         self.reward_fn = reward_fn
     
     def setup_model(self):
-        """設定模型和tokenizer"""
+        """
+        負責執行 GRPOTrainerWrapper 中的 setup_model 流程，將新的輸入資料合併到目前物件狀態或流程紀錄中。
+        
+        Args:
+            無。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 未標註。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         from transformers import AutoModelForCausalLM, AutoTokenizer
         
         print(f"📦 載入模型: {self.config.model_name}")
@@ -288,7 +461,18 @@ class GRPOTrainerWrapper(BaseTrainerWrapper):
         print("✅ 模型載入完成")
     
     def train(self):
-        """開始GRPO訓練"""
+        """
+        負責執行 GRPOTrainerWrapper 中的 train 流程，依照 GRPOTrainerWrapper 的流程需求處理 train 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            無。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 未標註。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         from trl import GRPOConfig, GRPOTrainer
         
         if self.model is None:
@@ -357,10 +541,19 @@ class GRPOTrainerWrapper(BaseTrainerWrapper):
 
 
 class PPOTrainerWrapper(BaseTrainerWrapper):
-    """PPO (Proximal Policy Optimization) 訓練器封裝
+    """
+    負責在 rl.trainers 中封裝 PPOTrainerWrapper，封裝此模組的狀態資料與主要操作流程。
     
-    用於強化學習訓練，是經典的RL算法。
-    相比GRPO，PPO需要額外的Value Model，但可能獲得更好的性能。
+    Args:
+        config: 控制此流程行為的設定資料。
+        dataset: 此流程需要使用的輸入資料。
+        reward_model: 用來呼叫模型或外部服務的模型名稱、客戶端或相關設定。
+    
+    Returns:
+        類別本身不直接回傳值；建立實例後可透過其方法操作狀態與流程。
+    
+    限制或副作用:
+        方法可能更新內部狀態、讀寫檔案、呼叫外部服務或產生日誌，需依使用情境確認。
     """
     
     def __init__(
@@ -370,19 +563,36 @@ class PPOTrainerWrapper(BaseTrainerWrapper):
         reward_model = None
     ):
         """
-        初始化PPO訓練器
+        負責執行 PPOTrainerWrapper 中的 __init__ 流程，初始化物件所需的設定、依賴與內部狀態，讓後續方法可以沿用同一份執行上下文。
         
         Args:
-            config: 訓練設定
-            dataset: 訓練資料集
-            reward_model: 獎勵模型
+            config: 控制此流程行為的設定資料。
+            dataset: 此流程需要使用的輸入資料。
+            reward_model: 用來呼叫模型或外部服務的模型名稱、客戶端或相關設定。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 未標註。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
         """
         super().__init__(config)
         self.dataset = dataset
         self.reward_model = reward_model
     
     def setup_model(self):
-        """設定模型和tokenizer"""
+        """
+        負責執行 PPOTrainerWrapper 中的 setup_model 流程，將新的輸入資料合併到目前物件狀態或流程紀錄中。
+        
+        Args:
+            無。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 未標註。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         from transformers import AutoModelForCausalLM, AutoTokenizer
         
         print(f"📦 載入模型: {self.config.model_name}")
@@ -405,7 +615,18 @@ class PPOTrainerWrapper(BaseTrainerWrapper):
         print("✅ 模型載入完成")
     
     def train(self):
-        """開始PPO訓練"""
+        """
+        負責執行 PPOTrainerWrapper 中的 train 流程，依照 PPOTrainerWrapper 的流程需求處理 train 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            無。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 未標註。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         print("⚠️  PPO訓練器正在開發中...")
         print("   建議使用GRPO訓練器，它更簡單且性能相近")
         raise NotImplementedError("PPO訓練器尚未實現，請使用GRPOTrainerWrapper")

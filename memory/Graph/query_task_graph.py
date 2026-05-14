@@ -1,24 +1,64 @@
 from __future__ import annotations
 
-from dataclasses import dataclass, field
 from datetime import datetime
 import hashlib
 import logging
+from pathlib import Path
+import pickle
 import re
 from typing import Any
+
+import networkx as nx
 
 logger = logging.getLogger(__name__)
 
 
 def _now_iso() -> str:
+    """
+    負責執行 memory.graph.query_task_graph 中的 _now_iso 流程，依照 memory.graph.query_task_graph 的流程需求處理 _now_iso 對應的資料轉換、狀態操作或結果產生。
+    
+    Args:
+        無。
+    
+    Returns:
+        執行結果；若函式標註回傳型別，預期型別為 str。
+    
+    限制或副作用:
+        可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+    """
     return datetime.now().isoformat(timespec="seconds")
 
 
 def _clean_text(value: Any) -> str:
+    """
+    負責執行 memory.graph.query_task_graph 中的 _clean_text 流程，依照 memory.graph.query_task_graph 的流程需求處理 _clean_text 對應的資料轉換、狀態操作或結果產生。
+    
+    Args:
+        value: 記憶系統提供的檢索結果、寫入資料或操作介面。
+    
+    Returns:
+        執行結果；若函式標註回傳型別，預期型別為 str。
+    
+    限制或副作用:
+        可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+    """
     return re.sub(r"\s+", " ", str(value or "")).strip()
 
 
 def _slug(value: Any, *, default: str = "unknown") -> str:
+    """
+    負責執行 memory.graph.query_task_graph 中的 _slug 流程，依照 memory.graph.query_task_graph 的流程需求處理 _slug 對應的資料轉換、狀態操作或結果產生。
+    
+    Args:
+        value: 記憶系統提供的檢索結果、寫入資料或操作介面。
+        default: 記憶系統提供的檢索結果、寫入資料或操作介面。
+    
+    Returns:
+        執行結果；若函式標註回傳型別，預期型別為 str。
+    
+    限制或副作用:
+        可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+    """
     text = _clean_text(value).lower()
     text = re.sub(r"[^a-z0-9_./:-]+", "_", text)
     text = text.strip("_")
@@ -26,11 +66,35 @@ def _slug(value: Any, *, default: str = "unknown") -> str:
 
 
 def _task_id_from_question(question: str) -> str:
+    """
+    負責執行 memory.graph.query_task_graph 中的 _task_id_from_question 流程，依照 memory.graph.query_task_graph 的流程需求處理 _task_id_from_question 對應的資料轉換、狀態操作或結果產生。
+    
+    Args:
+        question: 目前要處理的任務、問題或查詢文字。
+    
+    Returns:
+        執行結果；若函式標註回傳型別，預期型別為 str。
+    
+    限制或副作用:
+        可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+    """
     digest = hashlib.sha1(_clean_text(question).encode("utf-8", errors="ignore")).hexdigest()[:12]
     return f"gaia_task_{digest}"
 
 
 def _tokenize(text: str) -> set[str]:
+    """
+    負責執行 memory.graph.query_task_graph 中的 _tokenize 流程，依照 memory.graph.query_task_graph 的流程需求處理 _tokenize 對應的資料轉換、狀態操作或結果產生。
+    
+    Args:
+        text: 記憶系統提供的檢索結果、寫入資料或操作介面。
+    
+    Returns:
+        執行結果；若函式標註回傳型別，預期型別為 set[str]。
+    
+    限制或副作用:
+        可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+    """
     stopwords = {
         "the",
         "a",
@@ -69,6 +133,19 @@ def _tokenize(text: str) -> set[str]:
 
 
 def _lexical_similarity(a: str, b: str) -> float:
+    """
+    負責執行 memory.graph.query_task_graph 中的 _lexical_similarity 流程，依照 memory.graph.query_task_graph 的流程需求處理 _lexical_similarity 對應的資料轉換、狀態操作或結果產生。
+    
+    Args:
+        a: 記憶系統提供的檢索結果、寫入資料或操作介面。
+        b: 記憶系統提供的檢索結果、寫入資料或操作介面。
+    
+    Returns:
+        執行結果；若函式標註回傳型別，預期型別為 float。
+    
+    限制或副作用:
+        可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+    """
     left = _tokenize(a)
     right = _tokenize(b)
     if not left or not right:
@@ -76,36 +153,24 @@ def _lexical_similarity(a: str, b: str) -> float:
     return len(left & right) / len(left | right)
 
 
-@dataclass(slots=True)
-class TaskClassification:
-    task_type: str
-    trigger_terms: list[str] = field(default_factory=list)
-    attachment_type: str | None = None
-    failure_modes: list[str] = field(default_factory=list)
-    tool_policy: dict[str, list[str]] = field(default_factory=dict)
-    confidence: float = 0.5
-
-    def to_dict(self) -> dict[str, Any]:
-        return {
-            "task_type": self.task_type,
-            "trigger_terms": list(self.trigger_terms),
-            "attachment_type": self.attachment_type,
-            "failure_modes": list(self.failure_modes),
-            "tool_policy": {
-                "prefer": list(self.tool_policy.get("prefer", [])),
-                "optional": list(self.tool_policy.get("optional", [])),
-                "avoid": list(self.tool_policy.get("avoid", [])),
-            },
-            "confidence": self.confidence,
-        }
-
-
 class QueryTaskGraph:
-    """Task/query graph for GAIA-style memory retrieval.
-
-    The class writes GAIA task nodes and task-signal relationships to Neo4j
-    when a driver is available. If Neo4j is unavailable, it keeps a small
-    in-process fallback so callers can still build memory prompts.
+    """
+    負責在 memory.graph.query_task_graph 中封裝 QueryTaskGraph，管理記憶圖、任務紀錄、檢索結果或跨任務經驗的狀態與操作。
+    
+    Args:
+        graph_store: 記憶系統提供的檢索結果、寫入資料或操作介面。
+        auto_connect: 記憶系統提供的檢索結果、寫入資料或操作介面。
+        namespace: 記憶系統提供的檢索結果、寫入資料或操作介面。
+        task_vector_index: 記憶系統提供的檢索結果、寫入資料或操作介面。
+        similarity_threshold: 控制檢索、篩選或輸出數量的數值參數。
+        default_hop: 記憶系統提供的檢索結果、寫入資料或操作介面。
+        graph_persist_path: 記憶系統提供的檢索結果、寫入資料或操作介面。
+    
+    Returns:
+        類別本身不直接回傳值；建立實例後可透過其方法操作狀態與流程。
+    
+    限制或副作用:
+        方法可能更新內部狀態、讀寫檔案、呼叫外部服務或產生日誌，需依使用情境確認。
     """
 
     def __init__(
@@ -114,19 +179,75 @@ class QueryTaskGraph:
         *,
         auto_connect: bool = True,
         namespace: str = "gaia",
+        task_vector_index: Any | None = None,
+        similarity_threshold: float = 0.70,
+        default_hop: int = 1,
+        graph_persist_path: str | Path | None = None,
     ):
+        """
+        負責執行 QueryTaskGraph 中的 __init__ 流程，初始化物件所需的設定、依賴與內部狀態，讓後續方法可以沿用同一份執行上下文。
+        
+        Args:
+            graph_store: 記憶系統提供的檢索結果、寫入資料或操作介面。
+            auto_connect: 記憶系統提供的檢索結果、寫入資料或操作介面。
+            namespace: 記憶系統提供的檢索結果、寫入資料或操作介面。
+            task_vector_index: 記憶系統提供的檢索結果、寫入資料或操作介面。
+            similarity_threshold: 控制檢索、篩選或輸出數量的數值參數。
+            default_hop: 記憶系統提供的檢索結果、寫入資料或操作介面。
+            graph_persist_path: 記憶系統提供的檢索結果、寫入資料或操作介面。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 未標註。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         self.namespace = namespace
         self.graph_store = graph_store
+        self.task_vector_index = task_vector_index
+        self.similarity_threshold = similarity_threshold
+        self.default_hop = default_hop
+        self.graph_persist_path = Path(graph_persist_path) if graph_persist_path else (
+            Path("memory") / "storage" / "graph" / f"query_task_graph_{self.namespace}.pkl"
+        )
+        self.graph = nx.Graph()
         self._memory_tasks: dict[str, dict[str, Any]] = {}
         self._memory_edges: list[dict[str, Any]] = []
+        self._neo4j_hydrated = False
+        self._load_graph_snapshot()
         if self.graph_store is None and auto_connect:
             self.graph_store = self._create_graph_store()
+        self._hydrate_from_neo4j()
 
     @property
     def available(self) -> bool:
+        """
+        負責執行 QueryTaskGraph 中的 available 流程，依照 QueryTaskGraph 的流程需求處理 available 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            無。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 bool。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         return bool(getattr(self.graph_store, "driver", None))
 
     def _create_graph_store(self) -> Any | None:
+        """
+        負責執行 QueryTaskGraph 中的 _create_graph_store 流程，依照 QueryTaskGraph 的流程需求處理 _create_graph_store 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            無。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 Any | None。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         try:
             from core.database_config import get_database_config
             from memory.storage.neo4j_store import Neo4jGraphStore
@@ -141,21 +262,57 @@ class QueryTaskGraph:
             return None
 
     def _create_indexes(self, store: Any | None = None) -> None:
+        """
+        負責執行 QueryTaskGraph 中的 _create_indexes 流程，依照 QueryTaskGraph 的流程需求處理 _create_indexes 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            store: 記憶系統提供的檢索結果、寫入資料或操作介面。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 None。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         store = store or self.graph_store
         if not getattr(store, "driver", None):
             return
+        migrations = [
+            "MATCH (n:GaiaTask) SET n:MemoryTask",
+            "MATCH (n:GaiaTaskType) SET n:MemoryTaskType",
+            "MATCH (n:GaiaTriggerTerm) SET n:MemoryTriggerTerm",
+            "MATCH (n:GaiaFailureMode) SET n:MemoryFailureMode",
+            "MATCH (n:GaiaToolPolicy) SET n:MemoryToolPolicy",
+            "MATCH (n:GaiaAttachmentType) SET n:MemoryAttachmentType",
+        ]
         queries = [
-            "CREATE INDEX gaia_task_id_index IF NOT EXISTS FOR (t:GaiaTask) ON (t.id)",
-            "CREATE INDEX gaia_task_type_index IF NOT EXISTS FOR (t:GaiaTaskType) ON (t.name)",
-            "CREATE INDEX gaia_trigger_index IF NOT EXISTS FOR (t:GaiaTriggerTerm) ON (t.name)",
-            "CREATE INDEX gaia_failure_index IF NOT EXISTS FOR (f:GaiaFailureMode) ON (f.name)",
-            "CREATE INDEX gaia_policy_index IF NOT EXISTS FOR (p:GaiaToolPolicy) ON (p.name)",
+            "CREATE INDEX memory_task_id_index IF NOT EXISTS FOR (t:MemoryTask) ON (t.id)",
+            "CREATE INDEX memory_task_type_index IF NOT EXISTS FOR (t:MemoryTaskType) ON (t.name)",
+            "CREATE INDEX memory_trigger_index IF NOT EXISTS FOR (t:MemoryTriggerTerm) ON (t.name)",
+            "CREATE INDEX memory_failure_index IF NOT EXISTS FOR (f:MemoryFailureMode) ON (f.name)",
+            "CREATE INDEX memory_policy_index IF NOT EXISTS FOR (p:MemoryToolPolicy) ON (p.name)",
+            "CREATE INDEX memory_task_main_index IF NOT EXISTS FOR (t:MemoryTask) ON (t.task_main)",
         ]
         with store.driver.session(database=store.database) as session:
+            for query in migrations:
+                session.run(query)
             for query in queries:
                 session.run(query)
 
     def _write(self, query: str, **params: Any) -> bool:
+        """
+        負責執行 QueryTaskGraph 中的 _write 流程，依照 QueryTaskGraph 的流程需求處理 _write 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            query: 目前要處理的任務、問題或查詢文字。
+            **params: 記憶系統提供的檢索結果、寫入資料或操作介面。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 bool。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         if not self.available:
             return False
         try:
@@ -167,6 +324,19 @@ class QueryTaskGraph:
             return False
 
     def _read(self, query: str, **params: Any) -> list[dict[str, Any]]:
+        """
+        負責執行 QueryTaskGraph 中的 _read 流程，依照 QueryTaskGraph 的流程需求處理 _read 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            query: 目前要處理的任務、問題或查詢文字。
+            **params: 記憶系統提供的檢索結果、寫入資料或操作介面。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 list[dict[str, Any]]。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         if not self.available:
             return []
         try:
@@ -177,184 +347,431 @@ class QueryTaskGraph:
             logger.warning("QueryTaskGraph read failed: %s", exc)
             return []
 
-    def register_task(
+    def _load_graph_snapshot(self) -> None:
+        """
+        負責執行 QueryTaskGraph 中的 _load_graph_snapshot 流程，依照 QueryTaskGraph 的流程需求處理 _load_graph_snapshot 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            無。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 None。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
+        if not self.graph_persist_path.exists():
+            return
+        try:
+            with self.graph_persist_path.open("rb") as handle:
+                payload = pickle.load(handle)
+        except Exception as exc:
+            logger.warning("QueryTaskGraph graph snapshot load failed: %s", exc)
+            return
+        try:
+            graph = payload.get("graph") if isinstance(payload, dict) else payload
+            if isinstance(graph, nx.Graph):
+                self.graph = graph
+            tasks = payload.get("memory_tasks", {}) if isinstance(payload, dict) else {}
+            if isinstance(tasks, dict):
+                self._memory_tasks.update(tasks)
+            edges = payload.get("memory_edges", []) if isinstance(payload, dict) else []
+            if isinstance(edges, list):
+                self._memory_edges.extend(edge for edge in edges if isinstance(edge, dict))
+        except Exception as exc:
+            logger.warning("QueryTaskGraph graph snapshot restore failed: %s", exc)
+
+    def _persist_graph_snapshot(self) -> None:
+        """
+        負責執行 QueryTaskGraph 中的 _persist_graph_snapshot 流程，依照 QueryTaskGraph 的流程需求處理 _persist_graph_snapshot 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            無。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 None。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
+        try:
+            self.graph_persist_path.parent.mkdir(parents=True, exist_ok=True)
+            payload = {
+                "namespace": self.namespace,
+                "graph": self.graph,
+                "memory_tasks": self._memory_tasks,
+                "memory_edges": self._memory_edges[-5000:],
+                "updated_at": _now_iso(),
+            }
+            with self.graph_persist_path.open("wb") as handle:
+                pickle.dump(payload, handle)
+        except Exception as exc:
+            logger.warning("QueryTaskGraph graph snapshot persist failed: %s", exc)
+
+    def _hydrate_from_neo4j(self) -> None:
+        """
+        負責執行 QueryTaskGraph 中的 _hydrate_from_neo4j 流程，依照 QueryTaskGraph 的流程需求處理 _hydrate_from_neo4j 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            無。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 None。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
+        if self._neo4j_hydrated or not self.available:
+            return
+        self._neo4j_hydrated = True
+        task_rows = self._read(
+            """
+            MATCH (task:MemoryTask)
+            WHERE coalesce(task.namespace, $namespace) = $namespace
+            RETURN task.id AS task_id,
+                   task.question AS question,
+                   task.task_main AS task_main,
+                   task.task_description AS task_description,
+                   task.task_type AS task_type,
+                   task.label AS label,
+                   task.has_interaction_record AS has_interaction_record
+            """,
+            namespace=self.namespace,
+        )
+        for row in task_rows:
+            task_id = _clean_text(row.get("task_id"))
+            if not task_id:
+                continue
+            task = self._memory_tasks.setdefault(task_id, {"id": task_id})
+            task.update(
+                {
+                    "id": task_id,
+                    "question": _clean_text(row.get("question")),
+                    "task_main": _clean_text(row.get("task_main")) or task.get("task_main") or task_id,
+                    "task_description": _clean_text(row.get("task_description")),
+                    "task_type": _clean_text(row.get("task_type")),
+                    "label": _clean_text(row.get("label")),
+                    "has_interaction_record": bool(row.get("has_interaction_record")),
+                }
+            )
+            self._add_or_update_graph_node(task_id, persist=False)
+
+        edge_rows = self._read(
+            """
+            MATCH (a:MemoryTask)-[rel:SIMILAR_TO]-(b:MemoryTask)
+            WHERE coalesce(a.namespace, $namespace) = $namespace
+              AND coalesce(b.namespace, $namespace) = $namespace
+            RETURN a.id AS left_task_id,
+                   b.id AS right_task_id,
+                   coalesce(rel.weight, 0.0) AS weight
+            """,
+            namespace=self.namespace,
+        )
+        for row in edge_rows:
+            left = _clean_text(row.get("left_task_id"))
+            right = _clean_text(row.get("right_task_id"))
+            if not left or not right or left == right:
+                continue
+            self._add_similarity_edge(left, right, float(row.get("weight", 0.0) or 0.0), persist=False)
+        if task_rows or edge_rows:
+            self._persist_graph_snapshot()
+
+    def update_task_node(
         self,
         task_id: str | None,
-        question: str,
+        question: str | None = None,
         metadata: dict[str, Any] | None = None,
+        **properties: Any,
     ) -> str:
-        resolved_id = _clean_text(task_id) or _task_id_from_question(question)
+        """
+        負責執行 QueryTaskGraph 中的 update_task_node 流程，更新記憶圖、互動狀態、節點邊關係或追蹤紀錄。
+        
+        Args:
+            task_id: 記憶系統提供的檢索結果、寫入資料或操作介面。
+            question: 目前要處理的任務、問題或查詢文字。
+            metadata: 目前流程所需的上下文、狀態或附加資訊。
+            **properties: 記憶系統提供的檢索結果、寫入資料或操作介面。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 str。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
+        resolved_id = _clean_text(task_id) or _task_id_from_question(question or "")
         payload = dict(metadata or {})
         payload.setdefault("created_at", _now_iso())
         payload.setdefault("namespace", self.namespace)
-        task = {
-            "id": resolved_id,
-            "question": _clean_text(question),
-            "metadata": payload,
-        }
+        task = self._memory_tasks.setdefault(resolved_id, {"id": resolved_id})
+        if question is not None:
+            task["question"] = _clean_text(question)
+        task["metadata"] = {**dict(task.get("metadata") or {}), **payload}
+        for key, value in properties.items():
+            if value is not None:
+                task[key] = value
         self._memory_tasks.setdefault(resolved_id, {}).update(task)
+        self._add_or_update_graph_node(resolved_id)
         self._write(
             """
-            MERGE (t:GaiaTask {id: $task_id})
+            MERGE (t:MemoryTask {id: $task_id})
             SET t.question = $question,
                 t.namespace = $namespace,
                 t.updated_at = $updated_at,
                 t += $metadata
             """,
             task_id=resolved_id,
-            question=task["question"],
+            question=task.get("question", ""),
             namespace=self.namespace,
             updated_at=_now_iso(),
-            metadata=payload,
+            metadata={**payload, **{key: value for key, value in properties.items() if value is not None}},
         )
+        self._persist_graph_snapshot()
         return resolved_id
 
-    def classify_task(
-        self,
-        question: str,
-        attachment_type: str | None = None,
-    ) -> TaskClassification:
-        text = _clean_text(question).lower()
-        ext = _slug(attachment_type or "", default="")
-
-        rules: list[tuple[str, list[str], list[str], dict[str, list[str]], float]] = [
-            (
-                "stochastic_process",
-                ["random", "randomly", "probability", "odds", "maximize", "position", "advance"],
-                ["missing_state_transition_model", "surface_numeric_guess"],
-                {
-                    "prefer": ["python_solver"],
-                    "optional": ["search"],
-                    "avoid": ["calculator_on_raw_question"],
-                },
-                0.82,
-            ),
-            (
-                "spreadsheet_reasoning",
-                ["spreadsheet", "excel", "xlsx", "xls", "sheet", "cell", "row", "column", "color"],
-                ["table_scope_mismatch", "missed_attachment_evidence"],
-                {
-                    "prefer": ["attachment_reader", "pandas_excel"],
-                    "optional": ["python_solver"],
-                    "avoid": ["raw_text_guess"],
-                },
-                0.86,
-            ),
-            (
-                "image_understanding",
-                ["image", "png", "jpg", "jpeg", "screenshot", "photo", "visual", "picture"],
-                ["missed_visual_evidence", "weak_ocr_or_caption"],
-                {
-                    "prefer": ["attachment_reader", "vision_model"],
-                    "optional": ["search"],
-                    "avoid": ["text_only_guess"],
-                },
-                0.82,
-            ),
-            (
-                "audio_understanding",
-                ["audio", "mp3", "listen", "transcribe", "recording", "sound"],
-                ["missed_audio_evidence", "transcription_error"],
-                {
-                    "prefer": ["attachment_reader", "audio_transcription"],
-                    "optional": ["search"],
-                    "avoid": ["text_only_guess"],
-                },
-                0.82,
-            ),
-            (
-                "counting_scope",
-                ["how many", "count", "number of", "total", "list all", "between", "during"],
-                ["scope_filter_mismatch", "boundary_condition_slip"],
-                {
-                    "prefer": ["search"],
-                    "optional": ["python_solver"],
-                    "avoid": ["candidate_collapse"],
-                },
-                0.72,
-            ),
-            (
-                "unit_conversion",
-                ["unit", "convert", "nearest", "round", "km", "mile", "meter", "kg", "percent"],
-                ["unit_or_scale_mismatch", "format_or_rounding_slip"],
-                {
-                    "prefer": ["python_solver"],
-                    "optional": ["calculator"],
-                    "avoid": ["unverified_mental_math"],
-                },
-                0.7,
-            ),
-            (
-                "factual_search",
-                ["who", "when", "where", "website", "source", "latest", "current", "published", "released"],
-                ["insufficient_evidence", "outdated_fact"],
-                {
-                    "prefer": ["search"],
-                    "optional": ["rag"],
-                    "avoid": ["memory_as_answer_lookup"],
-                },
-                0.68,
-            ),
-        ]
-
-        if ext in {"xlsx", "xls", "csv"}:
-            return TaskClassification(
-                task_type="spreadsheet_reasoning",
-                trigger_terms=[ext, "spreadsheet"],
-                attachment_type=ext,
-                failure_modes=["table_scope_mismatch", "missed_attachment_evidence"],
-                tool_policy={"prefer": ["attachment_reader", "pandas_excel"], "optional": ["python_solver"], "avoid": ["raw_text_guess"]},
-                confidence=0.9,
-            )
-        if ext in {"png", "jpg", "jpeg", "webp"}:
-            return TaskClassification(
-                task_type="image_understanding",
-                trigger_terms=[ext, "image"],
-                attachment_type=ext,
-                failure_modes=["missed_visual_evidence", "weak_ocr_or_caption"],
-                tool_policy={"prefer": ["attachment_reader", "vision_model"], "optional": ["search"], "avoid": ["text_only_guess"]},
-                confidence=0.9,
-            )
-        if ext in {"mp3", "wav", "m4a"}:
-            return TaskClassification(
-                task_type="audio_understanding",
-                trigger_terms=[ext, "audio"],
-                attachment_type=ext,
-                failure_modes=["missed_audio_evidence", "transcription_error"],
-                tool_policy={"prefer": ["attachment_reader", "audio_transcription"], "optional": ["search"], "avoid": ["text_only_guess"]},
-                confidence=0.9,
-            )
-
-        best: TaskClassification | None = None
-        for task_type, terms, failures, policy, confidence in rules:
-            matched = [term for term in terms if term in text]
-            if not matched:
-                continue
-            score = confidence + min(0.12, 0.02 * len(matched))
-            if best is None or score > best.confidence:
-                best = TaskClassification(
-                    task_type=task_type,
-                    trigger_terms=matched,
-                    attachment_type=ext or None,
-                    failure_modes=failures,
-                    tool_policy=policy,
-                    confidence=min(score, 0.98),
-                )
-
-        if best is not None:
-            return best
-
-        return TaskClassification(
-            task_type="general_reasoning",
-            trigger_terms=sorted(_tokenize(question))[:8],
-            attachment_type=ext or None,
-            failure_modes=["insufficient_verification"],
-            tool_policy={"prefer": [], "optional": ["search"], "avoid": ["memory_as_answer_lookup"]},
-            confidence=0.45,
+    def _add_or_update_graph_node(self, task_id: str, *, persist: bool = False) -> None:
+        """
+        負責執行 QueryTaskGraph 中的 _add_or_update_graph_node 流程，依照 QueryTaskGraph 的流程需求處理 _add_or_update_graph_node 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            task_id: 記憶系統提供的檢索結果、寫入資料或操作介面。
+            persist: 記憶系統提供的檢索結果、寫入資料或操作介面。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 None。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
+        task = self._memory_tasks.get(task_id, {})
+        metadata = task.get("metadata") or {}
+        self.graph.add_node(
+            task_id,
+            task_id=task_id,
+            task_main=task.get("task_main") or metadata.get("task_main") or task_id,
+            question=task.get("question") or task.get("task_description") or "",
+            task_type=task.get("task_type") or metadata.get("task_type"),
+            trigger_terms=list(task.get("trigger_terms") or metadata.get("trigger_terms") or []),
+            label=task.get("label") or metadata.get("label"),
+            has_interaction_record=bool(task.get("has_interaction_record") or metadata.get("has_interaction_record")),
+            updated_at=_now_iso(),
         )
+        if persist:
+            self._persist_graph_snapshot()
 
-    def link_task_signals(self, task_id: str, classification: TaskClassification | dict[str, Any]) -> None:
-        data = classification.to_dict() if isinstance(classification, TaskClassification) else dict(classification)
+    def _add_similarity_edge(self, left_task_id: str, right_task_id: str, weight: float, *, persist: bool = False) -> None:
+        """
+        負責執行 QueryTaskGraph 中的 _add_similarity_edge 流程，依照 QueryTaskGraph 的流程需求處理 _add_similarity_edge 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            left_task_id: 記憶系統提供的檢索結果、寫入資料或操作介面。
+            right_task_id: 記憶系統提供的檢索結果、寫入資料或操作介面。
+            weight: 記憶系統提供的檢索結果、寫入資料或操作介面。
+            persist: 記憶系統提供的檢索結果、寫入資料或操作介面。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 None。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
+        if not left_task_id or not right_task_id or left_task_id == right_task_id:
+            return
+        self._add_or_update_graph_node(left_task_id)
+        self._add_or_update_graph_node(right_task_id)
+        existing = self.graph.get_edge_data(left_task_id, right_task_id, default={})
+        resolved_weight = max(float(weight or 0.0), float(existing.get("weight", 0.0) or 0.0))
+        self.graph.add_edge(
+            left_task_id,
+            right_task_id,
+            weight=resolved_weight,
+            edge_type="SIMILAR_TO",
+            updated_at=_now_iso(),
+        )
+        if persist:
+            self._persist_graph_snapshot()
+
+    def _task_search_text(self, task: dict[str, Any]) -> str:
+        """
+        負責執行 QueryTaskGraph 中的 _task_search_text 流程，依照 QueryTaskGraph 的流程需求處理 _task_search_text 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            task: 目前要處理的任務、問題或查詢文字。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 str。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
+        metadata = task.get("metadata") or {}
+        parts = [
+            task.get("task_main"),
+            task.get("task_description"),
+            task.get("question"),
+            metadata.get("task_main"),
+            metadata.get("question_excerpt"),
+            task.get("failure_mode"),
+            " ".join(task.get("trigger_terms") or []),
+            task.get("task_type"),
+        ]
+        return _clean_text(" ".join(str(part or "") for part in parts if part is not None))
+
+    def _retrieve_seed_tasks_from_vector_index(self, query: str, *, top_k: int) -> list[dict[str, Any]]:
+        """
+        負責執行 QueryTaskGraph 中的 _retrieve_seed_tasks_from_vector_index 流程，依照 QueryTaskGraph 的流程需求處理 _retrieve_seed_tasks_from_vector_index 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            query: 目前要處理的任務、問題或查詢文字。
+            top_k: 控制檢索、篩選或輸出數量的數值參數。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 list[dict[str, Any]]。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
+        index = self.task_vector_index
+        if index is None:
+            return []
+        try:
+            if hasattr(index, "search_similar_tasks"):
+                raw_results = index.search_similar_tasks(query, k=top_k)
+            elif hasattr(index, "similarity_search_with_score"):
+                raw_results = index.similarity_search_with_score(query, k=top_k)
+            elif hasattr(index, "similarity_search"):
+                raw_results = index.similarity_search(query, k=top_k)
+            else:
+                return []
+        except Exception as exc:
+            logger.warning("QueryTaskGraph vector seed search failed: %s", exc)
+            return []
+
+        seeds: list[dict[str, Any]] = []
+        for item in raw_results or []:
+            seeds.extend(self._normalize_vector_seed(item))
+        return sorted(seeds, key=lambda row: float(row.get("weight", 0.0) or 0.0), reverse=True)[:top_k]
+
+    def _normalize_vector_seed(self, item: Any) -> list[dict[str, Any]]:
+        """
+        負責執行 QueryTaskGraph 中的 _normalize_vector_seed 流程，依照 QueryTaskGraph 的流程需求處理 _normalize_vector_seed 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            item: 記憶系統提供的檢索結果、寫入資料或操作介面。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 list[dict[str, Any]]。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
+        if isinstance(item, tuple) and len(item) >= 2:
+            doc, score = item[0], item[1]
+            metadata = getattr(doc, "metadata", None) or (doc.get("metadata") if isinstance(doc, dict) else {}) or {}
+            content = getattr(doc, "page_content", None) or (doc.get("page_content") if isinstance(doc, dict) else "") or ""
+            task_id = metadata.get("task_id") or metadata.get("id")
+            weight = self._distance_to_similarity(score)
+            return [{"task_id": task_id, "weight": weight, "question": content, "source": "vector_index"}] if task_id else []
+        if isinstance(item, dict):
+            metadata = item.get("metadata") or {}
+            task_id = item.get("task_id") or metadata.get("task_id") or item.get("id")
+            if "distance" in item:
+                weight = self._distance_to_similarity(item.get("distance"))
+            else:
+                score = item.get("similarity", item.get("score", item.get("weight")))
+                weight = self._score_to_similarity(score)
+            return [
+                {
+                    "task_id": task_id,
+                    "weight": weight,
+                    "question": item.get("question") or item.get("page_content") or item.get("content") or "",
+                    "source": item.get("source", "vector_index"),
+                }
+            ] if task_id else []
+        return []
+
+    def _score_to_similarity(self, value: Any) -> float:
+        """
+        負責執行 QueryTaskGraph 中的 _score_to_similarity 流程，依照 QueryTaskGraph 的流程需求處理 _score_to_similarity 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            value: 記憶系統提供的檢索結果、寫入資料或操作介面。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 float。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
+        try:
+            score = float(value)
+        except (TypeError, ValueError):
+            return 0.0
+        if score < 0:
+            return max(0.0, 1.0 + score)
+        if score <= 1.0:
+            return max(0.0, min(1.0, score))
+        return max(0.0, min(1.0, 1.0 - score))
+
+    def _distance_to_similarity(self, value: Any) -> float:
+        """
+        負責執行 QueryTaskGraph 中的 _distance_to_similarity 流程，依照 QueryTaskGraph 的流程需求處理 _distance_to_similarity 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            value: 記憶系統提供的檢索結果、寫入資料或操作介面。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 float。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
+        try:
+            distance = float(value)
+        except (TypeError, ValueError):
+            return 0.0
+        return max(0.0, min(1.0, 1.0 - distance))
+
+    def _best_path_edge_weight(self, source_task_id: str, target_task_id: str) -> float:
+        """
+        負責執行 QueryTaskGraph 中的 _best_path_edge_weight 流程，依照 QueryTaskGraph 的流程需求處理 _best_path_edge_weight 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            source_task_id: 記憶系統提供的檢索結果、寫入資料或操作介面。
+            target_task_id: 記憶系統提供的檢索結果、寫入資料或操作介面。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 float。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
+        try:
+            path = nx.shortest_path(self.graph, source_task_id, target_task_id)
+        except Exception:
+            return 0.0
+        if len(path) < 2:
+            return 1.0
+        weights = []
+        for left, right in zip(path, path[1:]):
+            data = self.graph.get_edge_data(left, right, default={})
+            weights.append(float(data.get("weight", 0.0) or 0.0))
+        return min(weights) if weights else 0.0
+
+    def link_task_signals(self, task_id: str, classification: dict[str, Any]) -> None:
+        """
+        負責執行 QueryTaskGraph 中的 link_task_signals 流程，依照 QueryTaskGraph 的流程需求處理 link_task_signals 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            task_id: 記憶系統提供的檢索結果、寫入資料或操作介面。
+            classification: 記憶系統提供的檢索結果、寫入資料或操作介面。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 None。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
+        data = dict(classification or {})
         task_type = _slug(data.get("task_type"))
         trigger_terms = [_slug(term) for term in data.get("trigger_terms", []) if _slug(term)]
         attachment_type = _slug(data.get("attachment_type") or "", default="")
@@ -365,6 +782,7 @@ class QueryTaskGraph:
         task["classification"] = data
         task["task_type"] = task_type
         task["trigger_terms"] = trigger_terms
+        self._add_or_update_graph_node(task_id)
         self._memory_edges.extend(
             {"from": task_id, "to": value, "type": edge_type}
             for edge_type, values in [
@@ -378,8 +796,8 @@ class QueryTaskGraph:
 
         self._write(
             """
-            MATCH (task:GaiaTask {id: $task_id})
-            MERGE (type:GaiaTaskType {name: $task_type})
+            MATCH (task:MemoryTask {id: $task_id})
+            MERGE (type:MemoryTaskType {name: $task_type})
             MERGE (task)-[:CLASSIFIED_AS]->(type)
             SET task.task_type = $task_type,
                 task.classification_confidence = $confidence
@@ -392,8 +810,8 @@ class QueryTaskGraph:
         for term in trigger_terms:
             self._write(
                 """
-                MATCH (task:GaiaTask {id: $task_id})
-                MERGE (term:GaiaTriggerTerm {name: $term})
+                MATCH (task:MemoryTask {id: $task_id})
+                MERGE (term:MemoryTriggerTerm {name: $term})
                 MERGE (task)-[:HAS_TRIGGER]->(term)
                 """,
                 task_id=task_id,
@@ -402,8 +820,8 @@ class QueryTaskGraph:
         if attachment_type:
             self._write(
                 """
-                MATCH (task:GaiaTask {id: $task_id})
-                MERGE (attachment:GaiaAttachmentType {name: $attachment_type})
+                MATCH (task:MemoryTask {id: $task_id})
+                MERGE (attachment:MemoryAttachmentType {name: $attachment_type})
                 MERGE (task)-[:HAS_ATTACHMENT_TYPE]->(attachment)
                 """,
                 task_id=task_id,
@@ -412,8 +830,8 @@ class QueryTaskGraph:
         for mode in failure_modes:
             self._write(
                 """
-                MATCH (task:GaiaTask {id: $task_id})
-                MERGE (mode:GaiaFailureMode {name: $mode})
+                MATCH (task:MemoryTask {id: $task_id})
+                MERGE (mode:MemoryFailureMode {name: $mode})
                 MERGE (task)-[:HAS_POSSIBLE_FAILURE]->(mode)
                 """,
                 task_id=task_id,
@@ -423,13 +841,14 @@ class QueryTaskGraph:
             for tool in [_slug(item) for item in tools if _slug(item)]:
                 self._write(
                     f"""
-                    MATCH (type:GaiaTaskType {{name: $task_type}})
-                    MERGE (tool:GaiaToolPolicy {{name: $tool}})
+                    MATCH (type:MemoryTaskType {{name: $task_type}})
+                    MERGE (tool:MemoryToolPolicy {{name: $tool}})
                     MERGE (type)-[:{relation}]->(tool)
                     """,
                     task_type=task_type,
                     tool=tool,
                 )
+        self._persist_graph_snapshot()
 
     def link_similar_tasks(
         self,
@@ -439,51 +858,37 @@ class QueryTaskGraph:
         top_k: int = 5,
         min_weight: float = 0.20,
     ) -> list[dict[str, Any]]:
+        """
+        負責執行 QueryTaskGraph 中的 link_similar_tasks 流程，依照 QueryTaskGraph 的流程需求處理 link_similar_tasks 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            task_id: 記憶系統提供的檢索結果、寫入資料或操作介面。
+            question: 目前要處理的任務、問題或查詢文字。
+            top_k: 控制檢索、篩選或輸出數量的數值參數。
+            min_weight: 控制檢索、篩選或輸出數量的數值參數。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 list[dict[str, Any]]。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         candidates = []
-        current = self._memory_tasks.get(task_id, {})
-        current_type = current.get("task_type")
-        current_terms = set(current.get("trigger_terms") or [])
-
-        for other_id, other in self._memory_tasks.items():
-            if other_id == task_id:
-                continue
-            other_question = str(other.get("question", "") or "")
-            score = _lexical_similarity(question, other_question)
-            if current_type and other.get("task_type") == current_type:
-                score += 0.25
-            other_terms = set(other.get("trigger_terms") or [])
-            if current_terms or other_terms:
-                score += 0.20 * (len(current_terms & other_terms) / max(1, len(current_terms | other_terms)))
-            if score >= min_weight:
-                candidates.append({"task_id": other_id, "weight": min(score, 1.0), "question": other_question})
-
-        if self.available:
-            rows = self._read(
-                """
-                MATCH (current:GaiaTask {id: $task_id})
-                MATCH (other:GaiaTask)
-                WHERE other.id <> $task_id
-                OPTIONAL MATCH (current)-[:CLASSIFIED_AS]->(ct:GaiaTaskType)<-[:CLASSIFIED_AS]-(other)
-                OPTIONAL MATCH (current)-[:HAS_TRIGGER]->(trig:GaiaTriggerTerm)<-[:HAS_TRIGGER]-(other)
-                WITH other, count(DISTINCT ct) AS type_hits, count(DISTINCT trig) AS trigger_hits
-                RETURN other.id AS task_id, other.question AS question,
-                       (0.25 * type_hits + 0.08 * trigger_hits) AS graph_weight
-                ORDER BY graph_weight DESC
-                LIMIT $limit
-                """,
-                task_id=task_id,
-                limit=max(top_k * 3, 10),
-            )
-            for row in rows:
-                weight = float(row.get("graph_weight", 0.0) or 0.0)
-                if weight >= min_weight:
-                    candidates.append(
-                        {
-                            "task_id": row.get("task_id"),
-                            "weight": min(weight, 1.0),
-                            "question": row.get("question", ""),
-                        }
-                    )
+        for item in self.retrieve_seed_tasks_by_embedding(
+            question,
+            top_k=max(top_k * 2, 10),
+            exclude_task_id=task_id,
+        ):
+            weight = float(item.get("weight", 0.0) or 0.0)
+            if weight >= min_weight:
+                candidates.append(
+                    {
+                        "task_id": item.get("task_id"),
+                        "weight": min(weight, 1.0),
+                        "question": item.get("question", ""),
+                        "source": item.get("source", "seed_retrieval"),
+                    }
+                )
 
         deduped: dict[str, dict[str, Any]] = {}
         for item in candidates:
@@ -496,10 +901,11 @@ class QueryTaskGraph:
 
         for item in selected:
             self._memory_edges.append({"from": task_id, "to": item["task_id"], "type": "SIMILAR_TO", "weight": item["weight"]})
+            self._add_similarity_edge(task_id, str(item["task_id"]), float(item["weight"]))
             self._write(
                 """
-                MATCH (a:GaiaTask {id: $task_id})
-                MATCH (b:GaiaTask {id: $other_id})
+                MATCH (a:MemoryTask {id: $task_id})
+                MATCH (b:MemoryTask {id: $other_id})
                 MERGE (a)-[r:SIMILAR_TO]->(b)
                 SET r.weight = $weight,
                     r.updated_at = $updated_at
@@ -509,187 +915,178 @@ class QueryTaskGraph:
                 weight=float(item["weight"]),
                 updated_at=_now_iso(),
             )
+        if selected:
+            self._persist_graph_snapshot()
         return selected
 
-    def update_task_outcome(
+    def retrieve_seed_tasks_by_embedding(
         self,
-        task_id: str,
+        query: str,
         *,
-        stage1_result: str | None = None,
-        final_result: str | None = None,
-        expected: str | None = None,
-        exact: bool | None = None,
-        partial: bool | None = None,
-        failure_mode: str | None = None,
-        tools_used: list[str] | None = None,
-        metadata: dict[str, Any] | None = None,
-    ) -> None:
-        task = self._memory_tasks.setdefault(task_id, {"id": task_id})
-        task.update(
-            {
-                "stage1_result": stage1_result,
-                "final_result": final_result,
-                "expected": expected,
-                "exact": exact,
-                "partial": partial,
-                "failure_mode": _slug(failure_mode or "", default="") or None,
-                "tools_used": [_slug(tool) for tool in (tools_used or [])],
-                "outcome_metadata": dict(metadata or {}),
-            }
-        )
-        self._write(
-            """
-            MATCH (task:GaiaTask {id: $task_id})
-            SET task.stage1_result = $stage1_result,
-                task.final_result = $final_result,
-                task.expected = $expected,
-                task.exact = $exact,
-                task.partial = $partial,
-                task.failure_mode = $failure_mode,
-                task.tools_used = $tools_used,
-                task.updated_at = $updated_at
-            """,
-            task_id=task_id,
-            stage1_result=stage1_result,
-            final_result=final_result,
-            expected=expected,
-            exact=exact,
-            partial=partial,
-            failure_mode=_slug(failure_mode or "", default=""),
-            tools_used=[_slug(tool) for tool in (tools_used or [])],
-            updated_at=_now_iso(),
-        )
-        if failure_mode:
-            self._write(
-                """
-                MATCH (task:GaiaTask {id: $task_id})
-                MERGE (mode:GaiaFailureMode {name: $mode})
-                MERGE (task)-[:FAILED_WITH]->(mode)
-                """,
-                task_id=task_id,
-                mode=_slug(failure_mode),
+        top_k: int = 10,
+        exclude_task_id: str | None = None,
+    ) -> list[dict[str, Any]]:
+        """
+        負責執行 QueryTaskGraph 中的 retrieve_seed_tasks_by_embedding 流程，從記憶圖、向量索引或任務關聯中取回相關案例與策略提醒。
+        
+        Args:
+            query: 目前要處理的任務、問題或查詢文字。
+            top_k: 控制檢索、篩選或輸出數量的數值參數。
+            exclude_task_id: 記憶系統提供的檢索結果、寫入資料或操作介面。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 list[dict[str, Any]]。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
+        self._hydrate_from_neo4j()
+        seeds = self._retrieve_seed_tasks_from_vector_index(query, top_k=top_k)
+        if seeds:
+            return [
+                item
+                for item in seeds
+                if str(item.get("task_id") or "") and str(item.get("task_id")) != str(exclude_task_id or "")
+            ][:top_k]
+
+        candidates = []
+        for other_id, task in self._memory_tasks.items():
+            if other_id == exclude_task_id:
+                continue
+            text = self._task_search_text(task)
+            score = _lexical_similarity(query, text)
+            if score <= 0:
+                continue
+            candidates.append(
+                {
+                    "task_id": other_id,
+                    "weight": min(score, 1.0),
+                    "question": text,
+                    "source": "lexical_seed",
+                }
             )
+        return sorted(candidates, key=lambda item: item["weight"], reverse=True)[:top_k]
 
-    def retrieve_for_stage1_round0(
+    def expand_related_tasks(
         self,
-        task_id: str | None,
-        question: str,
+        seed_task_ids: list[str],
         *,
-        limit: int = 5,
-    ) -> dict[str, Any]:
-        resolved_id = _clean_text(task_id) or _task_id_from_question(question)
-        task = self._memory_tasks.get(resolved_id)
-        if task is None:
-            resolved_id = self.register_task(resolved_id, question)
-            classification = self.classify_task(question)
-            self.link_task_signals(resolved_id, classification)
-            task = self._memory_tasks.get(resolved_id, {})
+        hop: int | None = None,
+        limit: int = 10,
+    ) -> list[dict[str, Any]]:
+        """
+        負責執行 QueryTaskGraph 中的 expand_related_tasks 流程，依照 QueryTaskGraph 的流程需求處理 expand_related_tasks 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            seed_task_ids: 記憶系統提供的檢索結果、寫入資料或操作介面。
+            hop: 記憶系統提供的檢索結果、寫入資料或操作介面。
+            limit: 控制檢索、篩選或輸出數量的數值參數。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 list[dict[str, Any]]。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
+        self._hydrate_from_neo4j()
+        max_hop = self.default_hop if hop is None else max(0, int(hop))
+        scores: dict[str, float] = {}
+        for seed_id in seed_task_ids:
+            if not seed_id or not self.graph.has_node(seed_id):
+                continue
+            scores.setdefault(seed_id, 1.0)
+            lengths = nx.single_source_shortest_path_length(self.graph, seed_id, cutoff=max_hop)
+            for node_id, distance in lengths.items():
+                if node_id == seed_id:
+                    continue
+                edge_weight = self._best_path_edge_weight(seed_id, node_id)
+                hop_penalty = 1.0 / max(1, distance + 1)
+                score = edge_weight * hop_penalty
+                if score > scores.get(str(node_id), 0.0):
+                    scores[str(node_id)] = score
+        ranked = [
+            {
+                "task_id": task_id,
+                "weight": weight,
+                "task_main": self._memory_tasks.get(task_id, {}).get("task_main"),
+            }
+            for task_id, weight in scores.items()
+        ]
+        merged: dict[str, dict[str, Any]] = {
+            str(item["task_id"]): item
+            for item in ranked
+            if item.get("task_id")
+        }
+        if len(merged) < limit and self.available:
+            for item in self._expand_related_tasks_neo4j(seed_task_ids, hop=max_hop, limit=limit):
+                oid = str(item.get("task_id") or "")
+                if not oid:
+                    continue
+                if oid not in merged or float(item.get("weight", 0.0) or 0.0) > float(merged[oid].get("weight", 0.0) or 0.0):
+                    merged[oid] = item
+        return sorted(merged.values(), key=lambda item: float(item.get("weight", 0.0) or 0.0), reverse=True)[:limit]
 
-        similar = self.link_similar_tasks(resolved_id, question, top_k=limit)
-        similar_failures = []
-        for item in similar:
-            other = self._memory_tasks.get(str(item.get("task_id")), {})
-            failure_mode = other.get("failure_mode")
-            if failure_mode or other.get("exact") is False:
-                similar_failures.append(
-                    {
-                        "task_id": item.get("task_id"),
-                        "similarity": item.get("weight"),
-                        "failure_mode": failure_mode or "previous_wrong_answer",
-                        "summary": self._summarize_similar_task(other),
-                    }
-                )
-
-        if self.available:
+    def _expand_related_tasks_neo4j(
+        self,
+        seed_task_ids: list[str],
+        *,
+        hop: int,
+        limit: int,
+    ) -> list[dict[str, Any]]:
+        """
+        負責執行 QueryTaskGraph 中的 _expand_related_tasks_neo4j 流程，依照 QueryTaskGraph 的流程需求處理 _expand_related_tasks_neo4j 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            seed_task_ids: 記憶系統提供的檢索結果、寫入資料或操作介面。
+            hop: 記憶系統提供的檢索結果、寫入資料或操作介面。
+            limit: 控制檢索、篩選或輸出數量的數值參數。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 list[dict[str, Any]]。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
+        max_hop = max(0, int(hop))
+        if max_hop <= 0 or not seed_task_ids:
+            return []
+        results: dict[str, dict[str, Any]] = {}
+        for seed_id in [_clean_text(item) for item in seed_task_ids if _clean_text(item)]:
             rows = self._read(
-                """
-                MATCH (task:GaiaTask {id: $task_id})-[sim:SIMILAR_TO]->(other:GaiaTask)
-                WHERE coalesce(other.exact, false) = false OR other.failure_mode IS NOT NULL
-                RETURN other.id AS task_id, sim.weight AS similarity,
-                       other.failure_mode AS failure_mode,
-                       other.stage1_result AS stage1_result,
-                       other.final_result AS final_result,
-                       other.expected AS expected
-                ORDER BY sim.weight DESC
+                f"""
+                MATCH path = (seed:MemoryTask {{id: $seed_id}})-[:SIMILAR_TO*1..{max_hop}]-(related:MemoryTask)
+                WHERE coalesce(seed.namespace, $namespace) = $namespace
+                  AND coalesce(related.namespace, $namespace) = $namespace
+                WITH related, path,
+                     reduce(w = 1.0, rel IN relationships(path) | w * coalesce(rel.weight, 0.0)) AS path_weight,
+                     length(path) AS hop_count
+                RETURN related.id AS task_id,
+                       related.task_main AS task_main,
+                       path_weight / CASE WHEN hop_count = 0 THEN 1 ELSE hop_count END AS weight
+                ORDER BY weight DESC
                 LIMIT $limit
                 """,
-                task_id=resolved_id,
-                limit=limit,
+                seed_id=seed_id,
+                namespace=self.namespace,
+                limit=max(limit, 1),
             )
             for row in rows:
-                similar_failures.append(
-                    {
-                        "task_id": row.get("task_id"),
-                        "similarity": row.get("similarity"),
-                        "failure_mode": row.get("failure_mode") or "previous_wrong_answer",
-                        "summary": self._summarize_similar_task(row),
+                task_id = _clean_text(row.get("task_id"))
+                if not task_id or task_id == seed_id:
+                    continue
+                weight = float(row.get("weight", 0.0) or 0.0)
+                task = self._memory_tasks.setdefault(task_id, {"id": task_id})
+                if row.get("task_main"):
+                    task["task_main"] = _clean_text(row.get("task_main"))
+                self._add_or_update_graph_node(task_id)
+                self._add_similarity_edge(seed_id, task_id, weight)
+                if task_id not in results or weight > float(results[task_id].get("weight", 0.0) or 0.0):
+                    results[task_id] = {
+                        "task_id": task_id,
+                        "weight": weight,
+                        "task_main": task.get("task_main"),
+                        "source": "neo4j_k_hop",
                     }
-                )
-
-        classification = task.get("classification") or self.classify_task(question).to_dict()
-        return {
-            "task_id": resolved_id,
-            "task_type": classification.get("task_type", "general_reasoning"),
-            "trigger_terms": list(classification.get("trigger_terms", []))[:8],
-            "attachment_type": classification.get("attachment_type"),
-            "failure_modes": list(classification.get("failure_modes", []))[:5],
-            "tool_policy": classification.get("tool_policy", {}),
-            "similar_failures": similar_failures[:limit],
-        }
-
-    def _summarize_similar_task(self, task: dict[str, Any]) -> str:
-        failure_mode = task.get("failure_mode") or task.get("failure_mode".upper()) or "unknown_failure"
-        stage1 = task.get("stage1_result")
-        final = task.get("final_result")
-        expected = task.get("expected")
-        pieces = [f"failure_mode={failure_mode}"]
-        if stage1:
-            pieces.append(f"stage1={stage1}")
-        if final:
-            pieces.append(f"final={final}")
-        if expected:
-            pieces.append("expected was different")
-        return "; ".join(pieces)
-
-    def build_stage1_guidance_prompt(
-        self,
-        retrieval: dict[str, Any],
-        *,
-        insights: list[dict[str, Any]] | None = None,
-        max_failures: int = 1,
-    ) -> str:
-        lines = ["Relevant Memory Guidance:"]
-        task_type = retrieval.get("task_type")
-        if task_type:
-            lines.append(f"- Task type: {task_type}")
-        terms = retrieval.get("trigger_terms") or []
-        if terms:
-            lines.append(f"- Trigger terms: {', '.join(map(str, terms[:8]))}")
-
-        for insight in (insights or [])[:3]:
-            strategy = _clean_text(insight.get("strategy", ""))
-            if strategy:
-                lines.append(f"- Strategy: {strategy}")
-            checklist = insight.get("checklist") or []
-            if checklist:
-                compact = "; ".join(_clean_text(item) for item in checklist[:4] if _clean_text(item))
-                if compact:
-                    lines.append(f"- Checklist: {compact}")
-
-        for failure in (retrieval.get("similar_failures") or [])[:max_failures]:
-            summary = _clean_text(failure.get("summary", ""))
-            if summary:
-                lines.append(f"- Similar failure warning: {summary}")
-
-        policy = retrieval.get("tool_policy") or {}
-        prefer = policy.get("prefer") or []
-        avoid = policy.get("avoid") or []
-        policy_bits = []
-        if prefer:
-            policy_bits.append(f"prefer {', '.join(map(str, prefer[:4]))}")
-        if avoid:
-            policy_bits.append(f"avoid {', '.join(map(str, avoid[:4]))}")
-        if policy_bits:
-            lines.append(f"- Tool policy for later repair: {'; '.join(policy_bits)}")
-
-        return "\n".join(lines).strip()
+        if results:
+            self._persist_graph_snapshot()
+        return sorted(results.values(), key=lambda item: float(item.get("weight", 0.0) or 0.0), reverse=True)[:limit]

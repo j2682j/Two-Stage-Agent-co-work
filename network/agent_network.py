@@ -10,30 +10,69 @@ from .stage1_judge import Stage1Judge
 from .stage1_result_selector import Stage1ResultSelector
 from .tool_manager import ToolManager
 from decisionmaker import VerticalSolverFirstDecisionMaker
-from memory import MemoryConfig
+from memory.base import MemoryConfig
 
 
 class AgentNetwork:
     """
-    AgentNetwork 會串接多個 AgentNeuron，負責：
-    - forward: 讓多個節點逐輪推理並收集 stage1 候選結果
-    - backward: 根據 judge 與邊權重回傳每個節點的重要性分數
+    負責在 network.agent_network 中封裝 AgentNetwork，管理記憶圖、任務紀錄、檢索結果或跨任務經驗的狀態與操作。
+    
+    Args:
+        model_pool: 用來呼叫模型或外部服務的模型名稱、客戶端或相關設定。
+        agents: 此流程需要使用的輸入資料。
+        rounds: 此流程需要使用的輸入資料。
+        seed: 此流程需要使用的輸入資料。
+        enable_stage1_tools: 控制是否啟用此項資料、功能或處理分支的布林開關。
+        enable_shared_memory: 控制是否啟用此項資料、功能或處理分支的布林開關。
+        shared_memory_user_id: 記憶系統提供的檢索結果、寫入資料或操作介面。
+        memory_config: 記憶系統提供的檢索結果、寫入資料或操作介面。
+        memory_mode: 記憶系統提供的檢索結果、寫入資料或操作介面。
+        debug_print_stage1_first_round_prompt: 此流程需要使用的輸入資料。
+        enable_stage1_attachment_after_first_round: 控制是否啟用此項資料、功能或處理分支的布林開關。
+    
+    Returns:
+        類別本身不直接回傳值；建立實例後可透過其方法操作狀態與流程。
+    
+    限制或副作用:
+        方法可能更新內部狀態、讀寫檔案、呼叫外部服務或產生日誌，需依使用情境確認。
     """
 
     def __init__(
         self,
-        model_pool: List = ["nemotron-mini:4b", "minicpm3_4b:latest", "qwen3:4b", "gemma3:4b"],
+        model_pool: List = ["nemotron-mini:4b", "phi3:3.8b", "qwen3:4b", "gemma3:4b"],
         agents: int = 4,
         rounds: int = 5,
         seed: int = 2026,
         enable_stage1_tools: bool = False,
-        enable_shared_memory: bool = True,
+        enable_shared_memory: bool = False,
         shared_memory_user_id: str = "network_shared",
         memory_config: Optional[MemoryConfig] = None,
         memory_mode: str = "disabled",
         debug_print_stage1_first_round_prompt: bool = False,
         enable_stage1_attachment_after_first_round: bool = False,
     ):
+        """
+        負責執行 AgentNetwork 中的 __init__ 流程，初始化物件所需的設定、依賴與內部狀態，讓後續方法可以沿用同一份執行上下文。
+        
+        Args:
+            model_pool: 用來呼叫模型或外部服務的模型名稱、客戶端或相關設定。
+            agents: 此流程需要使用的輸入資料。
+            rounds: 此流程需要使用的輸入資料。
+            seed: 此流程需要使用的輸入資料。
+            enable_stage1_tools: 控制是否啟用此項資料、功能或處理分支的布林開關。
+            enable_shared_memory: 控制是否啟用此項資料、功能或處理分支的布林開關。
+            shared_memory_user_id: 記憶系統提供的檢索結果、寫入資料或操作介面。
+            memory_config: 記憶系統提供的檢索結果、寫入資料或操作介面。
+            memory_mode: 記憶系統提供的檢索結果、寫入資料或操作介面。
+            debug_print_stage1_first_round_prompt: 此流程需要使用的輸入資料。
+            enable_stage1_attachment_after_first_round: 控制是否啟用此項資料、功能或處理分支的布林開關。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 未標註。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         self.model_pool = model_pool
         self.agents = agents
         self.rounds = rounds
@@ -82,6 +121,18 @@ class AgentNetwork:
 
     
     def init_nn(self) -> None:
+        """
+        負責執行 AgentNetwork 中的 init_nn 流程，依照 AgentNetwork 的流程需求處理 init_nn 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            無。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 None。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         self.nodes, self.edges = [], []
 
         first_round_models = self.network_helper.sample_model_name_for_round(self, self.agents)
@@ -115,6 +166,18 @@ class AgentNetwork:
     
     
     def init_runtime(self) -> NetworkRuntime:
+        """
+        負責執行 AgentNetwork 中的 init_runtime 流程，依照 AgentNetwork 的流程需求處理 init_runtime 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            無。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 NetworkRuntime。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         runtime = NetworkRuntime(
             self.tool_manager,
             memory_tool=self.memory_tool,
@@ -136,7 +199,32 @@ class AgentNetwork:
     
 
     def forward(self, question):
+        """
+        負責執行 AgentNetwork 中的 forward 流程，接收問題或上下文，驅動節點進行推理並彙整本輪輸出。
+        
+        Args:
+            question: 目前要處理的任務、問題或查詢文字。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 未標註。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         def build_activation_trace_entry(round_id: int, node_indices: list[int]) -> dict:
+            """
+            負責建立後續流程需要的物件、資料結構或輸出區塊。
+            
+            Args:
+                round_id: 目前執行的階段、輪次或流程位置。
+                node_indices: 圖結構中的節點、邊或相關識別資料。
+            
+            Returns:
+                執行結果；若函式標註回傳型別，預期型別為 dict。
+            
+            限制或副作用:
+                可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+            """
             return {
                 "round": round_id,
                 "node_indices": list(node_indices),
@@ -155,6 +243,18 @@ class AgentNetwork:
             }
 
         def get_completions():
+            """
+            依照 AgentNetwork 的流程需求處理 get_completions 對應的資料轉換、狀態操作或結果產生。
+            
+            Args:
+                無。
+            
+            Returns:
+                執行結果；若函式標註回傳型別，預期型別為 未標註。
+            
+            限制或副作用:
+                可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+            """
             completions = [[] for _ in range(self.agents)]
             for rid in range(self.rounds):
                 for idx in range(self.agents * rid, self.agents * (rid + 1)):
@@ -216,6 +316,17 @@ class AgentNetwork:
                     question,
                     "gpt-oss:20b",
                 )
+                if self.runtime is not None:
+                    self.runtime.record_token_usage(
+                        {
+                            "stage": "stage1_activation_ranker",
+                            "agent_id": "activation_ranker",
+                            "model_name": "gpt-oss:20b",
+                            "prompt_tokens": prompt_tokens,
+                            "completion_tokens": completion_tokens,
+                            "round": rid,
+                        }
+                    )
                 total_prompt_tokens += prompt_tokens
                 total_completion_tokens += completion_tokens
                 idx_mask = list(map(lambda x: idxs[indices[x]] % self.agents, tops))
@@ -247,6 +358,18 @@ class AgentNetwork:
         return majority_answer, resp_cnt, completions, total_prompt_tokens, total_completion_tokens
 
     def backward(self, result):
+        """
+        負責執行 AgentNetwork 中的 backward 流程，根據結果、評分或回饋更新節點狀態與權重資訊。
+        
+        Args:
+            result: 評估、推理或工具執行後產生的結果與分數資料。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 未標註。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         flag_last = False
         for rid in range(self.rounds - 1, -1, -1):
             if not flag_last:
@@ -280,6 +403,17 @@ class AgentNetwork:
                     node.stage1_judge_revised_answer = evaluation.get("revised_answer", "")
                     node.stage1_judge_reasoning = evaluation.get("judge_reasoning", "")
                     node.stage1_judge_used_fallback = evaluation.get("used_fallback", False)
+                    if self.runtime is not None:
+                        self.runtime.record_token_usage(
+                            {
+                                "stage": "stage1_judge",
+                                "agent_id": f"stage1_judge_node_{idx}",
+                                "model_name": getattr(self.stage1_judge, "judge_model_name", "unknown"),
+                                "prompt_tokens": evaluation.get("prompt_tokens", 0),
+                                "completion_tokens": evaluation.get("completion_tokens", 0),
+                                "node_idx": idx,
+                            }
+                        )
                     scored[idx] = score
                     total_score += score
 
@@ -305,6 +439,16 @@ class AgentNetwork:
             question=self.current_question,
             fallback_answer=result,
         )
+        if self.runtime is not None:
+            self.runtime.record_token_usage(
+                {
+                    "stage": "stage1_result_selector",
+                    "agent_id": "stage1_result_selector",
+                    "model_name": getattr(self.stage1_result_selector, "judge_model_name", "unknown"),
+                    "prompt_tokens": getattr(self.stage1_result_selector, "last_prompt_tokens", 0),
+                    "completion_tokens": getattr(self.stage1_result_selector, "last_completion_tokens", 0),
+                }
+            )
         self.last_stage1_result = refined_result
         return [node.importance for node in self.nodes]
 
@@ -315,6 +459,21 @@ class AgentNetwork:
         stage1_result: str = None,
         importance: list[float] = None,
     ):
+        """
+        負責執行 AgentNetwork 中的 run_stage2 流程，依照 AgentNetwork 的流程需求處理 run_stage2 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            question: 目前要處理的任務、問題或查詢文字。
+            top_k_indices: 控制檢索、篩選或輸出數量的數值參數。
+            stage1_result: 評估、推理或工具執行後產生的結果與分數資料。
+            importance: 此流程需要使用的輸入資料。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 未標註。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         tool_manager = self.network_helper.ensure_tool_manager(self)
         stage2_outputs = []
         runtime = getattr(self, "runtime", None)
@@ -407,6 +566,19 @@ class AgentNetwork:
         return stage2_outputs
 
     def forward_two_stage(self, question: str, context: dict[str, Any] | None = None):
+        """
+        負責執行 AgentNetwork 中的 forward_two_stage 流程，依照 AgentNetwork 的流程需求處理 forward_two_stage 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            question: 目前要處理的任務、問題或查詢文字。
+            context: 目前流程所需的上下文、狀態或附加資訊。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 未標註。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         self.current_question = question
         self.current_context = context or {}
         if self.runtime is not None:

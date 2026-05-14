@@ -28,13 +28,22 @@ from memory.rag.pipeline import create_rag_pipeline
 from core.llm import HelloAgentsLLM
 
 class RAGTool(Tool):
-    """RAG工具
+    """
+    負責在 tools.builtin.rag_tool 中封裝 RAGTool，封裝工具呼叫、參數處理與工具結果回傳流程。
     
-    提供完整的 RAG 能力：
-    - 添加多格式文檔（PDF、Office、圖片、音頻等）
-    - 智慧搜尋與召回
-    - LLM 增強問答
-    - 知識庫管理
+    Args:
+        knowledge_base_path: 此流程需要使用的輸入資料。
+        qdrant_url: 此流程需要使用的輸入資料。
+        qdrant_api_key: 此流程需要使用的輸入資料。
+        collection_name: 此流程需要使用的輸入資料。
+        rag_namespace: 此流程需要使用的輸入資料。
+        expandable: 此流程需要使用的輸入資料。
+    
+    Returns:
+        類別本身不直接回傳值；建立實例後可透過其方法操作狀態與流程。
+    
+    限制或副作用:
+        方法可能更新內部狀態、讀寫檔案、呼叫外部服務或產生日誌，需依使用情境確認。
     """
     
     def __init__(
@@ -46,6 +55,23 @@ class RAGTool(Tool):
         rag_namespace: str = "default",
         expandable: bool = False
     ):
+        """
+        負責執行 RAGTool 中的 __init__ 流程，初始化物件所需的設定、依賴與內部狀態，讓後續方法可以沿用同一份執行上下文。
+        
+        Args:
+            knowledge_base_path: 此流程需要使用的輸入資料。
+            qdrant_url: 此流程需要使用的輸入資料。
+            qdrant_api_key: 此流程需要使用的輸入資料。
+            collection_name: 此流程需要使用的輸入資料。
+            rag_namespace: 此流程需要使用的輸入資料。
+            expandable: 此流程需要使用的輸入資料。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 未標註。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         super().__init__(
             name="rag",
             description="RAG工具 - 支援多格式文檔搜尋增強生成，提供智慧問答能力",
@@ -66,7 +92,18 @@ class RAGTool(Tool):
         self._init_components()
     
     def _init_components(self):
-        """初始化RAG元件"""
+        """
+        負責執行 RAGTool 中的 _init_components 流程，依照 RAGTool 的流程需求處理 _init_components 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            無。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 未標註。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         try:
             # 初始化預設命名空間的 RAG 管道
             default_pipeline = create_rag_pipeline(
@@ -89,7 +126,18 @@ class RAGTool(Tool):
             print(f"[ERROR] RAG工具初始化失敗: {e}")
 
     def _get_pipeline(self, namespace: Optional[str] = None) -> Dict[str, Any]:
-        """取得指定命名空間的 RAG 管道，若不存在則自動建立"""
+        """
+        負責執行 RAGTool 中的 _get_pipeline 流程，依照 RAGTool 的流程需求處理 _get_pipeline 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            namespace: 此流程需要使用的輸入資料。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 Dict[str, Any]。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         target_ns = namespace or self.rag_namespace
         if target_ns in self._pipelines:
             return self._pipelines[target_ns]
@@ -104,13 +152,17 @@ class RAGTool(Tool):
         return pipeline
 
     def run(self, parameters: Dict[str, Any]) -> str:
-        """執行工具（非展開模式）
-
+        """
+        負責執行 RAGTool 中的 run 流程，啟動主要執行流程，串接輸入準備、核心處理與結果輸出。
+        
         Args:
-            parameters: 工具參數字典，必須包含action參數
-
+            parameters: 此流程需要使用的輸入資料。
+        
         Returns:
-            執行結果字串
+            執行結果；若函式標註回傳型別，預期型別為 str。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
         """
         if not self.validate_parameters(parameters):
             return "[ERROR] 參數驗證失敗：缺少必需的參數"
@@ -171,7 +223,18 @@ class RAGTool(Tool):
             return f"[ERROR] 執行操作 '{action}' 時發生錯誤: {str(e)}"
 
     def get_parameters(self) -> List[ToolParameter]:
-        """取得工具參數定義 - Tool基類要求的介面"""
+        """
+        負責執行 RAGTool 中的 get_parameters 流程，依照 RAGTool 的流程需求處理 get_parameters 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            無。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 List[ToolParameter]。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         return [
             # 核心操作參數
             ToolParameter(
@@ -240,17 +303,21 @@ class RAGTool(Tool):
         chunk_size: int = 800,
         chunk_overlap: int = 100
     ) -> str:
-        """添加文檔到知識庫
-
+        """
+        負責執行 RAGTool 中的 _add_document 流程，依照 RAGTool 的流程需求處理 _add_document 對應的資料轉換、狀態操作或結果產生。
+        
         Args:
-            file_path: 文檔檔案路徑
-            document_id: 文檔ID（可選）
-            namespace: 知識庫命名空間（用於隔離不同項目）
-            chunk_size: 分塊大小
-            chunk_overlap: 分塊重疊大小
-
+            file_path: 要讀取或寫入的檔案或目錄路徑。
+            document_id: 此流程需要使用的輸入資料。
+            namespace: 此流程需要使用的輸入資料。
+            chunk_size: 此流程需要使用的輸入資料。
+            chunk_overlap: 此流程需要使用的輸入資料。
+        
         Returns:
-            執行結果
+            執行結果；若函式標註回傳型別，預期型別為 str。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
         """
         try:
             if not file_path or not os.path.exists(file_path):
@@ -290,17 +357,21 @@ class RAGTool(Tool):
         chunk_size: int = 800,
         chunk_overlap: int = 100
     ) -> str:
-        """添加文字到知識庫
-
+        """
+        負責執行 RAGTool 中的 _add_text 流程，依照 RAGTool 的流程需求處理 _add_text 對應的資料轉換、狀態操作或結果產生。
+        
         Args:
-            text: 要添加的文字內容
-            document_id: 文檔ID（可選）
-            namespace: 知識庫命名空間
-            chunk_size: 分塊大小
-            chunk_overlap: 分塊重疊大小
-
+            text: 此流程需要使用的輸入資料。
+            document_id: 此流程需要使用的輸入資料。
+            namespace: 此流程需要使用的輸入資料。
+            chunk_size: 此流程需要使用的輸入資料。
+            chunk_overlap: 此流程需要使用的輸入資料。
+        
         Returns:
-            執行結果
+            執行結果；若函式標註回傳型別，預期型別為 str。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
         """
         metadata = None
         try:
@@ -359,19 +430,23 @@ class RAGTool(Tool):
         include_citations: bool = True,
         namespace: str = "default"
     ) -> str:
-        """搜尋知識庫
-
+        """
+        負責執行 RAGTool 中的 _search 流程，依照 RAGTool 的流程需求處理 _search 對應的資料轉換、狀態操作或結果產生。
+        
         Args:
-            query: 搜尋查詢詞
-            limit: 回傳結果數量
-            min_score: 最低相關度分數
-            enable_advanced_search: 是否啟用高級搜尋（MQE、HyDE）
-            max_chars: 每個結果最大字符數
-            include_citations: 是否包含引用來源
-            namespace: 知識庫命名空間
-
+            query: 目前要處理的任務、問題或查詢文字。
+            limit: 控制檢索、篩選或輸出數量的數值參數。
+            min_score: 控制檢索、篩選或輸出數量的數值參數。
+            enable_advanced_search: 控制是否啟用此項資料、功能或處理分支的布林開關。
+            max_chars: 控制檢索、篩選或輸出數量的數值參數。
+            include_citations: 控制是否啟用此項資料、功能或處理分支的布林開關。
+            namespace: 已整理好的搜尋結果、共享資料包或可重用證據內容。
+        
         Returns:
-            搜尋結果
+            執行結果；若函式標註回傳型別，預期型別為 str。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
         """
         try:
             if not query or not query.strip():
@@ -408,6 +483,18 @@ class RAGTool(Tool):
                 
                 # 安全處理Unicode
                 def clean_text(text):
+                    """
+                    負責執行 RAGTool 中的 clean_text 流程，整理呼叫端傳入的資料，清理格式並轉換為後續流程可使用的內容。
+                    
+                    Args:
+                        text: 此流程需要使用的輸入資料。
+                    
+                    Returns:
+                        執行結果；若函式標註回傳型別，預期型別為 未標註。
+                    
+                    限制或副作用:
+                        可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+                    """
                     try:
                         return str(text).encode('utf-8', errors='ignore').decode('utf-8')
                     except Exception:
@@ -438,25 +525,22 @@ class RAGTool(Tool):
         max_chars: int = 1200,
         namespace: str = "default"
     ) -> str:
-        """智慧問答：搜尋 → 上下文注入 → LLM生成答案
-
+        """
+        負責執行 RAGTool 中的 _ask 流程，依照 RAGTool 的流程需求處理 _ask 對應的資料轉換、狀態操作或結果產生。
+        
         Args:
-            question: 使用者問題
-            limit: 搜尋結果數量
-            enable_advanced_search: 是否啟用高級搜尋
-            include_citations: 是否包含引用來源
-            max_chars: 每個結果最大字符數
-            namespace: 知識庫命名空間
-
+            question: 目前要處理的任務、問題或查詢文字。
+            limit: 控制檢索、篩選或輸出數量的數值參數。
+            enable_advanced_search: 控制是否啟用此項資料、功能或處理分支的布林開關。
+            include_citations: 控制是否啟用此項資料、功能或處理分支的布林開關。
+            max_chars: 控制檢索、篩選或輸出數量的數值參數。
+            namespace: 此流程需要使用的輸入資料。
+        
         Returns:
-            智慧問答結果
-
-        核心流程:
-        1. 解析使用者問題
-        2. 智慧搜尋相關內容
-        3. 建構上下文和提示詞
-        4. LLM生成準確答案
-        5. 添加引用來源
+            執行結果；若函式標註回傳型別，預期型別為 str。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
         """
         try:
             # 驗證問題
@@ -557,7 +641,18 @@ class RAGTool(Tool):
             return f"[ERROR] 智慧問答失敗: {str(e)}\n[INFO] 請檢查知識庫狀態或稍后重試"
     
     def _clean_content_for_context(self, content: str) -> str:
-        """清理內容用於上下文"""
+        """
+        負責執行 RAGTool 中的 _clean_content_for_context 流程，依照 RAGTool 的流程需求處理 _clean_content_for_context 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            content: 此流程需要使用的輸入資料。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 str。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         # 移除過多的換行和空格
         content = " ".join(content.split())
         # 截斷過長內容
@@ -566,7 +661,19 @@ class RAGTool(Tool):
         return content
     
     def _smart_truncate_context(self, context: str, max_chars: int) -> str:
-        """智慧截斷上下文，保持段落完整性"""
+        """
+        負責執行 RAGTool 中的 _smart_truncate_context 流程，依照 RAGTool 的流程需求處理 _smart_truncate_context 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            context: 目前流程所需的上下文、狀態或附加資訊。
+            max_chars: 控制檢索、篩選或輸出數量的數值參數。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 str。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         if len(context) <= max_chars:
             return context
         
@@ -580,7 +687,18 @@ class RAGTool(Tool):
             return truncated[:max_chars-20] + "...[內容被截斷]"
     
     def _build_system_prompt(self) -> str:
-        """建構系統提示詞"""
+        """
+        負責執行 RAGTool 中的 _build_system_prompt 流程，依照 RAGTool 的流程需求處理 _build_system_prompt 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            無。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 str。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         return (
             "你是一個專業的知識助手，具備以下能力：\n"
             "1. 📖 精準理解：仔細理解使用者問題的核心意圖\n"
@@ -596,7 +714,19 @@ class RAGTool(Tool):
         )
     
     def _build_user_prompt(self, question: str, context: str) -> str:
-        """建構使用者提示詞"""
+        """
+        負責執行 RAGTool 中的 _build_user_prompt 流程，依照 RAGTool 的流程需求處理 _build_user_prompt 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            question: 目前要處理的任務、問題或查詢文字。
+            context: 目前流程所需的上下文、狀態或附加資訊。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 str。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         return (
             f"請基於以下上下文資訊回答問題：\n\n"
             f"【問題】{question}\n\n"
@@ -605,7 +735,23 @@ class RAGTool(Tool):
         )
     
     def _format_final_answer(self, question: str, answer: str, citations: Optional[List[Dict]] = None, search_time: int = 0, llm_time: int = 0, avg_score: float = 0) -> str:
-        """格式化最終答案"""
+        """
+        負責執行 RAGTool 中的 _format_final_answer 流程，依照 RAGTool 的流程需求處理 _format_final_answer 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            question: 目前要處理的任務、問題或查詢文字。
+            answer: 模型、節點或工具產生的候選回覆內容。
+            citations: 此流程需要使用的輸入資料。
+            search_time: 已整理好的搜尋結果、共享資料包或可重用證據內容。
+            llm_time: 用來呼叫模型或外部服務的模型名稱、客戶端或相關設定。
+            avg_score: 評估、推理或工具執行後產生的結果與分數資料。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 str。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         result = [f"🤖 **智慧問答結果**\n"]
         result.append(answer)
         
@@ -622,14 +768,18 @@ class RAGTool(Tool):
 
     @tool_action("rag_clear", "清空知識庫（危險操作，請謹慎使用）")
     def _clear_knowledge_base(self, confirm: bool = False, namespace: str = "default") -> str:
-        """清空知識庫
-
+        """
+        負責執行 RAGTool 中的 _clear_knowledge_base 流程，依照 RAGTool 的流程需求處理 _clear_knowledge_base 對應的資料轉換、狀態操作或結果產生。
+        
         Args:
-            confirm: 確認執行（必須設定為True）
-            namespace: 知識庫命名空間
-
+            confirm: 此流程需要使用的輸入資料。
+            namespace: 此流程需要使用的輸入資料。
+        
         Returns:
-            執行結果
+            執行結果；若函式標註回傳型別，預期型別為 str。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
         """
         try:
             if not confirm:
@@ -660,13 +810,17 @@ class RAGTool(Tool):
 
     @tool_action("rag_stats", "取得知識庫統計資訊")
     def _get_stats(self, namespace: str = "default") -> str:
-        """取得知識庫統計
-
+        """
+        負責執行 RAGTool 中的 _get_stats 流程，依照 RAGTool 的流程需求處理 _get_stats 對應的資料轉換、狀態操作或結果產生。
+        
         Args:
-            namespace: 知識庫命名空間
-
+            namespace: 此流程需要使用的輸入資料。
+        
         Returns:
-            統計資訊
+            執行結果；若函式標註回傳型別，預期型別為 str。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
         """
         try:
             pipeline = self._get_pipeline(namespace)
@@ -717,9 +871,20 @@ class RAGTool(Tool):
             return f"[ERROR] 取得統計資訊失敗: {str(e)}"
 
     def get_relevant_context(self, query: str, limit: int = 3, max_chars: int = 1200, namespace: Optional[str] = None) -> str:
-        """為查詢取得相關上下文
+        """
+        負責執行 RAGTool 中的 get_relevant_context 流程，依照 RAGTool 的流程需求處理 get_relevant_context 對應的資料轉換、狀態操作或結果產生。
         
-        這個方法可以被Agent呼叫來取得相關的知識庫上下文
+        Args:
+            query: 目前要處理的任務、問題或查詢文字。
+            limit: 控制檢索、篩選或輸出數量的數值參數。
+            max_chars: 控制檢索、篩選或輸出數量的數值參數。
+            namespace: 此流程需要使用的輸入資料。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 str。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
         """
         try:
             if not query:
@@ -754,7 +919,22 @@ class RAGTool(Tool):
             return f"取得上下文失敗: {str(e)}"
     
     def batch_add_texts(self, texts: List[str], document_ids: Optional[List[str]] = None, chunk_size: int = 800, chunk_overlap: int = 100, namespace: Optional[str] = None) -> str:
-        """批量添加文字"""
+        """
+        負責執行 RAGTool 中的 batch_add_texts 流程，依照 RAGTool 的流程需求處理 batch_add_texts 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            texts: 此流程需要使用的輸入資料。
+            document_ids: 此流程需要使用的輸入資料。
+            chunk_size: 此流程需要使用的輸入資料。
+            chunk_overlap: 此流程需要使用的輸入資料。
+            namespace: 此流程需要使用的輸入資料。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 str。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         try:
             if not texts:
                 return "[ERROR] 文字列表不能為空"
@@ -810,7 +990,18 @@ class RAGTool(Tool):
             return f"[ERROR] 批量添加失敗: {str(e)}"
     
     def clear_all_namespaces(self) -> str:
-        """清空目前工具管理的所有命名空間資料"""
+        """
+        負責執行 RAGTool 中的 clear_all_namespaces 流程，清除或移除指定資源、狀態或註冊資料，維持後續流程的一致性。
+        
+        Args:
+            無。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 str。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         try:
             for ns, pipeline in self._pipelines.items():
                 store = pipeline.get("store")
@@ -828,7 +1019,19 @@ class RAGTool(Tool):
     # ========================================
     
     def add_document(self, file_path: str, namespace: str = "default") -> str:
-        """便捷方法：添加單個文檔"""
+        """
+        負責執行 RAGTool 中的 add_document 流程，將新的輸入資料合併到目前物件狀態或流程紀錄中。
+        
+        Args:
+            file_path: 要讀取或寫入的檔案或目錄路徑。
+            namespace: 此流程需要使用的輸入資料。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 str。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         return self.run({
             "action": "add_document",
             "file_path": file_path,
@@ -836,7 +1039,20 @@ class RAGTool(Tool):
         })
     
     def add_text(self, text: str, namespace: str = "default", document_id: str = None) -> str:
-        """便捷方法：添加文字內容"""
+        """
+        負責執行 RAGTool 中的 add_text 流程，將新的輸入資料合併到目前物件狀態或流程紀錄中。
+        
+        Args:
+            text: 此流程需要使用的輸入資料。
+            namespace: 此流程需要使用的輸入資料。
+            document_id: 此流程需要使用的輸入資料。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 str。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         return self.run({
             "action": "add_text",
             "text": text,
@@ -845,7 +1061,20 @@ class RAGTool(Tool):
         })
     
     def ask(self, question: str, namespace: str = "default", **kwargs) -> str:
-        """便捷方法：智慧問答"""
+        """
+        負責執行 RAGTool 中的 ask 流程，依照 RAGTool 的流程需求處理 ask 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            question: 目前要處理的任務、問題或查詢文字。
+            namespace: 此流程需要使用的輸入資料。
+            **kwargs: 此流程需要使用的輸入資料。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 str。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         params = {
             "action": "ask",
             "question": question,
@@ -855,7 +1084,20 @@ class RAGTool(Tool):
         return self.run(params)
     
     def search(self, query: str, namespace: str = "default", **kwargs) -> str:
-        """便捷方法：搜尋知識庫"""
+        """
+        負責執行 RAGTool 中的 search 流程，執行搜尋查詢並整理外部資訊來源供回答使用。
+        
+        Args:
+            query: 目前要處理的任務、問題或查詢文字。
+            namespace: 已整理好的搜尋結果、共享資料包或可重用證據內容。
+            **kwargs: 已整理好的搜尋結果、共享資料包或可重用證據內容。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 str。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         params = {
             "action": "search",
             "query": query,
@@ -865,7 +1107,19 @@ class RAGTool(Tool):
         return self.run(params)
     
     def add_documents_batch(self, file_paths: List[str], namespace: str = "default") -> str:
-        """批量添加多個文檔"""
+        """
+        負責執行 RAGTool 中的 add_documents_batch 流程，將新的輸入資料合併到目前物件狀態或流程紀錄中。
+        
+        Args:
+            file_paths: 此流程需要使用的輸入資料。
+            namespace: 此流程需要使用的輸入資料。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 str。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         if not file_paths:
             return "[ERROR] 檔案路徑列表不能為空"
         
@@ -911,7 +1165,20 @@ class RAGTool(Tool):
         return "\n".join(summary)
     
     def add_texts_batch(self, texts: List[str], namespace: str = "default", document_ids: Optional[List[str]] = None) -> str:
-        """批量添加多個文字"""
+        """
+        負責執行 RAGTool 中的 add_texts_batch 流程，將新的輸入資料合併到目前物件狀態或流程紀錄中。
+        
+        Args:
+            texts: 此流程需要使用的輸入資料。
+            namespace: 此流程需要使用的輸入資料。
+            document_ids: 此流程需要使用的輸入資料。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 str。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         if not texts:
             return "[ERROR] 文字列表不能為空"
         

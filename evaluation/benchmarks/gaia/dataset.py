@@ -10,23 +10,20 @@ import json
 
 
 class GAIADataset:
-    """GAIA 資料集載入器
-
-    從 HuggingFace 載入 GAIA 資料集,支援不同難度等級。
-
-    GAIA是一個通用AI 助理評估基準,包含466個真實世界問題,
-    需要推理、多模態處理、網頁瀏覽和工具使用等能力。
-
-    難度等級:
-    - Level 1: 簡單問題 (0步推理, 直接回答)
-    - Level 2: 中等問題 (1-5步推理, 需要簡單工具使用)
-    - Level 3: 複雜問題 (5+步推理, 需要複雜工具鏈和多步推理)
-
-    Attributes:
-        dataset_name: HuggingFace 資料集名稱
-        split: 資料集分割(validation/test)
-        level: 難度等級
-        data: 載入的資料列表
+    """
+    負責在 evaluation.benchmarks.gaia.dataset 中封裝 GAIADataset，封裝 benchmark 評估、答案判定、分數計算或報告資料整理流程。
+    
+    Args:
+        dataset_name: 此流程需要使用的輸入資料。
+        split: 此流程需要使用的輸入資料。
+        level: 此流程需要使用的輸入資料。
+        local_data_dir: 此流程需要使用的輸入資料。
+    
+    Returns:
+        類別本身不直接回傳值；建立實例後可透過其方法操作狀態與流程。
+    
+    限制或副作用:
+        方法可能更新內部狀態、讀寫檔案、呼叫外部服務或產生日誌，需依使用情境確認。
     """
 
     def __init__(
@@ -36,13 +33,20 @@ class GAIADataset:
         level: Optional[int] = None,
         local_data_dir: Optional[Union[str, Path]] = None
     ):
-        """初始化 GAIA 資料集載入器
-
+        """
+        負責執行 GAIADataset 中的 __init__ 流程，初始化物件所需的設定、依賴與內部狀態，讓後續方法可以沿用同一份執行上下文。
+        
         Args:
-            dataset_name: HuggingFace 資料集名稱
-            split: 資料集分割 (validation/test)
-            level: 難度等級 (1-3),None表示載入所有等級
-            local_data_dir: 本地資料目錄路徑
+            dataset_name: 此流程需要使用的輸入資料。
+            split: 此流程需要使用的輸入資料。
+            level: 此流程需要使用的輸入資料。
+            local_data_dir: 此流程需要使用的輸入資料。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 未標註。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
         """
         self.dataset_name = dataset_name
         self.split = split
@@ -52,16 +56,34 @@ class GAIADataset:
         self._is_local = self._check_if_local_source()
 
     def _check_if_local_source(self) -> bool:
-        """檢查是否使用本地資料源"""
+        """
+        負責執行 GAIADataset 中的 _check_if_local_source 流程，依照 GAIADataset 的流程需求處理 _check_if_local_source 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            無。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 bool。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         if self.local_data_dir and self.local_data_dir.exists():
             return True
         return False
 
     def load(self) -> List[Dict[str, Any]]:
-        """載入資料集
-
+        """
+        負責執行 GAIADataset 中的 load 流程，讀取本地或外部資料來源並轉換成系統可處理的格式。
+        
+        Args:
+            無。
+        
         Returns:
-            資料集列表,每個元素包含問題、答案、難度等
+            執行結果；若函式標註回傳型別，預期型別為 List[Dict[str, Any]]。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
         """
         if self.data:
             return self.data
@@ -84,7 +106,18 @@ class GAIADataset:
         return self.data
 
     def _load_from_local(self) -> List[Dict[str, Any]]:
-        """從本地載入資料集"""
+        """
+        負責執行 GAIADataset 中的 _load_from_local 流程，依照 GAIADataset 的流程需求處理 _load_from_local 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            無。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 List[Dict[str, Any]]。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         data = []
 
         if not self.local_data_dir or not self.local_data_dir.exists():
@@ -133,10 +166,17 @@ class GAIADataset:
         return data
 
     def _load_from_huggingface(self) -> List[Dict[str, Any]]:
-        """從HuggingFace下載GAIA資料集
-
-        注意：GAIA是gated dataset，需要HF_TOKEN環境變數
-        使用snapshot_download下載整個資料集到本地
+        """
+        負責執行 GAIADataset 中的 _load_from_huggingface 流程，依照 GAIADataset 的流程需求處理 _load_from_huggingface 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            無。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 List[Dict[str, Any]]。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
         """
         try:
             from huggingface_hub import snapshot_download
@@ -216,7 +256,18 @@ class GAIADataset:
             return []
 
     def _standardize_item(self, item: Dict[str, Any]) -> Dict[str, Any]:
-        """標準化資料項格式"""
+        """
+        負責執行 GAIADataset 中的 _standardize_item 流程，依照 GAIADataset 的流程需求處理 _standardize_item 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            item: 此流程需要使用的輸入資料。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 Dict[str, Any]。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         # GAIA資料集的標準字段
         standardized = {
             "task_id": item.get("task_id", ""),
@@ -234,36 +285,51 @@ class GAIADataset:
         return standardized
     
     def get_sample(self, index: int) -> Dict[str, Any]:
-        """取得單個樣本
-
+        """
+        負責執行 GAIADataset 中的 get_sample 流程，依照 GAIADataset 的流程需求處理 get_sample 對應的資料轉換、狀態操作或結果產生。
+        
         Args:
-            index: 樣本索引
-
+            index: 此流程需要使用的輸入資料。
+        
         Returns:
-            樣本資料
+            執行結果；若函式標註回傳型別，預期型別為 Dict[str, Any]。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
         """
         if not self.data:
             self.load()
         return self.data[index] if index < len(self.data) else {}
 
     def get_by_level(self, level: int) -> List[Dict[str, Any]]:
-        """取得指定難度等級的樣本
-
+        """
+        負責執行 GAIADataset 中的 get_by_level 流程，依照 GAIADataset 的流程需求處理 get_by_level 對應的資料轉換、狀態操作或結果產生。
+        
         Args:
-            level: 難度等級 (1-3)
-
+            level: 此流程需要使用的輸入資料。
+        
         Returns:
-            該等級的所有樣本
+            執行結果；若函式標註回傳型別，預期型別為 List[Dict[str, Any]]。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
         """
         if not self.data:
             self.load()
         return [item for item in self.data if item.get("level") == level]
 
     def get_level_distribution(self) -> Dict[int, int]:
-        """取得難度等級分布
-
+        """
+        負責執行 GAIADataset 中的 get_level_distribution 流程，依照 GAIADataset 的流程需求處理 get_level_distribution 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            無。
+        
         Returns:
-            字典，鍵為等級，值為該等級的樣本數
+            執行結果；若函式標註回傳型別，預期型別為 Dict[int, int]。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
         """
         if not self.data:
             self.load()
@@ -277,10 +343,17 @@ class GAIADataset:
         return distribution
 
     def get_statistics(self) -> Dict[str, Any]:
-        """取得資料集統計資訊
-
+        """
+        負責執行 GAIADataset 中的 get_statistics 流程，依照 GAIADataset 的流程需求處理 get_statistics 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            無。
+        
         Returns:
-            統計資訊字典
+            執行結果；若函式標註回傳型別，預期型別為 Dict[str, Any]。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
         """
         if not self.data:
             self.load()
@@ -303,13 +376,35 @@ class GAIADataset:
         }
 
     def __len__(self) -> int:
-        """回傳資料集大小"""
+        """
+        負責執行 GAIADataset 中的 __len__ 流程，依照 GAIADataset 的流程需求處理 __len__ 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            無。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 int。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         if not self.data:
             self.load()
         return len(self.data)
 
     def __iter__(self):
-        """迭代器"""
+        """
+        負責執行 GAIADataset 中的 __iter__ 流程，依照 GAIADataset 的流程需求處理 __iter__ 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            無。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 未標註。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         if not self.data:
             self.load()
         return iter(self.data)

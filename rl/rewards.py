@@ -5,30 +5,47 @@ from typing import List, Callable, Dict, Any, Optional
 
 
 class MathRewardFunction:
-    """數學問題獎勵函式
-
-    用於評估模型生成的數學答案是否正確。
+    """
+    負責在 rl.rewards 中封裝 MathRewardFunction，封裝此模組的狀態資料與主要操作流程。
+    
+    Args:
+        tolerance: 此流程需要使用的輸入資料。
+    
+    Returns:
+        類別本身不直接回傳值；建立實例後可透過其方法操作狀態與流程。
+    
+    限制或副作用:
+        方法可能更新內部狀態、讀寫檔案、呼叫外部服務或產生日誌，需依使用情境確認。
     """
 
     def __init__(self, tolerance: float = 1e-4):
         """
-        初始化獎勵函式
-
+        負責執行 MathRewardFunction 中的 __init__ 流程，初始化物件所需的設定、依賴與內部狀態，讓後續方法可以沿用同一份執行上下文。
+        
         Args:
-            tolerance: 數值比較的容差
+            tolerance: 此流程需要使用的輸入資料。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 未標註。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
         """
         self.tolerance = tolerance
         self.__name__ = "MathRewardFunction"  # 添加__name__屬性
     
     def extract_answer(self, text: str) -> Optional[str]:
         """
-        從文字中提取答案
+        負責執行 MathRewardFunction 中的 extract_answer 流程，解析模型輸出並取出答案、決策、排序或 JSON 結構。
         
         Args:
-            text: 生成的文字
-            
+            text: 此流程需要使用的輸入資料。
+        
         Returns:
-            提取的答案字串，如果找不到則回傳None
+            執行結果；若函式標註回傳型別，預期型別為 Optional[str]。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
         """
         # 嘗試多種答案格式
         patterns = [
@@ -54,13 +71,16 @@ class MathRewardFunction:
     
     def normalize_answer(self, answer: str) -> Optional[float]:
         """
-        標準化答案為數值
+        負責執行 MathRewardFunction 中的 normalize_answer 流程，整理呼叫端傳入的資料，清理格式並轉換為後續流程可使用的內容。
         
         Args:
-            answer: 答案字串
-            
+            answer: 模型、節點或工具產生的候選回覆內容。
+        
         Returns:
-            標準化後的數值，如果無法轉換則回傳None
+            執行結果；若函式標註回傳型別，預期型別為 Optional[float]。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
         """
         if answer is None:
             return None
@@ -83,14 +103,17 @@ class MathRewardFunction:
     
     def compare_answers(self, pred: str, truth: str) -> bool:
         """
-        比較預測答案和真實答案
+        負責執行 MathRewardFunction 中的 compare_answers 流程，依照 MathRewardFunction 的流程需求處理 compare_answers 對應的資料轉換、狀態操作或結果產生。
         
         Args:
-            pred: 預測答案
-            truth: 真實答案
-            
+            pred: 此流程需要使用的輸入資料。
+            truth: 此流程需要使用的輸入資料。
+        
         Returns:
-            是否匹配
+            執行結果；若函式標註回傳型別，預期型別為 bool。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
         """
         pred_num = self.normalize_answer(pred)
         truth_num = self.normalize_answer(truth)
@@ -108,14 +131,17 @@ class MathRewardFunction:
         **kwargs
     ) -> List[float]:
         """
-        計算獎勵
-
+        負責執行 MathRewardFunction 中的 __call__ 流程，依照 MathRewardFunction 的流程需求處理 __call__ 對應的資料轉換、狀態操作或結果產生。
+        
         Args:
-            completions: 模型生成的完成文字列表
-            **kwargs: 其他參數,必須包含ground_truth列表
-
+            completions: 此流程需要使用的輸入資料。
+            **kwargs: 此流程需要使用的輸入資料。
+        
         Returns:
-            獎勵值列表（1.0表示正確，0.0表示錯誤）
+            執行結果；若函式標註回傳型別，預期型別為 List[float]。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
         """
         # 從kwargs中取得ground_truth
         ground_truths = kwargs.get("ground_truth", [])
@@ -141,13 +167,16 @@ class MathRewardFunction:
 
 def create_accuracy_reward(tolerance: float = 1e-4) -> Callable:
     """
-    建立準確性獎勵函式（便捷函式）
+    負責執行 rl.rewards 中的 create_accuracy_reward 流程，建立後續流程需要的物件、資料結構或輸出區塊。
     
     Args:
-        tolerance: 數值比較的容差
-        
+        tolerance: 此流程需要使用的輸入資料。
+    
     Returns:
-        獎勵函式
+        執行結果；若函式標註回傳型別，預期型別為 Callable。
+    
+    限制或副作用:
+        可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
     """
     reward_fn = MathRewardFunction(tolerance=tolerance)
     return reward_fn
@@ -159,18 +188,34 @@ def create_length_penalty_reward(
     penalty_weight: float = 0.1
 ) -> Callable:
     """
-    建立帶長度懲罰的獎勵函式
+    負責執行 rl.rewards 中的 create_length_penalty_reward 流程，建立後續流程需要的物件、資料結構或輸出區塊。
     
     Args:
-        base_reward_fn: 基礎獎勵函式
-        max_length: 最大長度
-        penalty_weight: 懲罰權重
-        
+        base_reward_fn: 此流程需要使用的輸入資料。
+        max_length: 控制檢索、篩選或輸出數量的數值參數。
+        penalty_weight: 此流程需要使用的輸入資料。
+    
     Returns:
-        帶長度懲罰的獎勵函式
+        執行結果；若函式標註回傳型別，預期型別為 Callable。
+    
+    限制或副作用:
+        可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
     """
     def reward_fn(completions: List[str], **kwargs) -> List[float]:
         # 計算基礎獎勵
+        """
+        負責執行 rl.rewards 中的 reward_fn 流程，依照 rl.rewards 的流程需求處理 reward_fn 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            completions: 此流程需要使用的輸入資料。
+            **kwargs: 此流程需要使用的輸入資料。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 List[float]。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         base_rewards = base_reward_fn(completions, **kwargs)
         
         # 添加長度懲罰
@@ -192,17 +237,33 @@ def create_step_reward(
     step_bonus: float = 0.1
 ) -> Callable:
     """
-    建立帶步驟獎勵的函式（鼓勵詳細的推理過程）
+    負責執行 rl.rewards 中的 create_step_reward 流程，建立後續流程需要的物件、資料結構或輸出區塊。
     
     Args:
-        base_reward_fn: 基礎獎勵函式
-        step_bonus: 每個推理步驟的獎勵
-        
+        base_reward_fn: 此流程需要使用的輸入資料。
+        step_bonus: 此流程需要使用的輸入資料。
+    
     Returns:
-        帶步驟獎勵的函式
+        執行結果；若函式標註回傳型別，預期型別為 Callable。
+    
+    限制或副作用:
+        可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
     """
     def reward_fn(completions: List[str], **kwargs) -> List[float]:
         # 計算基礎獎勵
+        """
+        負責執行 rl.rewards 中的 reward_fn 流程，依照 rl.rewards 的流程需求處理 reward_fn 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            completions: 此流程需要使用的輸入資料。
+            **kwargs: 此流程需要使用的輸入資料。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 List[float]。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         base_rewards = base_reward_fn(completions, **kwargs)
         
         # 添加步驟獎勵
@@ -224,15 +285,18 @@ def evaluate_rewards(
     reward_fn: Callable
 ) -> Dict[str, Any]:
     """
-    評估獎勵函式的性能
+    負責執行 rl.rewards 中的 evaluate_rewards 流程，評估候選結果是否符合任務需求並回傳判定資訊。
     
     Args:
-        completions: 生成的完成文字列表
-        ground_truths: 真實答案列表
-        reward_fn: 獎勵函式
-        
+        completions: 此流程需要使用的輸入資料。
+        ground_truths: 此流程需要使用的輸入資料。
+        reward_fn: 此流程需要使用的輸入資料。
+    
     Returns:
-        評估結果字典
+        執行結果；若函式標註回傳型別，預期型別為 Dict[str, Any]。
+    
+    限制或副作用:
+        可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
     """
     rewards = reward_fn(completions, ground_truths=ground_truths)
     

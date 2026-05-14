@@ -15,7 +15,18 @@ if TYPE_CHECKING:
 
 
 def _map_parameter_type(param_type: str) -> str:
-    """將工具參數類型映射為JSON Schema允許的類型"""
+    """
+    負責執行 agents.function_call_agent 中的 _map_parameter_type 流程，依照 agents.function_call_agent 的流程需求處理 _map_parameter_type 對應的資料轉換、狀態操作或結果產生。
+    
+    Args:
+        param_type: 此流程需要使用的輸入資料。
+    
+    Returns:
+        執行結果；若函式標註回傳型別，預期型別為 str。
+    
+    限制或副作用:
+        可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+    """
     normalized = (param_type or "").lower()
     if normalized in {"string", "number", "integer", "boolean", "array", "object"}:
         return normalized
@@ -23,7 +34,25 @@ def _map_parameter_type(param_type: str) -> str:
 
 
 class FunctionCallAgent(Agent):
-    """基於OpenAI原生函式呼叫機制的Agent"""
+    """
+    負責在 agents.function_call_agent 中封裝 FunctionCallAgent，封裝代理節點的推理、工具使用、訊息傳遞或協作控制邏輯。
+    
+    Args:
+        name: 此流程需要使用的輸入資料。
+        llm: 用來呼叫模型或外部服務的模型名稱、客戶端或相關設定。
+        system_prompt: 此流程需要使用的輸入資料。
+        config: 控制此流程行為的設定資料。
+        tool_registry: 此流程需要使用的輸入資料。
+        enable_tool_calling: 控制是否啟用此項資料、功能或處理分支的布林開關。
+        default_tool_choice: 此流程需要使用的輸入資料。
+        max_tool_iterations: 控制檢索、篩選或輸出數量的數值參數。
+    
+    Returns:
+        類別本身不直接回傳值；建立實例後可透過其方法操作狀態與流程。
+    
+    限制或副作用:
+        方法可能更新內部狀態、讀寫檔案、呼叫外部服務或產生日誌，需依使用情境確認。
+    """
 
     def __init__(
         self,
@@ -36,6 +65,25 @@ class FunctionCallAgent(Agent):
         default_tool_choice: Union[str, dict] = "auto",
         max_tool_iterations: int = 3,
     ):
+        """
+        負責執行 FunctionCallAgent 中的 __init__ 流程，初始化物件所需的設定、依賴與內部狀態，讓後續方法可以沿用同一份執行上下文。
+        
+        Args:
+            name: 此流程需要使用的輸入資料。
+            llm: 用來呼叫模型或外部服務的模型名稱、客戶端或相關設定。
+            system_prompt: 此流程需要使用的輸入資料。
+            config: 控制此流程行為的設定資料。
+            tool_registry: 此流程需要使用的輸入資料。
+            enable_tool_calling: 控制是否啟用此項資料、功能或處理分支的布林開關。
+            default_tool_choice: 此流程需要使用的輸入資料。
+            max_tool_iterations: 控制檢索、篩選或輸出數量的數值參數。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 未標註。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         super().__init__(name, llm, system_prompt, config)
         self.tool_registry = tool_registry
         self.enable_tool_calling = enable_tool_calling and tool_registry is not None
@@ -43,7 +91,18 @@ class FunctionCallAgent(Agent):
         self.max_tool_iterations = max_tool_iterations
 
     def _get_system_prompt(self) -> str:
-        """建構系統提示詞，注入工具描述"""
+        """
+        負責執行 FunctionCallAgent 中的 _get_system_prompt 流程，依照 FunctionCallAgent 的流程需求處理 _get_system_prompt 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            無。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 str。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         base_prompt = self.system_prompt or "你是一個可靠的AI 助理，能夠在需要時呼叫工具完成任務。"
 
         if not self.enable_tool_calling or not self.tool_registry:
@@ -60,6 +119,18 @@ class FunctionCallAgent(Agent):
         return prompt
 
     def _build_tool_schemas(self) -> list[dict[str, Any]]:
+        """
+        負責執行 FunctionCallAgent 中的 _build_tool_schemas 流程，依照 FunctionCallAgent 的流程需求處理 _build_tool_schemas 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            無。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 list[dict[str, Any]]。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         if not self.enable_tool_calling or not self.tool_registry:
             return []
 
@@ -127,7 +198,18 @@ class FunctionCallAgent(Agent):
 
     @staticmethod
     def _extract_message_content(raw_content: Any) -> str:
-        """從OpenAI回應的message.content中安全提取文字"""
+        """
+        負責執行 FunctionCallAgent 中的 _extract_message_content 流程，依照 FunctionCallAgent 的流程需求處理 _extract_message_content 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            raw_content: 此流程需要使用的輸入資料。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 str。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         if raw_content is None:
             return ""
         if isinstance(raw_content, str):
@@ -145,7 +227,18 @@ class FunctionCallAgent(Agent):
 
     @staticmethod
     def _parse_function_call_arguments(arguments: Optional[str]) -> dict[str, Any]:
-        """解析模型回傳的JSON字串參數"""
+        """
+        負責執行 FunctionCallAgent 中的 _parse_function_call_arguments 流程，依照 FunctionCallAgent 的流程需求處理 _parse_function_call_arguments 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            arguments: 此流程需要使用的輸入資料。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 dict[str, Any]。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         if not arguments:
             return {}
 
@@ -156,7 +249,19 @@ class FunctionCallAgent(Agent):
             return {}
 
     def _convert_parameter_types(self, tool_name: str, param_dict: dict[str, Any]) -> dict[str, Any]:
-        """根據工具定義盡可能轉換參數類型"""
+        """
+        負責執行 FunctionCallAgent 中的 _convert_parameter_types 流程，依照 FunctionCallAgent 的流程需求處理 _convert_parameter_types 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            tool_name: 可呼叫的工具、工具名稱或工具註冊表。
+            param_dict: 此流程需要使用的輸入資料。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 dict[str, Any]。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         if not self.tool_registry:
             return param_dict
 
@@ -201,7 +306,19 @@ class FunctionCallAgent(Agent):
         return converted
 
     def _execute_tool_call(self, tool_name: str, arguments: dict[str, Any]) -> str:
-        """執行工具呼叫並回傳字串結果"""
+        """
+        負責執行 FunctionCallAgent 中的 _execute_tool_call 流程，依照 FunctionCallAgent 的流程需求處理 _execute_tool_call 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            tool_name: 可呼叫的工具、工具名稱或工具註冊表。
+            arguments: 此流程需要使用的輸入資料。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 str。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         if not self.tool_registry:
             return "❌ 錯誤：未設定工具註冊表"
 
@@ -224,7 +341,21 @@ class FunctionCallAgent(Agent):
         return f"❌ 錯誤：找不到工具 '{tool_name}'"
 
     def _invoke_with_tools(self, messages: list[dict[str, Any]], tools: list[dict[str, Any]], tool_choice: Union[str, dict], **kwargs):
-        """呼叫底層OpenAI客戶端執行函式呼叫"""
+        """
+        負責執行 FunctionCallAgent 中的 _invoke_with_tools 流程，依照 FunctionCallAgent 的流程需求處理 _invoke_with_tools 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            messages: 此流程需要使用的輸入資料。
+            tools: 可呼叫的工具、工具名稱或工具註冊表。
+            tool_choice: 此流程需要使用的輸入資料。
+            **kwargs: 此流程需要使用的輸入資料。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 未標註。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         client = getattr(self.llm, "_client", None)
         if client is None:
             raise RuntimeError("HelloAgentsLLM 未正確初始化客戶端，無法執行函式呼叫。")
@@ -251,7 +382,19 @@ class FunctionCallAgent(Agent):
         **kwargs,
     ) -> str:
         """
-        執行函式呼叫范式的對話流程
+        負責執行 FunctionCallAgent 中的 run 流程，啟動主要執行流程，串接輸入準備、核心處理與結果輸出。
+        
+        Args:
+            input_text: 此流程需要使用的輸入資料。
+            max_tool_iterations: 控制檢索、篩選或輸出數量的數值參數。
+            tool_choice: 此流程需要使用的輸入資料。
+            **kwargs: 此流程需要使用的輸入資料。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 str。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
         """
         messages: list[dict[str, Any]] = []
         system_prompt = self._get_system_prompt()
@@ -340,7 +483,18 @@ class FunctionCallAgent(Agent):
         return final_response
 
     def add_tool(self, tool) -> None:
-        """便捷方法：將工具註冊到目前Agent"""
+        """
+        負責執行 FunctionCallAgent 中的 add_tool 流程，將新的輸入資料合併到目前物件狀態或流程紀錄中。
+        
+        Args:
+            tool: 可呼叫的工具、工具名稱或工具註冊表。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 None。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         if not self.tool_registry:
             from ..tools.registry import ToolRegistry
 
@@ -358,6 +512,18 @@ class FunctionCallAgent(Agent):
         self.tool_registry.register_tool(tool)
 
     def remove_tool(self, tool_name: str) -> bool:
+        """
+        負責執行 FunctionCallAgent 中的 remove_tool 流程，清除或移除指定資源、狀態或註冊資料，維持後續流程的一致性。
+        
+        Args:
+            tool_name: 可呼叫的工具、工具名稱或工具註冊表。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 bool。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         if self.tool_registry:
             before = set(self.tool_registry.list_tools())
             self.tool_registry.unregister(tool_name)
@@ -366,14 +532,50 @@ class FunctionCallAgent(Agent):
         return False
 
     def list_tools(self) -> list[str]:
+        """
+        負責執行 FunctionCallAgent 中的 list_tools 流程，依照 FunctionCallAgent 的流程需求處理 list_tools 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            無。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 list[str]。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         if self.tool_registry:
             return self.tool_registry.list_tools()
         return []
 
     def has_tools(self) -> bool:
+        """
+        負責執行 FunctionCallAgent 中的 has_tools 流程，檢查目前輸入、狀態或條件是否符合流程繼續執行的要求。
+        
+        Args:
+            無。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 bool。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         return self.enable_tool_calling and self.tool_registry is not None
 
     def stream_run(self, input_text: str, **kwargs) -> Iterator[str]:
-        """流式呼叫暫未實現，直接回退到一次性呼叫"""
+        """
+        負責執行 FunctionCallAgent 中的 stream_run 流程，依照 FunctionCallAgent 的流程需求處理 stream_run 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            input_text: 此流程需要使用的輸入資料。
+            **kwargs: 此流程需要使用的輸入資料。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 Iterator[str]。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         result = self.run(input_text, **kwargs)
         yield result

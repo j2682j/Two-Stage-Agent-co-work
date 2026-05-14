@@ -25,33 +25,24 @@ MCP_SERVER_ENV_MAP = {
 
 
 class MCPTool(Tool):
-    """MCP (Model Context Protocol) 工具
-
-    連線到 MCP 伺服器並呼叫其提供的工具、資源和提示詞。
+    """
+    負責在 tools.builtin.protocol_tools 中封裝 MCPTool，封裝工具呼叫、參數處理與工具結果回傳流程。
     
-    功能：
-    - 列出伺服器提供的工具
-    - 呼叫伺服器工具
-    - 讀取伺服器資源
-    - 取得提示詞模板
-
-    使用範例:
-        >>> from hello_agents.tools.builtin import MCPTool
-        >>>
-        >>> # 方式1: 使用內建演示伺服器
-        >>> tool = MCPTool()  # 自動建立內建伺服器
-        >>> result = tool.run({"action": "list_tools"})
-        >>>
-        >>> # 方式2: 連線到外部 MCP 伺服器
-        >>> tool = MCPTool(server_command=["python", "examples/mcp_example.py"])
-        >>> result = tool.run({"action": "list_tools"})
-        >>>
-        >>> # 方式3: 使用自定義 FastMCP 伺服器
-        >>> from fastmcp import FastMCP
-        >>> server = FastMCP("MyServer")
-        >>> tool = MCPTool(server=server)
-
-    注意：使用 fastmcp 庫，已包含在依賴中
+    Args:
+        name: 此流程需要使用的輸入資料。
+        description: 此流程需要使用的輸入資料。
+        server_command: 此流程需要使用的輸入資料。
+        server_args: 此流程需要使用的輸入資料。
+        server: 此流程需要使用的輸入資料。
+        auto_expand: 此流程需要使用的輸入資料。
+        env: 此流程需要使用的輸入資料。
+        env_keys: 此流程需要使用的輸入資料。
+    
+    Returns:
+        類別本身不直接回傳值；建立實例後可透過其方法操作狀態與流程。
+    
+    限制或副作用:
+        方法可能更新內部狀態、讀寫檔案、呼叫外部服務或產生日誌，需依使用情境確認。
     """
     
     def __init__(self,
@@ -64,46 +55,23 @@ class MCPTool(Tool):
                  env: Optional[Dict[str, str]] = None,
                  env_keys: Optional[List[str]] = None):
         """
-        初始化 MCP 工具
-
+        負責執行 MCPTool 中的 __init__ 流程，初始化物件所需的設定、依賴與內部狀態，讓後續方法可以沿用同一份執行上下文。
+        
         Args:
-            name: 工具名稱（預設為"mcp"，建議為不同伺服器指定不同名稱）
-            description: 工具描述（可選，預設為通用描述）
-            server_command: 伺服器啟動命令（如 ["python", "server.py"]）
-            server_args: 伺服器參數列表
-            server: FastMCP 伺服器實例（可選，用於記憶體傳輸）
-            auto_expand: 是否自動展開為獨立工具（預設True）
-            env: 環境變數字典（優先順序最高，直接傳遞給MCP伺服器）
-            env_keys: 要從系統環境變數載入的key列表（優先順序中等）
-
-        環境變數優先順序（從高到低）：
-            1. 直接傳遞的env參數
-            2. env_keys指定的環境變數
-            3. 自動檢測的環境變數（根據server_command）
-
-        注意：如果所有參數都為空，將建立內建演示伺服器
-
-        範例：
-            >>> # 方式1：直接傳遞環境變數（優先順序最高）
-            >>> github_tool = MCPTool(
-            ...     name="github",
-            ...     server_command=["npx", "-y", "@modelcontextprotocol/server-github"],
-            ...     env={"GITHUB_PERSONAL_ACCESS_TOKEN": "ghp_xxx"}
-            ... )
-            >>>
-            >>> # 方式2：從.env檔案載入指定的環境變數
-            >>> github_tool = MCPTool(
-            ...     name="github",
-            ...     server_command=["npx", "-y", "@modelcontextprotocol/server-github"],
-            ...     env_keys=["GITHUB_PERSONAL_ACCESS_TOKEN"]
-            ... )
-            >>>
-            >>> # 方式3：自動檢測（最簡單，推薦）
-            >>> github_tool = MCPTool(
-            ...     name="github",
-            ...     server_command=["npx", "-y", "@modelcontextprotocol/server-github"]
-            ...     # 自動從環境變數載入GITHUB_PERSONAL_ACCESS_TOKEN
-            ... )
+            name: 此流程需要使用的輸入資料。
+            description: 此流程需要使用的輸入資料。
+            server_command: 此流程需要使用的輸入資料。
+            server_args: 此流程需要使用的輸入資料。
+            server: 此流程需要使用的輸入資料。
+            auto_expand: 此流程需要使用的輸入資料。
+            env: 此流程需要使用的輸入資料。
+            env_keys: 此流程需要使用的輸入資料。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 未標註。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
         """
         self.server_command = server_command
         self.server_args = server_args or []
@@ -137,17 +105,18 @@ class MCPTool(Tool):
                      env_keys: Optional[List[str]],
                      server_command: Optional[List[str]]) -> Dict[str, str]:
         """
-        準備環境變數
-
-        優先順序：env > env_keys > 自動檢測
-
+        負責執行 MCPTool 中的 _prepare_env 流程，依照 MCPTool 的流程需求處理 _prepare_env 對應的資料轉換、狀態操作或結果產生。
+        
         Args:
-            env: 直接傳遞的環境變數字典
-            env_keys: 要從系統環境變數載入的key列表
-            server_command: 伺服器命令（用於自動檢測）
-
+            env: 此流程需要使用的輸入資料。
+            env_keys: 此流程需要使用的輸入資料。
+            server_command: 此流程需要使用的輸入資料。
+        
         Returns:
-            合併後的環境變數字典
+            執行結果；若函式標註回傳型別，預期型別為 Dict[str, str]。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
         """
         result_env = {}
 
@@ -189,7 +158,18 @@ class MCPTool(Tool):
         return result_env
 
     def _create_builtin_server(self):
-        """建立內建演示伺服器"""
+        """
+        負責執行 MCPTool 中的 _create_builtin_server 流程，依照 MCPTool 的流程需求處理 _create_builtin_server 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            無。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 未標註。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         try:
             from fastmcp import FastMCP
 
@@ -197,34 +177,104 @@ class MCPTool(Tool):
 
             @server.tool()
             def add(a: float, b: float) -> float:
-                """加法計算器"""
+                """
+                負責執行 MCPTool 中的 add 流程，將新的輸入資料合併到目前物件狀態或流程紀錄中。
+                
+                Args:
+                    a: 此流程需要使用的輸入資料。
+                    b: 此流程需要使用的輸入資料。
+                
+                Returns:
+                    執行結果；若函式標註回傳型別，預期型別為 float。
+                
+                限制或副作用:
+                    可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+                """
                 return a + b
 
             @server.tool()
             def subtract(a: float, b: float) -> float:
-                """減法計算器"""
+                """
+                負責執行 MCPTool 中的 subtract 流程，依照 MCPTool 的流程需求處理 subtract 對應的資料轉換、狀態操作或結果產生。
+                
+                Args:
+                    a: 此流程需要使用的輸入資料。
+                    b: 此流程需要使用的輸入資料。
+                
+                Returns:
+                    執行結果；若函式標註回傳型別，預期型別為 float。
+                
+                限制或副作用:
+                    可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+                """
                 return a - b
 
             @server.tool()
             def multiply(a: float, b: float) -> float:
-                """乘法計算器"""
+                """
+                負責執行 MCPTool 中的 multiply 流程，依照 MCPTool 的流程需求處理 multiply 對應的資料轉換、狀態操作或結果產生。
+                
+                Args:
+                    a: 此流程需要使用的輸入資料。
+                    b: 此流程需要使用的輸入資料。
+                
+                Returns:
+                    執行結果；若函式標註回傳型別，預期型別為 float。
+                
+                限制或副作用:
+                    可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+                """
                 return a * b
 
             @server.tool()
             def divide(a: float, b: float) -> float:
-                """除法計算器"""
+                """
+                負責執行 MCPTool 中的 divide 流程，依照 MCPTool 的流程需求處理 divide 對應的資料轉換、狀態操作或結果產生。
+                
+                Args:
+                    a: 此流程需要使用的輸入資料。
+                    b: 此流程需要使用的輸入資料。
+                
+                Returns:
+                    執行結果；若函式標註回傳型別，預期型別為 float。
+                
+                限制或副作用:
+                    可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+                """
                 if b == 0:
                     raise ValueError("除數不能為零")
                 return a / b
 
             @server.tool()
             def greet(name: str = "World") -> str:
-                """友好問候"""
+                """
+                負責執行 MCPTool 中的 greet 流程，依照 MCPTool 的流程需求處理 greet 對應的資料轉換、狀態操作或結果產生。
+                
+                Args:
+                    name: 此流程需要使用的輸入資料。
+                
+                Returns:
+                    執行結果；若函式標註回傳型別，預期型別為 str。
+                
+                限制或副作用:
+                    可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+                """
                 return f"Hello, {name}! 歡迎使用 HelloAgents MCP 工具！"
 
             @server.tool()
             def get_system_info() -> dict:
-                """取得系統資訊"""
+                """
+                負責執行 MCPTool 中的 get_system_info 流程，依照 MCPTool 的流程需求處理 get_system_info 對應的資料轉換、狀態操作或結果產生。
+                
+                Args:
+                    無。
+                
+                Returns:
+                    執行結果；若函式標註回傳型別，預期型別為 dict。
+                
+                限制或副作用:
+                    可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+                """
                 import platform
                 import sys
                 return {
@@ -242,12 +292,35 @@ class MCPTool(Tool):
             )
 
     def _discover_tools(self):
-        """發現MCP伺服器提供的所有工具"""
+        """
+        負責執行 MCPTool 中的 _discover_tools 流程，依照 MCPTool 的流程需求處理 _discover_tools 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            無。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 未標註。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         try:
             from hello_agents.protocols.mcp.client import MCPClient
             import asyncio
 
             async def discover():
+                """
+                負責執行 MCPTool 中的 discover 流程，依照 MCPTool 的流程需求處理 discover 對應的資料轉換、狀態操作或結果產生。
+                
+                Args:
+                    無。
+                
+                Returns:
+                    執行結果；若函式標註回傳型別，預期型別為 未標註。
+                
+                限制或副作用:
+                    可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+                """
                 client_source = self.server if self.server else self.server_command
                 async with MCPClient(client_source, self.server_args, env=self.env) as client:
                     tools = await client.list_tools()
@@ -259,6 +332,18 @@ class MCPTool(Tool):
                 # 如果已有循環，在新執行緒中執行
                 import concurrent.futures
                 def run_in_thread():
+                    """
+                    負責執行 MCPTool 中的 run_in_thread 流程，依照 MCPTool 的流程需求處理 run_in_thread 對應的資料轉換、狀態操作或結果產生。
+                    
+                    Args:
+                        無。
+                    
+                    Returns:
+                        執行結果；若函式標註回傳型別，預期型別為 未標註。
+                    
+                    限制或副作用:
+                        可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+                    """
                     new_loop = asyncio.new_event_loop()
                     asyncio.set_event_loop(new_loop)
                     try:
@@ -278,7 +363,18 @@ class MCPTool(Tool):
             self._available_tools = []
 
     def _generate_description(self) -> str:
-        """生成增強的工具描述"""
+        """
+        負責執行 MCPTool 中的 _generate_description 流程，依照 MCPTool 的流程需求處理 _generate_description 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            無。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 str。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         if not self._available_tools:
             return "連線到 MCP 伺服器，呼叫工具、讀取資源和取得提示詞。支援內建伺服器和外部伺服器。"
 
@@ -313,12 +409,16 @@ class MCPTool(Tool):
 
     def get_expanded_tools(self) -> List['Tool']:  # type: ignore
         """
-        取得展開的工具列表
-
-        將MCP伺服器的每個工具包裝成獨立的Tool對象
-
+        負責執行 MCPTool 中的 get_expanded_tools 流程，依照 MCPTool 的流程需求處理 get_expanded_tools 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            無。
+        
         Returns:
-            Tool對象列表
+            執行結果；若函式標註回傳型別，預期型別為 List['Tool']。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
         """
         if not self.auto_expand:
             return []
@@ -338,20 +438,16 @@ class MCPTool(Tool):
 
     def run(self, parameters: Dict[str, Any]) -> str:
         """
-        執行 MCP 操作
-
+        負責執行 MCPTool 中的 run 流程，啟動主要執行流程，串接輸入準備、核心處理與結果輸出。
+        
         Args:
-            parameters: 包含以下參數的字典
-                - action: 操作類型 (list_tools, call_tool, list_resources, read_resource, list_prompts, get_prompt)
-                  如果不指定action但指定了tool_name，會自動推斷為call_tool
-                - tool_name: 工具名稱（call_tool 需要）
-                - arguments: 工具參數（call_tool 需要）
-                - uri: 資源 URI（read_resource 需要）
-                - prompt_name: 提示詞名稱（get_prompt 需要）
-                - prompt_arguments: 提示詞參數（get_prompt 可選）
-
+            parameters: 此流程需要使用的輸入資料。
+        
         Returns:
-            操作結果
+            執行結果；若函式標註回傳型別，預期型別為 str。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
         """
         from hello_agents.protocols.mcp.client import MCPClient
 
@@ -371,6 +467,18 @@ class MCPTool(Tool):
 
             async def run_mcp_operation():
                 # 根據設定選擇客戶端建立方式
+                """
+                負責執行 MCPTool 中的 run_mcp_operation 流程，依照 MCPTool 的流程需求處理 run_mcp_operation 對應的資料轉換、狀態操作或結果產生。
+                
+                Args:
+                    無。
+                
+                Returns:
+                    執行結果；若函式標註回傳型別，預期型別為 未標註。
+                
+                限制或副作用:
+                    可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+                """
                 if self.server:
                     # 使用內建伺服器（記憶體傳輸）
                     client_source = self.server
@@ -446,6 +554,18 @@ class MCPTool(Tool):
 
                     def run_in_thread():
                         # 在新執行緒中建立新的事件循環
+                        """
+                        負責執行 MCPTool 中的 run_in_thread 流程，依照 MCPTool 的流程需求處理 run_in_thread 對應的資料轉換、狀態操作或結果產生。
+                        
+                        Args:
+                            無。
+                        
+                        Returns:
+                            執行結果；若函式標註回傳型別，預期型別為 未標註。
+                        
+                        限制或副作用:
+                            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+                        """
                         new_loop = asyncio.new_event_loop()
                         asyncio.set_event_loop(new_loop)
                         try:
@@ -466,7 +586,18 @@ class MCPTool(Tool):
             return f"MCP 操作失敗: {str(e)}"
     
     def get_parameters(self) -> List[ToolParameter]:
-        """取得工具參數定義"""
+        """
+        負責執行 MCPTool 中的 get_parameters 流程，依照 MCPTool 的流程需求處理 get_parameters 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            無。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 List[ToolParameter]。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         return [
             ToolParameter(
                 name="action",
@@ -508,43 +639,35 @@ class MCPTool(Tool):
 
 
 class A2ATool(Tool):
-    """A2A (Agent-to-Agent Protocol) 工具
-
-    連線到 A2A Agent 並進行通信。
+    """
+    負責在 tools.builtin.protocol_tools 中封裝 A2ATool，封裝工具呼叫、參數處理與工具結果回傳流程。
     
-    功能：
-    - 向 Agent 提問
-    - 取得 Agent 資訊
-    - 發送自定義消息
-
-    使用範例:
-        >>> from hello_agents.tools.builtin import A2ATool
-        >>> # 連線到 A2A Agent（使用預設名稱）
-        >>> tool = A2ATool(agent_url="http://localhost:5000")
-        >>> # 連線到 A2A Agent（自定義名稱和描述）
-        >>> tool = A2ATool(
-        ...     agent_url="http://localhost:5000",
-        ...     name="tech_expert",
-        ...     description="技術專家，回答技術相關問題"
-        ... )
-        >>> # 提問
-        >>> result = tool.run({"action": "ask", "question": "計算 2+2"})
-        >>> # 取得資訊
-        >>> result = tool.run({"action": "get_info"})
+    Args:
+        agent_url: 此流程需要使用的輸入資料。
+        name: 此流程需要使用的輸入資料。
+        description: 此流程需要使用的輸入資料。
     
-    注意：需要安裝官方 a2a-sdk 庫: pip install a2a-sdk
-    詳見文檔: docs/chapter10/A2A_GUIDE.md
-    官方倉庫: https://github.com/a2aproject/a2a-python
+    Returns:
+        類別本身不直接回傳值；建立實例後可透過其方法操作狀態與流程。
+    
+    限制或副作用:
+        方法可能更新內部狀態、讀寫檔案、呼叫外部服務或產生日誌，需依使用情境確認。
     """
     
     def __init__(self, agent_url: str, name: str = "a2a", description: str = None):
         """
-        初始化 A2A 工具
-
+        負責執行 A2ATool 中的 __init__ 流程，初始化物件所需的設定、依賴與內部狀態，讓後續方法可以沿用同一份執行上下文。
+        
         Args:
-            agent_url: Agent URL
-            name: 工具名稱（可選，預設為 "a2a"）
-            description: 工具描述（可選）
+            agent_url: 此流程需要使用的輸入資料。
+            name: 此流程需要使用的輸入資料。
+            description: 此流程需要使用的輸入資料。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 未標註。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
         """
         if description is None:
             description = "連線到 A2A Agent，支援提問和取得資訊。需要安裝官方 a2a-sdk 庫。"
@@ -557,15 +680,16 @@ class A2ATool(Tool):
         
     def run(self, parameters: Dict[str, Any]) -> str:
         """
-        執行 A2A 操作
+        負責執行 A2ATool 中的 run 流程，啟動主要執行流程，串接輸入準備、核心處理與結果輸出。
         
         Args:
-            parameters: 包含以下參數的字典
-                - action: 操作類型 (ask, get_info)
-                - question: 問題文字（ask 需要）
+            parameters: 此流程需要使用的輸入資料。
         
         Returns:
-            操作結果
+            執行結果；若函式標註回傳型別，預期型別為 str。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
         """
         try:
             from hello_agents.protocols.a2a.implementation import A2AClient, A2A_AVAILABLE
@@ -609,7 +733,18 @@ class A2ATool(Tool):
             return f"A2A 操作失敗: {str(e)}"
     
     def get_parameters(self) -> List[ToolParameter]:
-        """取得工具參數定義"""
+        """
+        負責執行 A2ATool 中的 get_parameters 流程，依照 A2ATool 的流程需求處理 get_parameters 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            無。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 List[ToolParameter]。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         return [
             ToolParameter(
                 name="action",
@@ -627,51 +762,37 @@ class A2ATool(Tool):
 
 
 class ANPTool(Tool):
-    """ANP (Agent Network Protocol) 工具
-
-    提供智慧代理網路管理功能，包括服務發現、節點管理和消息路由。
-    這是一個概念性實現，用於演示 Agent 網路管理的核心理念。
+    """
+    負責在 tools.builtin.protocol_tools 中封裝 ANPTool，封裝工具呼叫、參數處理與工具結果回傳流程。
     
-    功能：
-    - 註冊和發現服務
-    - 添加和管理網路節點
-    - 消息路由
-    - 網路統計
-
-    使用範例:
-        >>> from hello_agents.tools.builtin import ANPTool
-        >>> tool = ANPTool()
-        >>> # 註冊服務
-        >>> result = tool.run({
-        ...     "action": "register_service",
-        ...     "service_id": "calc-1",
-        ...     "service_type": "calculator",
-        ...     "endpoint": "http://localhost:5001"
-        ... })
-        >>> # 發現服務
-        >>> result = tool.run({
-        ...     "action": "discover_services",
-        ...     "service_type": "calculator"
-        ... })
-        >>> # 添加節點
-        >>> result = tool.run({
-        ...     "action": "add_node",
-        ...     "node_id": "agent-1",
-        ...     "endpoint": "http://localhost:5001"
-        ... })
+    Args:
+        name: 此流程需要使用的輸入資料。
+        description: 此流程需要使用的輸入資料。
+        discovery: 此流程需要使用的輸入資料。
+        network: 此流程需要使用的輸入資料。
     
-    注意：這是概念性實現，不需要額外依賴
-    詳見文檔: docs/chapter10/ANP_CONCEPTS.md
+    Returns:
+        類別本身不直接回傳值；建立實例後可透過其方法操作狀態與流程。
+    
+    限制或副作用:
+        方法可能更新內部狀態、讀寫檔案、呼叫外部服務或產生日誌，需依使用情境確認。
     """
     
     def __init__(self, name: str = "anp", description: str = None, discovery=None, network=None):
-        """初始化 ANP 工具
-
+        """
+        負責執行 ANPTool 中的 __init__ 流程，初始化物件所需的設定、依賴與內部狀態，讓後續方法可以沿用同一份執行上下文。
+        
         Args:
-            name: 工具名稱
-            description: 工具描述
-            discovery: 可選的 ANPDiscovery 實例，如果不提供則建立新實例
-            network: 可選的 ANPNetwork 實例，如果不提供則建立新實例
+            name: 此流程需要使用的輸入資料。
+            description: 此流程需要使用的輸入資料。
+            discovery: 此流程需要使用的輸入資料。
+            network: 此流程需要使用的輸入資料。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 未標註。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
         """
         if description is None:
             description = "智慧代理網路管理工具，支援服務發現、節點管理和消息路由。概念性實現。"
@@ -686,17 +807,16 @@ class ANPTool(Tool):
         
     def run(self, parameters: Dict[str, Any]) -> str:
         """
-        執行 ANP 操作
+        負責執行 ANPTool 中的 run 流程，啟動主要執行流程，串接輸入準備、核心處理與結果輸出。
         
         Args:
-            parameters: 包含以下參數的字典
-                - action: 操作類型 (register_service, discover_services, add_node, route_message, get_stats)
-                - service_id, service_type, endpoint: 服務資訊（register_service 需要）
-                - node_id, endpoint: 節點資訊（add_node 需要）
-                - from_node, to_node, message: 路由資訊（route_message 需要）
+            parameters: 此流程需要使用的輸入資料。
         
         Returns:
-            操作結果
+            執行結果；若函式標註回傳型別，預期型別為 str。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
         """
         from hello_agents.protocols.anp.implementation import ServiceInfo
 
@@ -791,7 +911,18 @@ class ANPTool(Tool):
             return f"ANP 操作失敗: {str(e)}"
     
     def get_parameters(self) -> List[ToolParameter]:
-        """取得工具參數定義"""
+        """
+        負責執行 ANPTool 中的 get_parameters 流程，依照 ANPTool 的流程需求處理 get_parameters 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            無。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 List[ToolParameter]。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         return [
             ToolParameter(
                 name="action",

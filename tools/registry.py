@@ -7,16 +7,48 @@ from .base import Tool
 
 
 class ToolRegistry:
-    """管理工具與函式型工具的註冊、查詢與執行。"""
+    """
+    負責在 tools.registry 中封裝 ToolRegistry，封裝工具呼叫、參數處理與工具結果回傳流程。
+    
+    Args:
+        無明確建構參數，可能透過 dataclass 欄位或預設值建立物件。
+    
+    Returns:
+        類別本身不直接回傳值；建立實例後可透過其方法操作狀態與流程。
+    
+    限制或副作用:
+        方法可能更新內部狀態、讀寫檔案、呼叫外部服務或產生日誌，需依使用情境確認。
+    """
 
     def __init__(self) -> None:
+        """
+        負責執行 ToolRegistry 中的 __init__ 流程，初始化物件所需的設定、依賴與內部狀態，讓後續方法可以沿用同一份執行上下文。
+        
+        Args:
+            無。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 None。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         self._tools: dict[str, Tool] = {}
         self._functions: dict[str, dict[str, Any]] = {}
 
     def register_tool(self, tool: Tool, auto_expand: bool = True) -> None:
-        """註冊工具。
-
-        若工具支援展開，會改為註冊其展開後的子工具。
+        """
+        負責執行 ToolRegistry 中的 register_tool 流程，依照 ToolRegistry 的流程需求處理 register_tool 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            tool: 可呼叫的工具、工具名稱或工具註冊表。
+            auto_expand: 此流程需要使用的輸入資料。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 None。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
         """
         if auto_expand and hasattr(tool, "expandable") and tool.expandable:
             expanded_tools = tool.get_expanded_tools()
@@ -40,7 +72,20 @@ class ToolRegistry:
         description: str,
         func: Callable[[str], str],
     ) -> None:
-        """註冊函式型工具。"""
+        """
+        負責執行 ToolRegistry 中的 register_function 流程，依照 ToolRegistry 的流程需求處理 register_function 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            name: 此流程需要使用的輸入資料。
+            description: 此流程需要使用的輸入資料。
+            func: 此流程需要使用的輸入資料。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 None。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         if name in self._functions:
             print(f"[WARN] 工具 '{name}' 已存在，將被覆蓋。")
 
@@ -51,7 +96,18 @@ class ToolRegistry:
         print(f"[OK] 工具 '{name}' 已註冊。")
 
     def unregister(self, name: str) -> None:
-        """移除工具或函式型工具。"""
+        """
+        負責執行 ToolRegistry 中的 unregister 流程，依照 ToolRegistry 的流程需求處理 unregister 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            name: 此流程需要使用的輸入資料。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 None。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         if name in self._tools:
             del self._tools[name]
             print(f"[INFO] 工具 '{name}' 已註銷。")
@@ -62,16 +118,50 @@ class ToolRegistry:
             print(f"[WARN] 工具 '{name}' 不存在。")
 
     def get_tool(self, name: str) -> Optional[Tool]:
-        """取得工具實例。"""
+        """
+        負責執行 ToolRegistry 中的 get_tool 流程，依照 ToolRegistry 的流程需求處理 get_tool 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            name: 此流程需要使用的輸入資料。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 Optional[Tool]。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         return self._tools.get(name)
 
     def get_function(self, name: str) -> Optional[Callable[[str], str]]:
-        """取得函式型工具。"""
+        """
+        負責執行 ToolRegistry 中的 get_function 流程，依照 ToolRegistry 的流程需求處理 get_function 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            name: 此流程需要使用的輸入資料。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 Optional[Callable[[str], str]]。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         func_info = self._functions.get(name)
         return func_info["func"] if func_info else None
 
     def execute_tool(self, name: str, input_text: str) -> str:
-        """執行指定工具。"""
+        """
+        負責執行 ToolRegistry 中的 execute_tool 流程，依照 ToolRegistry 的流程需求處理 execute_tool 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            name: 此流程需要使用的輸入資料。
+            input_text: 此流程需要使用的輸入資料。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 str。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         if name in self._tools:
             tool = self._tools[name]
             try:
@@ -89,7 +179,18 @@ class ToolRegistry:
         return f"[ERROR] 找不到名稱為 '{name}' 的工具。"
 
     def get_tools_description(self) -> str:
-        """回傳所有已註冊工具的描述。"""
+        """
+        負責執行 ToolRegistry 中的 get_tools_description 流程，依照 ToolRegistry 的流程需求處理 get_tools_description 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            無。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 str。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         descriptions = []
 
         for tool in self._tools.values():
@@ -101,15 +202,48 @@ class ToolRegistry:
         return "\n".join(descriptions) if descriptions else "目前沒有已註冊工具"
 
     def list_tools(self) -> list[str]:
-        """列出所有工具名稱。"""
+        """
+        負責執行 ToolRegistry 中的 list_tools 流程，依照 ToolRegistry 的流程需求處理 list_tools 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            無。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 list[str]。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         return list(self._tools.keys()) + list(self._functions.keys())
 
     def get_all_tools(self) -> list[Tool]:
-        """取得所有工具實例。"""
+        """
+        負責執行 ToolRegistry 中的 get_all_tools 流程，依照 ToolRegistry 的流程需求處理 get_all_tools 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            無。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 list[Tool]。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         return list(self._tools.values())
 
     def clear(self) -> None:
-        """清空所有註冊內容。"""
+        """
+        負責執行 ToolRegistry 中的 clear 流程，清除或移除指定資源、狀態或註冊資料，維持後續流程的一致性。
+        
+        Args:
+            無。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 None。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         self._tools.clear()
         self._functions.clear()
         print("[OK] 所有工具已清空。")

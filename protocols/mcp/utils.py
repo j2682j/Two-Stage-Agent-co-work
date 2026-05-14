@@ -16,22 +16,19 @@ def create_context(
     metadata: Optional[Dict[str, Any]] = None
 ) -> Dict[str, Any]:
     """
-    建立 MCP 上下文對象
+    負責執行 protocols.mcp.utils 中的 create_context 流程，建立後續流程需要的物件、資料結構或輸出區塊。
     
     Args:
-        messages: 消息列表
-        tools: 工具列表
-        resources: 資源列表
-        metadata: 元資料
-        
+        messages: 此流程需要使用的輸入資料。
+        tools: 可呼叫的工具、工具名稱或工具註冊表。
+        resources: 此流程需要使用的輸入資料。
+        metadata: 目前流程所需的上下文、狀態或附加資訊。
+    
     Returns:
-        上下文字典
-        
-    Example:
-        >>> context = create_context(
-        ...     messages=[{"role": "user", "content": "Hello"}],
-        ...     tools=[{"name": "calculator", "description": "計算器"}]
-        ... )
+        執行結果；若函式標註回傳型別，預期型別為 Dict[str, Any]。
+    
+    限制或副作用:
+        可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
     """
     return {
         "messages": messages or [],
@@ -43,20 +40,16 @@ def create_context(
 
 def parse_context(context: Union[str, Dict[str, Any]]) -> Dict[str, Any]:
     """
-    解析 MCP 上下文
+    負責執行 protocols.mcp.utils 中的 parse_context 流程，解析輸入內容並萃取後續流程需要使用的結構化資料。
     
     Args:
-        context: 上下文字串或字典
-        
+        context: 目前流程所需的上下文、狀態或附加資訊。
+    
     Returns:
-        解析後的上下文字典
-        
-    Raises:
-        ValueError: 如果上下文格式無效
-        
-    Example:
-        >>> context_str = '{"messages": [], "tools": []}'
-        >>> parsed = parse_context(context_str)
+        執行結果；若函式標註回傳型別，預期型別為 Dict[str, Any]。
+    
+    限制或副作用:
+        可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
     """
     if isinstance(context, str):
         try:
@@ -81,18 +74,18 @@ def create_error_response(
     details: Optional[Dict[str, Any]] = None
 ) -> Dict[str, Any]:
     """
-    建立錯誤回應
+    負責執行 protocols.mcp.utils 中的 create_error_response 流程，建立後續流程需要的物件、資料結構或輸出區塊。
     
     Args:
-        error_message: 錯誤消息
-        error_code: 錯誤代碼
-        details: 錯誤詳情
-        
+        error_message: 此流程需要使用的輸入資料。
+        error_code: 此流程需要使用的輸入資料。
+        details: 此流程需要使用的輸入資料。
+    
     Returns:
-        錯誤回應字典
-        
-    Example:
-        >>> error = create_error_response("Tool not found", "TOOL_NOT_FOUND")
+        執行結果；若函式標註回傳型別，預期型別為 Dict[str, Any]。
+    
+    限制或副作用:
+        可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
     """
     response = {
         "error": {
@@ -112,17 +105,17 @@ def create_success_response(
     metadata: Optional[Dict[str, Any]] = None
 ) -> Dict[str, Any]:
     """
-    建立成功回應
+    負責執行 protocols.mcp.utils 中的 create_success_response 流程，建立後續流程需要的物件、資料結構或輸出區塊。
     
     Args:
-        data: 回應資料
-        metadata: 元資料
-        
+        data: 此流程需要使用的輸入資料。
+        metadata: 目前流程所需的上下文、狀態或附加資訊。
+    
     Returns:
-        成功回應字典
-        
-    Example:
-        >>> response = create_success_response({"result": 42})
+        執行結果；若函式標註回傳型別，預期型別為 Dict[str, Any]。
+    
+    限制或副作用:
+        可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
     """
     response = {
         "success": True,

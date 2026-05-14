@@ -8,9 +8,34 @@ from ..base import BaseMemory, MemoryConfig, MemoryItem
 
 
 class WorkingMemory(BaseMemory):
-    """用來保存近期上下文與暫時推理內容的短期記憶庫。"""
+    """
+    負責在 memory.types.working 中封裝 WorkingMemory，管理記憶圖、任務紀錄、檢索結果或跨任務經驗的狀態與操作。
+    
+    Args:
+        config: 控制此流程行為的設定資料。
+        storage_backend: 記憶系統提供的檢索結果、寫入資料或操作介面。
+    
+    Returns:
+        類別本身不直接回傳值；建立實例後可透過其方法操作狀態與流程。
+    
+    限制或副作用:
+        方法可能更新內部狀態、讀寫檔案、呼叫外部服務或產生日誌，需依使用情境確認。
+    """
 
     def __init__(self, config: MemoryConfig, storage_backend=None):
+        """
+        負責執行 WorkingMemory 中的 __init__ 流程，初始化物件所需的設定、依賴與內部狀態，讓後續方法可以沿用同一份執行上下文。
+        
+        Args:
+            config: 控制此流程行為的設定資料。
+            storage_backend: 記憶系統提供的檢索結果、寫入資料或操作介面。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 未標註。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         super().__init__(config, storage_backend)
 
         self.max_capacity = self.config.working_memory_capacity
@@ -23,7 +48,18 @@ class WorkingMemory(BaseMemory):
         self.memory_heap = []  # (-priority, timestamp, memory_id, memory_item)
 
     def add(self, memory_item: MemoryItem) -> str:
-        """新增一筆工作記憶。"""
+        """
+        負責執行 WorkingMemory 中的 add 流程，更新記憶圖、互動狀態、節點邊關係或追蹤紀錄。
+        
+        Args:
+            memory_item: 記憶系統提供的檢索結果、寫入資料或操作介面。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 str。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         self._expire_old_memories()
 
         priority = self._calculate_priority(memory_item)
@@ -38,7 +74,21 @@ class WorkingMemory(BaseMemory):
         return memory_item.id
 
     def retrieve(self, query: str, limit: int = 5, user_id: str = None, **kwargs) -> List[MemoryItem]:
-        """檢索相關的工作記憶。"""
+        """
+        負責執行 WorkingMemory 中的 retrieve 流程，從記憶圖、向量索引或任務關聯中取回相關案例與策略提醒。
+        
+        Args:
+            query: 目前要處理的任務、問題或查詢文字。
+            limit: 控制檢索、篩選或輸出數量的數值參數。
+            user_id: 記憶系統提供的檢索結果、寫入資料或操作介面。
+            **kwargs: 記憶系統提供的檢索結果、寫入資料或操作介面。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 List[MemoryItem]。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         self._expire_old_memories()
         if not self.memories:
             return []
@@ -107,7 +157,21 @@ class WorkingMemory(BaseMemory):
         importance: float = None,
         metadata: Dict[str, Any] = None,
     ) -> bool:
-        """更新既有的工作記憶。"""
+        """
+        負責執行 WorkingMemory 中的 update 流程，更新記憶圖、互動狀態、節點邊關係或追蹤紀錄。
+        
+        Args:
+            memory_id: 記憶系統提供的檢索結果、寫入資料或操作介面。
+            content: 記憶系統提供的檢索結果、寫入資料或操作介面。
+            importance: 記憶系統提供的檢索結果、寫入資料或操作介面。
+            metadata: 目前流程所需的上下文、狀態或附加資訊。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 bool。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         for memory in self.memories:
             if memory.id != memory_id:
                 continue
@@ -131,7 +195,18 @@ class WorkingMemory(BaseMemory):
         return False
 
     def remove(self, memory_id: str) -> bool:
-        """移除一筆工作記憶。"""
+        """
+        負責執行 WorkingMemory 中的 remove 流程，清除或移除指定資源、狀態或註冊資料，維持後續流程的一致性。
+        
+        Args:
+            memory_id: 記憶系統提供的檢索結果、寫入資料或操作介面。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 bool。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         for idx, memory in enumerate(self.memories):
             if memory.id != memory_id:
                 continue
@@ -145,17 +220,50 @@ class WorkingMemory(BaseMemory):
         return False
 
     def has_memory(self, memory_id: str) -> bool:
-        """判斷指定記憶 id 是否存在。"""
+        """
+        負責執行 WorkingMemory 中的 has_memory 流程，檢查目前輸入、狀態或條件是否符合流程繼續執行的要求。
+        
+        Args:
+            memory_id: 記憶系統提供的檢索結果、寫入資料或操作介面。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 bool。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         return any(memory.id == memory_id for memory in self.memories)
 
     def clear(self):
-        """清空所有工作記憶。"""
+        """
+        負責執行 WorkingMemory 中的 clear 流程，清除或移除指定資源、狀態或註冊資料，維持後續流程的一致性。
+        
+        Args:
+            無。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 未標註。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         self.memories.clear()
         self.memory_heap.clear()
         self.current_tokens = 0
 
     def get_stats(self) -> Dict[str, Any]:
-        """回傳工作記憶統計資訊。"""
+        """
+        負責執行 WorkingMemory 中的 get_stats 流程，依照 WorkingMemory 的流程需求處理 get_stats 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            無。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 Dict[str, Any]。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         self._expire_old_memories()
         active_memories = self.memories
 
@@ -175,21 +283,65 @@ class WorkingMemory(BaseMemory):
         }
 
     def get_recent(self, limit: int = 10) -> List[MemoryItem]:
-        """回傳最近的記憶。"""
+        """
+        負責執行 WorkingMemory 中的 get_recent 流程，依照 WorkingMemory 的流程需求處理 get_recent 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            limit: 控制檢索、篩選或輸出數量的數值參數。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 List[MemoryItem]。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         sorted_memories = sorted(self.memories, key=lambda item: item.timestamp, reverse=True)
         return sorted_memories[:limit]
 
     def get_important(self, limit: int = 10) -> List[MemoryItem]:
-        """回傳重要性最高的記憶。"""
+        """
+        負責執行 WorkingMemory 中的 get_important 流程，依照 WorkingMemory 的流程需求處理 get_important 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            limit: 控制檢索、篩選或輸出數量的數值參數。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 List[MemoryItem]。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         sorted_memories = sorted(self.memories, key=lambda item: item.importance, reverse=True)
         return sorted_memories[:limit]
 
     def get_all(self) -> List[MemoryItem]:
-        """回傳目前所有記憶的淺拷貝。"""
+        """
+        負責執行 WorkingMemory 中的 get_all 流程，依照 WorkingMemory 的流程需求處理 get_all 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            無。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 List[MemoryItem]。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         return self.memories.copy()
 
     def get_context_summary(self, max_length: int = 500) -> str:
-        """回傳工作記憶的簡短文字摘要。"""
+        """
+        負責執行 WorkingMemory 中的 get_context_summary 流程，依照 WorkingMemory 的流程需求處理 get_context_summary 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            max_length: 控制檢索、篩選或輸出數量的數值參數。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 str。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         if not self.memories:
             return "目前沒有可用的工作記憶。"
 
@@ -216,7 +368,20 @@ class WorkingMemory(BaseMemory):
         return "工作記憶內容：\n" + "\n".join(summary_parts)
 
     def forget(self, strategy: str = "importance_based", threshold: float = 0.1, max_age_days: int = 1) -> int:
-        """遺忘低價值或已過期的工作記憶。"""
+        """
+        負責執行 WorkingMemory 中的 forget 流程，依照 WorkingMemory 的流程需求處理 forget 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            strategy: 記憶系統提供的檢索結果、寫入資料或操作介面。
+            threshold: 控制檢索、篩選或輸出數量的數值參數。
+            max_age_days: 控制檢索、篩選或輸出數量的數值參數。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 int。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         forgotten_count = 0
         current_time = datetime.now()
         to_remove = []
@@ -248,18 +413,51 @@ class WorkingMemory(BaseMemory):
         return forgotten_count
 
     def _calculate_priority(self, memory: MemoryItem) -> float:
-        """依重要性與新近程度計算優先權。"""
+        """
+        負責執行 WorkingMemory 中的 _calculate_priority 流程，依照 WorkingMemory 的流程需求處理 _calculate_priority 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            memory: 記憶系統提供的檢索結果、寫入資料或操作介面。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 float。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         return memory.importance * self._calculate_time_decay(memory.timestamp)
 
     def _calculate_time_decay(self, timestamp: datetime) -> float:
-        """計算工作記憶的新近程度衰減。"""
+        """
+        負責執行 WorkingMemory 中的 _calculate_time_decay 流程，依照 WorkingMemory 的流程需求處理 _calculate_time_decay 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            timestamp: 記憶系統提供的檢索結果、寫入資料或操作介面。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 float。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         time_diff = datetime.now() - timestamp
         hours_passed = time_diff.total_seconds() / 3600
         decay_factor = self.config.decay_factor ** (hours_passed / 6)
         return max(0.1, decay_factor)
 
     def _enforce_capacity_limits(self):
-        """強制執行容量與 token 限制。"""
+        """
+        負責執行 WorkingMemory 中的 _enforce_capacity_limits 流程，依照 WorkingMemory 的流程需求處理 _enforce_capacity_limits 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            無。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 未標註。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         while len(self.memories) > self.max_capacity:
             self._remove_lowest_priority_memory()
 
@@ -267,7 +465,18 @@ class WorkingMemory(BaseMemory):
             self._remove_lowest_priority_memory()
 
     def _expire_old_memories(self):
-        """移除過期記憶並重建內部狀態。"""
+        """
+        負責執行 WorkingMemory 中的 _expire_old_memories 流程，依照 WorkingMemory 的流程需求處理 _expire_old_memories 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            無。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 未標註。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         if not self.memories:
             return
 
@@ -292,7 +501,18 @@ class WorkingMemory(BaseMemory):
             heapq.heappush(self.memory_heap, (-priority, memory.timestamp, memory.id, memory))
 
     def _remove_lowest_priority_memory(self):
-        """移除優先權最低的記憶項目。"""
+        """
+        負責執行 WorkingMemory 中的 _remove_lowest_priority_memory 流程，依照 WorkingMemory 的流程需求處理 _remove_lowest_priority_memory 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            無。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 未標註。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         if not self.memories:
             return
 
@@ -309,12 +529,34 @@ class WorkingMemory(BaseMemory):
             self.remove(lowest_memory.id)
 
     def _update_heap_priority(self, memory: MemoryItem):
-        """在記憶內容變動後重建 heap。"""
+        """
+        負責執行 WorkingMemory 中的 _update_heap_priority 流程，依照 WorkingMemory 的流程需求處理 _update_heap_priority 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            memory: 記憶系統提供的檢索結果、寫入資料或操作介面。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 未標註。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         self.memory_heap = []
         for item in self.memories:
             priority = self._calculate_priority(item)
             heapq.heappush(self.memory_heap, (-priority, item.timestamp, item.id, item))
 
     def _mark_deleted_in_heap(self, memory_id: str):
-        """heap 的刪除採延遲處理，需要時再重建。"""
+        """
+        負責執行 WorkingMemory 中的 _mark_deleted_in_heap 流程，依照 WorkingMemory 的流程需求處理 _mark_deleted_in_heap 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            memory_id: 記憶系統提供的檢索結果、寫入資料或操作介面。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 未標註。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         pass

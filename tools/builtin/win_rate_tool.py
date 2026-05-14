@@ -17,14 +17,31 @@ from hello_agents.core.llm import HelloAgentsLLM
 
 
 class WinRateTool(Tool):
-    """Win Rate評估工具"""
+    """
+    負責在 tools.builtin.win_rate_tool 中封裝 WinRateTool，封裝工具呼叫、參數處理與工具結果回傳流程。
+    
+    Args:
+        llm: 用來呼叫模型或外部服務的模型名稱、客戶端或相關設定。
+    
+    Returns:
+        類別本身不直接回傳值；建立實例後可透過其方法操作狀態與流程。
+    
+    限制或副作用:
+        方法可能更新內部狀態、讀寫檔案、呼叫外部服務或產生日誌，需依使用情境確認。
+    """
     
     def __init__(self, llm: HelloAgentsLLM = None):
         """
-        初始化Win Rate工具
+        負責執行 WinRateTool 中的 __init__ 流程，初始化物件所需的設定、依賴與內部狀態，讓後續方法可以沿用同一份執行上下文。
         
         Args:
-            llm: LLM實例，用於評估
+            llm: 用來呼叫模型或外部服務的模型名稱、客戶端或相關設定。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 未標註。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
         """
         super().__init__(
             name="win_rate_evaluation",
@@ -33,7 +50,18 @@ class WinRateTool(Tool):
         self.llm = llm
         
     def get_parameters(self) -> Dict[str, Any]:
-        """取得工具參數定義"""
+        """
+        負責執行 WinRateTool 中的 get_parameters 流程，依照 WinRateTool 的流程需求處理 get_parameters 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            無。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 Dict[str, Any]。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         return {
             "type": "object",
             "properties": {
@@ -67,13 +95,16 @@ class WinRateTool(Tool):
     
     def run(self, params: Dict[str, Any]) -> str:
         """
-        執行Win Rate評估
+        負責執行 WinRateTool 中的 run 流程，啟動主要執行流程，串接輸入準備、核心處理與結果輸出。
         
         Args:
-            params: 工具參數
+            params: 此流程需要使用的輸入資料。
         
         Returns:
-            評估結果的JSON字串
+            執行結果；若函式標註回傳型別，預期型別為 str。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
         """
         # 解析參數
         generated_data_path = params["generated_data_path"]
@@ -146,7 +177,19 @@ class WinRateTool(Tool):
         }, ensure_ascii=False, indent=2)
     
     def _generate_report(self, results: Dict[str, Any], output_path: str):
-        """生成Markdown評估報告"""
+        """
+        負責執行 WinRateTool 中的 _generate_report 流程，依照 WinRateTool 的流程需求處理 _generate_report 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            results: 此流程需要使用的輸入資料。
+            output_path: 要讀取或寫入的檔案或目錄路徑。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 未標註。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         metrics = results["metrics"]
         
         report = f"""# Win Rate評估報告
@@ -208,7 +251,18 @@ class WinRateTool(Tool):
         print(f"[OK] 評估報告已保存: {output_path}")
     
     def _get_win_rate_analysis(self, win_rate: float) -> str:
-        """根據勝率生成分析"""
+        """
+        負責執行 WinRateTool 中的 _get_win_rate_analysis 流程，依照 WinRateTool 的流程需求處理 _get_win_rate_analysis 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            win_rate: 此流程需要使用的輸入資料。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 str。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         if win_rate >= 0.55:
             return """
 [OK] **優秀**: 生成資料品質超過參考資料！這表明資料生成系統表現出色。
@@ -227,7 +281,18 @@ class WinRateTool(Tool):
 """
     
     def _get_conclusion(self, win_rate: float) -> str:
-        """根據勝率生成結論"""
+        """
+        負責執行 WinRateTool 中的 _get_conclusion 流程，依照 WinRateTool 的流程需求處理 _get_conclusion 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            win_rate: 此流程需要使用的輸入資料。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 str。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         if win_rate >= 0.45:
             return f"""基於Win Rate評估，生成資料集的品質**接近或達到AIME真題水平**（Win Rate = {win_rate:.2%}）。
 

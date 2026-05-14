@@ -27,22 +27,24 @@ def register_service(
     capabilities: Optional[List[str]] = None,
     metadata: Optional[Dict[str, Any]] = None
 ) -> bool:
-    """註冊服務的便捷函式
-
-    支援兩種呼叫方式：
-    1. 傳入 ServiceInfo 對象：
-       register_service(discovery, service=service_info)
-
-    2. 傳入參數自動構造：
-       register_service(
-           discovery=discovery,
-           service_id="agent1",
-           service_type="nlp",
-           endpoint="http://localhost:8001",
-           service_name="NLP Agent",
-           capabilities=["text_analysis"],
-           metadata={"version": "1.0"}
-       )
+    """
+    負責執行 protocols.anp.__init__ 中的 register_service 流程，依照 protocols.anp.__init__ 的流程需求處理 register_service 對應的資料轉換、狀態操作或結果產生。
+    
+    Args:
+        discovery: 此流程需要使用的輸入資料。
+        service: 此流程需要使用的輸入資料。
+        service_id: 此流程需要使用的輸入資料。
+        service_type: 此流程需要使用的輸入資料。
+        endpoint: 此流程需要使用的輸入資料。
+        service_name: 此流程需要使用的輸入資料。
+        capabilities: 此流程需要使用的輸入資料。
+        metadata: 目前流程所需的上下文、狀態或附加資訊。
+    
+    Returns:
+        執行結果；若函式標註回傳型別，預期型別為 bool。
+    
+    限制或副作用:
+        可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
     """
     if service is not None:
         # 方式1：直接傳入 ServiceInfo 對象
@@ -63,7 +65,19 @@ def register_service(
         return discovery.register_service(service_info)
 
 def discover_service(discovery: ANPDiscovery, service_type: str = None):
-    """發現服務的便捷函式"""
+    """
+    負責執行 protocols.anp.__init__ 中的 discover_service 流程，依照 protocols.anp.__init__ 的流程需求處理 discover_service 對應的資料轉換、狀態操作或結果產生。
+    
+    Args:
+        discovery: 此流程需要使用的輸入資料。
+        service_type: 此流程需要使用的輸入資料。
+    
+    Returns:
+        執行結果；若函式標註回傳型別，預期型別為 未標註。
+    
+    限制或副作用:
+        可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+    """
     return discovery.discover_services(service_type=service_type)
 
 __all__ = [

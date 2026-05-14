@@ -26,20 +26,78 @@ from dotenv import load_dotenv
 # ==============
 
 class EmbeddingModel:
-    """嵌入模型基類（最小介面）"""
+    """
+    負責在 memory.embedding 中封裝 EmbeddingModel，管理記憶圖、任務紀錄、檢索結果或跨任務經驗的狀態與操作。
+    
+    Args:
+        無明確建構參數，可能透過 dataclass 欄位或預設值建立物件。
+    
+    Returns:
+        類別本身不直接回傳值；建立實例後可透過其方法操作狀態與流程。
+    
+    限制或副作用:
+        方法可能更新內部狀態、讀寫檔案、呼叫外部服務或產生日誌，需依使用情境確認。
+    """
 
     def encode(self, texts: Union[str, List[str]]):
+        """
+        負責執行 EmbeddingModel 中的 encode 流程，依照 EmbeddingModel 的流程需求處理 encode 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            texts: 記憶系統提供的檢索結果、寫入資料或操作介面。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 未標註。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         raise NotImplementedError
 
     @property
     def dimension(self) -> int:
+        """
+        負責執行 EmbeddingModel 中的 dimension 流程，依照 EmbeddingModel 的流程需求處理 dimension 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            無。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 int。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         raise NotImplementedError
 
 
 class LocalTransformerEmbedding(EmbeddingModel):
-    """本地Transformer嵌入（優先 sentence-transformers，缺失回退 transformers+torch）"""
+    """
+    負責在 memory.embedding 中封裝 LocalTransformerEmbedding，管理記憶圖、任務紀錄、檢索結果或跨任務經驗的狀態與操作。
+    
+    Args:
+        model_name: 記憶系統提供的檢索結果、寫入資料或操作介面。
+    
+    Returns:
+        類別本身不直接回傳值；建立實例後可透過其方法操作狀態與流程。
+    
+    限制或副作用:
+        方法可能更新內部狀態、讀寫檔案、呼叫外部服務或產生日誌，需依使用情境確認。
+    """
 
     def __init__(self, model_name: str = "sentence-transformers/all-MiniLM-L6-v2"):
+        """
+        負責執行 LocalTransformerEmbedding 中的 __init__ 流程，初始化物件所需的設定、依賴與內部狀態，讓後續方法可以沿用同一份執行上下文。
+        
+        Args:
+            model_name: 記憶系統提供的檢索結果、寫入資料或操作介面。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 未標註。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         self.model_name = model_name
         self._backend = None  # "st" 或 "hf"
         self._st_model = None
@@ -50,6 +108,18 @@ class LocalTransformerEmbedding(EmbeddingModel):
 
     def _load_backend(self):
         # 優先 sentence-transformers
+        """
+        負責執行 LocalTransformerEmbedding 中的 _load_backend 流程，依照 LocalTransformerEmbedding 的流程需求處理 _load_backend 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            無。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 未標註。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         try:
             from sentence_transformers import SentenceTransformer
             self._st_model = SentenceTransformer(self.model_name)
@@ -80,6 +150,18 @@ class LocalTransformerEmbedding(EmbeddingModel):
         raise ImportError("找不到可用的本地嵌入後端，請安裝 sentence-transformers 或 transformers+torch")
 
     def encode(self, texts: Union[str, List[str]]):
+        """
+        負責執行 LocalTransformerEmbedding 中的 encode 流程，依照 LocalTransformerEmbedding 的流程需求處理 encode 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            texts: 記憶系統提供的檢索結果、寫入資料或操作介面。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 未標註。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         if isinstance(texts, str):
             inputs = [texts]
             single = True
@@ -105,13 +187,48 @@ class LocalTransformerEmbedding(EmbeddingModel):
 
     @property
     def dimension(self) -> int:
+        """
+        負責執行 LocalTransformerEmbedding 中的 dimension 流程，依照 LocalTransformerEmbedding 的流程需求處理 dimension 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            無。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 int。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         return int(self._dimension or 0)
 
 
 class TFIDFEmbedding(EmbeddingModel):
-    """TF-IDF 在無深度模型時保證可用）"""
+    """
+    負責在 memory.embedding 中封裝 TFIDFEmbedding，管理記憶圖、任務紀錄、檢索結果或跨任務經驗的狀態與操作。
+    
+    Args:
+        max_features: 控制檢索、篩選或輸出數量的數值參數。
+    
+    Returns:
+        類別本身不直接回傳值；建立實例後可透過其方法操作狀態與流程。
+    
+    限制或副作用:
+        方法可能更新內部狀態、讀寫檔案、呼叫外部服務或產生日誌，需依使用情境確認。
+    """
 
     def __init__(self, max_features: int = 1000):
+        """
+        負責執行 TFIDFEmbedding 中的 __init__ 流程，初始化物件所需的設定、依賴與內部狀態，讓後續方法可以沿用同一份執行上下文。
+        
+        Args:
+            max_features: 控制檢索、篩選或輸出數量的數值參數。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 未標註。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         self.max_features = max_features
         self._vectorizer = None
         self._is_fitted = False
@@ -119,6 +236,18 @@ class TFIDFEmbedding(EmbeddingModel):
         self._init_vectorizer()
 
     def _init_vectorizer(self):
+        """
+        負責執行 TFIDFEmbedding 中的 _init_vectorizer 流程，依照 TFIDFEmbedding 的流程需求處理 _init_vectorizer 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            無。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 未標註。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         try:
             from sklearn.feature_extraction.text import TfidfVectorizer
             self._vectorizer = TfidfVectorizer(max_features=self.max_features, stop_words='english')
@@ -126,11 +255,35 @@ class TFIDFEmbedding(EmbeddingModel):
             raise ImportError("請安裝 scikit-learn: pip install scikit-learn")
 
     def fit(self, texts: List[str]):
+        """
+        負責執行 TFIDFEmbedding 中的 fit 流程，依照 TFIDFEmbedding 的流程需求處理 fit 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            texts: 記憶系統提供的檢索結果、寫入資料或操作介面。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 未標註。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         self._vectorizer.fit(texts)
         self._is_fitted = True
         self._dimension = len(self._vectorizer.get_feature_names_out())
 
     def encode(self, texts: Union[str, List[str]]):
+        """
+        負責執行 TFIDFEmbedding 中的 encode 流程，依照 TFIDFEmbedding 的流程需求處理 encode 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            texts: 記憶系統提供的檢索結果、寫入資料或操作介面。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 未標註。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         if not self._is_fitted:
             raise ValueError("TF-IDF模型未訓練，請先呼叫fit()方法")
         if isinstance(texts, str):
@@ -146,6 +299,18 @@ class TFIDFEmbedding(EmbeddingModel):
 
     @property
     def dimension(self) -> int:
+        """
+        負責執行 TFIDFEmbedding 中的 dimension 流程，依照 TFIDFEmbedding 的流程需求處理 dimension 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            無。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 int。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         return self._dimension
 
 
@@ -154,10 +319,18 @@ class TFIDFEmbedding(EmbeddingModel):
 # ==============
 
 def create_embedding_model(model_type: str = "local", **kwargs) -> EmbeddingModel:
-    """建立嵌入模型實例
-
-    model_type: "dashscope" | "local" | "tfidf"
-    kwargs: model_name, api_key
+    """
+    負責執行 memory.embedding 中的 create_embedding_model 流程，建立記憶圖或任務記錄結構，供後續檢索、寫入與提示注入使用。
+    
+    Args:
+        model_type: 記憶系統提供的檢索結果、寫入資料或操作介面。
+        **kwargs: 記憶系統提供的檢索結果、寫入資料或操作介面。
+    
+    Returns:
+        執行結果；若函式標註回傳型別，預期型別為 EmbeddingModel。
+    
+    限制或副作用:
+        可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
     """
     if model_type in ("local", "sentence_transformer", "huggingface"):
         return LocalTransformerEmbedding(**kwargs)
@@ -168,7 +341,19 @@ def create_embedding_model(model_type: str = "local", **kwargs) -> EmbeddingMode
 
 
 def create_embedding_model_with_fallback(preferred_type: str = "dashscope", **kwargs) -> EmbeddingModel:
-    """帶回退的建立：local -> tfidf"""
+    """
+    負責執行 memory.embedding 中的 create_embedding_model_with_fallback 流程，建立記憶圖或任務記錄結構，供後續檢索、寫入與提示注入使用。
+    
+    Args:
+        preferred_type: 記憶系統提供的檢索結果、寫入資料或操作介面。
+        **kwargs: 記憶系統提供的檢索結果、寫入資料或操作介面。
+    
+    Returns:
+        執行結果；若函式標註回傳型別，預期型別為 EmbeddingModel。
+    
+    限制或副作用:
+        可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+    """
     if preferred_type in ("sentence_transformer", "huggingface"):
         preferred_type = "local"
     fallback = ["local", "tfidf"]
@@ -194,6 +379,18 @@ _ENV_LOADED = False
 
 
 def _ensure_env_loaded():
+    """
+    負責執行 memory.embedding 中的 _ensure_env_loaded 流程，依照 memory.embedding 的流程需求處理 _ensure_env_loaded 對應的資料轉換、狀態操作或結果產生。
+    
+    Args:
+        無。
+    
+    Returns:
+        執行結果；若函式標註回傳型別，預期型別為 未標註。
+    
+    限制或副作用:
+        可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+    """
     global _ENV_LOADED
     if _ENV_LOADED:
         return
@@ -205,6 +402,18 @@ def _ensure_env_loaded():
 
 
 def _build_embedder() -> EmbeddingModel:
+    """
+    負責執行 memory.embedding 中的 _build_embedder 流程，依照 memory.embedding 的流程需求處理 _build_embedder 對應的資料轉換、狀態操作或結果產生。
+    
+    Args:
+        無。
+    
+    Returns:
+        執行結果；若函式標註回傳型別，預期型別為 EmbeddingModel。
+    
+    限制或副作用:
+        可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+    """
     _ensure_env_loaded()
     preferred = (os.getenv("EMBED_MODEL_TYPE") or "local").strip()
     # 根據提供商選擇預設模型
@@ -224,7 +433,18 @@ def _build_embedder() -> EmbeddingModel:
 
 
 def get_text_embedder() -> EmbeddingModel:
-    """取得全局共享的文字嵌入實例（執行緒安全單例）"""
+    """
+    負責執行 memory.embedding 中的 get_text_embedder 流程，依照 memory.embedding 的流程需求處理 get_text_embedder 對應的資料轉換、狀態操作或結果產生。
+    
+    Args:
+        無。
+    
+    Returns:
+        執行結果；若函式標註回傳型別，預期型別為 EmbeddingModel。
+    
+    限制或副作用:
+        可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+    """
     global _embedder
     if _embedder is not None:
         return _embedder
@@ -235,7 +455,18 @@ def get_text_embedder() -> EmbeddingModel:
 
 
 def get_dimension(default: int = 384) -> int:
-    """取得統一向量維度（失敗回退預設值）"""
+    """
+    負責執行 memory.embedding 中的 get_dimension 流程，依照 memory.embedding 的流程需求處理 get_dimension 對應的資料轉換、狀態操作或結果產生。
+    
+    Args:
+        default: 記憶系統提供的檢索結果、寫入資料或操作介面。
+    
+    Returns:
+        執行結果；若函式標註回傳型別，預期型別為 int。
+    
+    限制或副作用:
+        可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+    """
     try:
         return int(getattr(get_text_embedder(), "dimension", default))
     except Exception:
@@ -243,7 +474,18 @@ def get_dimension(default: int = 384) -> int:
 
 
 def refresh_embedder() -> EmbeddingModel:
-    """強制重建嵌入實例（可用於動態切換環境變數）"""
+    """
+    負責執行 memory.embedding 中的 refresh_embedder 流程，依照 memory.embedding 的流程需求處理 refresh_embedder 對應的資料轉換、狀態操作或結果產生。
+    
+    Args:
+        無。
+    
+    Returns:
+        執行結果；若函式標註回傳型別，預期型別為 EmbeddingModel。
+    
+    限制或副作用:
+        可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+    """
     global _embedder
     with _lock:
         _embedder = _build_embedder()

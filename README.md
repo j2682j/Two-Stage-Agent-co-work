@@ -138,7 +138,6 @@ $env:LLM_TIMEOUT="120"
 - `memory_tool.py`：memory 讀寫與 debug 工具。
 - `rag_tool.py`：RAG context retrieval。
 - `terminal_tool.py`：終端工具，目前需要安全性收斂後再作為預設工具使用。
-- `gaia_evaluation_tool.py` / `bfcl_evaluation_tool.py`：benchmark evaluation wrappers。
 
 `network.ToolManager` 會註冊 calculator、search、memory，並在 RAG 初始化成功時註冊 RAG。
 

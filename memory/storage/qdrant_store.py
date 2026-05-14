@@ -1,4 +1,4 @@
-﻿"""
+"""
 Qdrant向量資料庫儲存實現
 使用專業的Qdrant向量資料庫替代ChromaDB
 """
@@ -27,7 +27,18 @@ except ImportError:
 logger = logging.getLogger(__name__)
 
 class QdrantConnectionManager:
-    """Qdrant連線管理器 - 防止重復連線和初始化"""
+    """
+    負責在 memory.storage.qdrant_store 中封裝 QdrantConnectionManager，管理記憶圖、任務紀錄、檢索結果或跨任務經驗的狀態與操作。
+    
+    Args:
+        無明確建構參數，可能透過 dataclass 欄位或預設值建立物件。
+    
+    Returns:
+        類別本身不直接回傳值；建立實例後可透過其方法操作狀態與流程。
+    
+    限制或副作用:
+        方法可能更新內部狀態、讀寫檔案、呼叫外部服務或產生日誌，需依使用情境確認。
+    """
     _instances = {}  # key: (url, collection_name) -> QdrantVectorStore instance
     _lock = threading.Lock()
     
@@ -42,7 +53,24 @@ class QdrantConnectionManager:
         timeout: int = 30,
         **kwargs
     ) -> 'QdrantVectorStore':
-        """取得或建立Qdrant實例（單例模式）"""
+        """
+        負責執行 QdrantConnectionManager 中的 get_instance 流程，依照 QdrantConnectionManager 的流程需求處理 get_instance 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            url: 記憶系統提供的檢索結果、寫入資料或操作介面。
+            api_key: 記憶系統提供的檢索結果、寫入資料或操作介面。
+            collection_name: 記憶系統提供的檢索結果、寫入資料或操作介面。
+            vector_size: 記憶系統提供的檢索結果、寫入資料或操作介面。
+            distance: 記憶系統提供的檢索結果、寫入資料或操作介面。
+            timeout: 記憶系統提供的檢索結果、寫入資料或操作介面。
+            **kwargs: 記憶系統提供的檢索結果、寫入資料或操作介面。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 'QdrantVectorStore'。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         # 建立唯一鍵
         key = (url or "local", collection_name)
         
@@ -68,7 +96,24 @@ class QdrantConnectionManager:
         return cls._instances[key]
 
 class QdrantVectorStore:
-    """Qdrant向量資料庫儲存實現"""
+    """
+    負責在 memory.storage.qdrant_store 中封裝 QdrantVectorStore，管理記憶圖、任務紀錄、檢索結果或跨任務經驗的狀態與操作。
+    
+    Args:
+        url: 記憶系統提供的檢索結果、寫入資料或操作介面。
+        api_key: 記憶系統提供的檢索結果、寫入資料或操作介面。
+        collection_name: 記憶系統提供的檢索結果、寫入資料或操作介面。
+        vector_size: 記憶系統提供的檢索結果、寫入資料或操作介面。
+        distance: 記憶系統提供的檢索結果、寫入資料或操作介面。
+        timeout: 記憶系統提供的檢索結果、寫入資料或操作介面。
+        **kwargs: 記憶系統提供的檢索結果、寫入資料或操作介面。
+    
+    Returns:
+        類別本身不直接回傳值；建立實例後可透過其方法操作狀態與流程。
+    
+    限制或副作用:
+        方法可能更新內部狀態、讀寫檔案、呼叫外部服務或產生日誌，需依使用情境確認。
+    """
     
     def __init__(
         self, 
@@ -81,15 +126,22 @@ class QdrantVectorStore:
         **kwargs
     ):
         """
-        初始化Qdrant向量儲存 (支援云API)
+        負責執行 QdrantVectorStore 中的 __init__ 流程，初始化物件所需的設定、依賴與內部狀態，讓後續方法可以沿用同一份執行上下文。
         
         Args:
-            url: Qdrant云服務URL (如果為None則使用本地)
-            api_key: Qdrant云服務API密鑰
-            collection_name: 集合名稱
-            vector_size: 向量維度
-            distance: 距離度量方式 (cosine, dot, euclidean)
-            timeout: 連線逾時時間
+            url: 記憶系統提供的檢索結果、寫入資料或操作介面。
+            api_key: 記憶系統提供的檢索結果、寫入資料或操作介面。
+            collection_name: 記憶系統提供的檢索結果、寫入資料或操作介面。
+            vector_size: 記憶系統提供的檢索結果、寫入資料或操作介面。
+            distance: 記憶系統提供的檢索結果、寫入資料或操作介面。
+            timeout: 記憶系統提供的檢索結果、寫入資料或操作介面。
+            **kwargs: 記憶系統提供的檢索結果、寫入資料或操作介面。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 未標註。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
         """
         if not QDRANT_AVAILABLE:
             raise ImportError(
@@ -129,7 +181,18 @@ class QdrantVectorStore:
         self._initialize_client()
         
     def _initialize_client(self):
-        """初始化Qdrant客戶端和集合"""
+        """
+        負責執行 QdrantVectorStore 中的 _initialize_client 流程，依照 QdrantVectorStore 的流程需求處理 _initialize_client 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            無。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 未標註。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         try:
             # 根據設定建立客戶端連線
             if self.url and self.api_key:
@@ -172,7 +235,18 @@ class QdrantVectorStore:
             raise
     
     def _ensure_collection(self):
-        """確保集合存在，不存在則建立"""
+        """
+        負責執行 QdrantVectorStore 中的 _ensure_collection 流程，依照 QdrantVectorStore 的流程需求處理 _ensure_collection 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            無。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 未標註。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         try:
             # 檢查集合是否存在
             collections = self.client.get_collections().collections
@@ -212,7 +286,18 @@ class QdrantVectorStore:
             raise
 
     def _ensure_payload_indexes(self):
-        """為常用過濾字段建立payload索引"""
+        """
+        負責執行 QdrantVectorStore 中的 _ensure_payload_indexes 流程，依照 QdrantVectorStore 的流程需求處理 _ensure_payload_indexes 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            無。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 未標註。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         try:
             index_fields = [
                 ("memory_type", models.PayloadSchemaType.KEYWORD),
@@ -248,15 +333,18 @@ class QdrantVectorStore:
         ids: Optional[List[str]] = None
     ) -> bool:
         """
-        添加向量到Qdrant
+        負責執行 QdrantVectorStore 中的 add_vectors 流程，更新記憶圖、互動狀態、節點邊關係或追蹤紀錄。
         
         Args:
-            vectors: 向量列表
-            metadata: 元資料列表
-            ids: 可選的ID列表
+            vectors: 記憶系統提供的檢索結果、寫入資料或操作介面。
+            metadata: 目前流程所需的上下文、狀態或附加資訊。
+            ids: 記憶系統提供的檢索結果、寫入資料或操作介面。
         
         Returns:
-            bool: 是否成功
+            執行結果；若函式標註回傳型別，預期型別為 bool。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
         """
         try:
             if not vectors:
@@ -338,16 +426,19 @@ class QdrantVectorStore:
         where: Optional[Dict[str, Any]] = None
     ) -> List[Dict[str, Any]]:
         """
-        搜尋相似向量
+        負責執行 QdrantVectorStore 中的 search_similar 流程，從記憶圖、向量索引或任務關聯中取回相關案例與策略提醒。
         
         Args:
-            query_vector: 查詢向量
-            limit: 回傳結果數量限制
-            score_threshold: 相似度閾值
-            where: 過濾條件
+            query_vector: 已整理好的搜尋結果、共享資料包或可重用證據內容。
+            limit: 控制檢索、篩選或輸出數量的數值參數。
+            score_threshold: 控制檢索、篩選或輸出數量的數值參數。
+            where: 已整理好的搜尋結果、共享資料包或可重用證據內容。
         
         Returns:
-            List[Dict]: 搜尋結果
+            執行結果；若函式標註回傳型別，預期型別為 List[Dict[str, Any]]。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
         """
         try:
             if len(query_vector) != self.vector_size:
@@ -425,13 +516,16 @@ class QdrantVectorStore:
     
     def delete_vectors(self, ids: List[str]) -> bool:
         """
-        刪除向量
+        負責執行 QdrantVectorStore 中的 delete_vectors 流程，依照 QdrantVectorStore 的流程需求處理 delete_vectors 對應的資料轉換、狀態操作或結果產生。
         
         Args:
-            ids: 要刪除的向量ID列表
+            ids: 記憶系統提供的檢索結果、寫入資料或操作介面。
         
         Returns:
-            bool: 是否成功
+            執行結果；若函式標註回傳型別，預期型別為 bool。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
         """
         try:
             if not ids:
@@ -454,10 +548,16 @@ class QdrantVectorStore:
     
     def clear_collection(self) -> bool:
         """
-        清空集合
+        負責執行 QdrantVectorStore 中的 clear_collection 流程，清除或移除指定資源、狀態或註冊資料，維持後續流程的一致性。
+        
+        Args:
+            無。
         
         Returns:
-            bool: 是否成功
+            執行結果；若函式標註回傳型別，預期型別為 bool。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
         """
         try:
             # 刪除並重新建立集合
@@ -473,10 +573,16 @@ class QdrantVectorStore:
     
     def delete_memories(self, memory_ids: List[str]):
         """
-        刪除指定記憶（通過payload中的 memory_id 過濾刪除）
+        負責執行 QdrantVectorStore 中的 delete_memories 流程，依照 QdrantVectorStore 的流程需求處理 delete_memories 對應的資料轉換、狀態操作或結果產生。
         
-        注意：由於寫入時可能將非UUID的點ID轉換為UUID，這裡不再依賴點ID，
-        而是通過payload中的memory_id來匹配刪除，確保一致性。
+        Args:
+            memory_ids: 記憶系統提供的檢索結果、寫入資料或操作介面。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 未標註。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
         """
         try:
             if not memory_ids:
@@ -499,10 +605,16 @@ class QdrantVectorStore:
     
     def get_collection_info(self) -> Dict[str, Any]:
         """
-        取得集合資訊
+        負責執行 QdrantVectorStore 中的 get_collection_info 流程，依照 QdrantVectorStore 的流程需求處理 get_collection_info 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            無。
         
         Returns:
-            Dict: 集合資訊
+            執行結果；若函式標註回傳型別，預期型別為 Dict[str, Any]。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
         """
         try:
             collection_info = self.client.get_collection(self.collection_name)
@@ -527,7 +639,16 @@ class QdrantVectorStore:
     
     def get_collection_stats(self) -> Dict[str, Any]:
         """
-        取得集合統計資訊（相容抽象介面）
+        負責執行 QdrantVectorStore 中的 get_collection_stats 流程，依照 QdrantVectorStore 的流程需求處理 get_collection_stats 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            無。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 Dict[str, Any]。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
         """
         info = self.get_collection_info()
         if not info:
@@ -537,10 +658,16 @@ class QdrantVectorStore:
     
     def health_check(self) -> bool:
         """
-        健康檢查
+        負責執行 QdrantVectorStore 中的 health_check 流程，依照 QdrantVectorStore 的流程需求處理 health_check 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            無。
         
         Returns:
-            bool: 服務是否健康
+            執行結果；若函式標註回傳型別，預期型別為 bool。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
         """
         try:
             # 嘗試取得集合列表
@@ -551,7 +678,18 @@ class QdrantVectorStore:
             return False
     
     def __del__(self):
-        """析構函式，清理資源"""
+        """
+        負責執行 QdrantVectorStore 中的 __del__ 流程，依照 QdrantVectorStore 的流程需求處理 __del__ 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            無。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 未標註。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         if hasattr(self, 'client') and self.client:
             try:
                 self.client.close()

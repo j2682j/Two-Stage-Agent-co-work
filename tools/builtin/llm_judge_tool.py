@@ -17,14 +17,31 @@ from hello_agents.core.llm import HelloAgentsLLM
 
 
 class LLMJudgeTool(Tool):
-    """LLM Judge評估工具"""
+    """
+    負責在 tools.builtin.llm_judge_tool 中封裝 LLMJudgeTool，封裝工具呼叫、參數處理與工具結果回傳流程。
+    
+    Args:
+        llm: 用來呼叫模型或外部服務的模型名稱、客戶端或相關設定。
+    
+    Returns:
+        類別本身不直接回傳值；建立實例後可透過其方法操作狀態與流程。
+    
+    限制或副作用:
+        方法可能更新內部狀態、讀寫檔案、呼叫外部服務或產生日誌，需依使用情境確認。
+    """
     
     def __init__(self, llm: HelloAgentsLLM = None):
         """
-        初始化LLM Judge工具
+        負責執行 LLMJudgeTool 中的 __init__ 流程，初始化物件所需的設定、依賴與內部狀態，讓後續方法可以沿用同一份執行上下文。
         
         Args:
-            llm: LLM實例，用於評估
+            llm: 用來呼叫模型或外部服務的模型名稱、客戶端或相關設定。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 未標註。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
         """
         super().__init__(
             name="llm_judge_evaluation",
@@ -33,7 +50,18 @@ class LLMJudgeTool(Tool):
         self.llm = llm
         
     def get_parameters(self) -> Dict[str, Any]:
-        """取得工具參數定義"""
+        """
+        負責執行 LLMJudgeTool 中的 get_parameters 流程，依照 LLMJudgeTool 的流程需求處理 get_parameters 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            無。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 Dict[str, Any]。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         return {
             "type": "object",
             "properties": {
@@ -67,13 +95,16 @@ class LLMJudgeTool(Tool):
     
     def run(self, params: Dict[str, Any]) -> str:
         """
-        執行LLM Judge評估
+        負責執行 LLMJudgeTool 中的 run 流程，啟動主要執行流程，串接輸入準備、核心處理與結果輸出。
         
         Args:
-            params: 工具參數
+            params: 用來呼叫模型或外部服務的模型名稱、客戶端或相關設定。
         
         Returns:
-            評估結果的JSON字串
+            執行結果；若函式標註回傳型別，預期型別為 str。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
         """
         # 解析參數
         generated_data_path = params["generated_data_path"]
@@ -148,7 +179,19 @@ class LLMJudgeTool(Tool):
         }, ensure_ascii=False, indent=2)
     
     def _generate_report(self, results: Dict[str, Any], output_path: str):
-        """生成Markdown評估報告"""
+        """
+        負責執行 LLMJudgeTool 中的 _generate_report 流程，依照 LLMJudgeTool 的流程需求處理 _generate_report 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            results: 用來呼叫模型或外部服務的模型名稱、客戶端或相關設定。
+            output_path: 要讀取或寫入的檔案或目錄路徑。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 未標註。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         metrics = results["metrics"]
         
         report = f"""# LLM Judge評估報告
@@ -212,7 +255,18 @@ class LLMJudgeTool(Tool):
         print(f"[OK] 評估報告已保存: {output_path}")
     
     def _get_rating(self, score: float) -> str:
-        """根據分數取得評級"""
+        """
+        負責執行 LLMJudgeTool 中的 _get_rating 流程，依照 LLMJudgeTool 的流程需求處理 _get_rating 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            score: 評估、推理或工具執行後產生的結果與分數資料。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 str。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         if score >= 4.5:
             return "優秀 ⭐⭐⭐⭐⭐"
         elif score >= 4.0:

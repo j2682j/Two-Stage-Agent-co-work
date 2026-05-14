@@ -11,21 +11,18 @@ from ..base import Tool, ToolParameter
 
 class MCPWrappedTool(Tool):
     """
-    MCP工具包裝器 - 將單個MCP工具包裝成Agent System Tool
+    負責在 tools.builtin.mcp_wrapper_tool 中封裝 MCPWrappedTool，封裝工具呼叫、參數處理與工具結果回傳流程。
     
-    這個類將MCP伺服器的一個工具（如 read_file）包裝成一個獨立的Tool對象。
-    Agent呼叫時只需提供參數，無需了解MCP的內部結構。
+    Args:
+        mcp_tool: 此流程需要使用的輸入資料。
+        tool_info: 此流程需要使用的輸入資料。
+        prefix: 此流程需要使用的輸入資料。
     
-    範例：
-        >>> # 內部使用，由MCPTool自動建立
-        >>> wrapped_tool = MCPWrappedTool(
-        ...     mcp_tool=mcp_tool_instance,
-        ...     tool_info={
-        ...         "name": "read_file",
-        ...         "description": "Read a file...",
-        ...         "input_schema": {...}
-        ...     }
-        ... )
+    Returns:
+        類別本身不直接回傳值；建立實例後可透過其方法操作狀態與流程。
+    
+    限制或副作用:
+        方法可能更新內部狀態、讀寫檔案、呼叫外部服務或產生日誌，需依使用情境確認。
     """
     
     def __init__(self,
@@ -33,12 +30,18 @@ class MCPWrappedTool(Tool):
                  tool_info: Dict[str, Any],
                  prefix: str = ""):
         """
-        初始化MCP包裝工具
-
+        負責執行 MCPWrappedTool 中的 __init__ 流程，初始化物件所需的設定、依賴與內部狀態，讓後續方法可以沿用同一份執行上下文。
+        
         Args:
-            mcp_tool: 父MCP工具實例
-            tool_info: MCP工具資訊（包含name, description, input_schema）
-            prefix: 工具名前綴（如 "filesystem_"）
+            mcp_tool: 此流程需要使用的輸入資料。
+            tool_info: 此流程需要使用的輸入資料。
+            prefix: 此流程需要使用的輸入資料。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 未標註。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
         """
         self.mcp_tool = mcp_tool
         self.tool_info = tool_info
@@ -61,13 +64,16 @@ class MCPWrappedTool(Tool):
     
     def _parse_input_schema(self, input_schema: Dict[str, Any]) -> List[ToolParameter]:
         """
-        將MCP的input_schema轉換為HelloAgents的ToolParameter列表
-
+        負責執行 MCPWrappedTool 中的 _parse_input_schema 流程，依照 MCPWrappedTool 的流程需求處理 _parse_input_schema 對應的資料轉換、狀態操作或結果產生。
+        
         Args:
-            input_schema: MCP工具的input_schema（JSON Schema格式）
-
+            input_schema: 此流程需要使用的輸入資料。
+        
         Returns:
-            ToolParameter列表
+            執行結果；若函式標註回傳型別，預期型別為 List[ToolParameter]。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
         """
         parameters = []
 
@@ -90,22 +96,31 @@ class MCPWrappedTool(Tool):
     
     def get_parameters(self) -> List[ToolParameter]:
         """
-        取得工具參數定義
-
+        負責執行 MCPWrappedTool 中的 get_parameters 流程，依照 MCPWrappedTool 的流程需求處理 get_parameters 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            無。
+        
         Returns:
-            ToolParameter列表
+            執行結果；若函式標註回傳型別，預期型別為 List[ToolParameter]。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
         """
         return self._parameters
 
     def run(self, params: Dict[str, Any]) -> str:
         """
-        執行MCP工具
-
+        負責執行 MCPWrappedTool 中的 run 流程，啟動主要執行流程，串接輸入準備、核心處理與結果輸出。
+        
         Args:
-            params: 工具參數（直接傳遞給MCP工具）
-
+            params: 此流程需要使用的輸入資料。
+        
         Returns:
-            執行結果
+            執行結果；若函式標註回傳型別，預期型別為 str。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
         """
         # 建構MCP呼叫參數
         mcp_params = {

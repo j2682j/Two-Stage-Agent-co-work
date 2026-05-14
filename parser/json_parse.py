@@ -2,6 +2,18 @@ import json
 import re
 
 def _repair_json_candidate(text: str) -> str:
+    """
+    負責執行 parser.json_parse 中的 _repair_json_candidate 流程，依照 parser.json_parse 的流程需求處理 _repair_json_candidate 對應的資料轉換、狀態操作或結果產生。
+    
+    Args:
+        text: 此流程需要使用的輸入資料。
+    
+    Returns:
+        執行結果；若函式標註回傳型別，預期型別為 str。
+    
+    限制或副作用:
+        可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+    """
     candidate = text.strip()
     if not candidate:
         return candidate
@@ -34,6 +46,18 @@ def _repair_json_candidate(text: str) -> str:
     return candidate
 
 def try_parse_json(reply: str) -> dict | None:
+    """
+    負責執行 parser.json_parse 中的 try_parse_json 流程，依照 parser.json_parse 的流程需求處理 try_parse_json 對應的資料轉換、狀態操作或結果產生。
+    
+    Args:
+        reply: 模型、節點或工具產生的候選回覆內容。
+    
+    Returns:
+        執行結果；若函式標註回傳型別，預期型別為 dict | None。
+    
+    限制或副作用:
+        可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+    """
     if not reply:
         return None
 

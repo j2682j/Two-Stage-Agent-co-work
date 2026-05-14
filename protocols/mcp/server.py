@@ -16,7 +16,19 @@ except ImportError:
 
 
 class MCPServer:
-    """基於 fastmcp 庫的 MCP 伺服器"""
+    """
+    負責在 protocols.mcp.server 中封裝 MCPServer，封裝此模組的狀態資料與主要操作流程。
+    
+    Args:
+        name: 此流程需要使用的輸入資料。
+        description: 此流程需要使用的輸入資料。
+    
+    Returns:
+        類別本身不直接回傳值；建立實例後可透過其方法操作狀態與流程。
+    
+    限制或副作用:
+        方法可能更新內部狀態、讀寫檔案、呼叫外部服務或產生日誌，需依使用情境確認。
+    """
     
     def __init__(
         self,
@@ -24,11 +36,17 @@ class MCPServer:
         description: Optional[str] = None
     ):
         """
-        初始化 MCP 伺服器
+        負責執行 MCPServer 中的 __init__ 流程，初始化物件所需的設定、依賴與內部狀態，讓後續方法可以沿用同一份執行上下文。
         
         Args:
-            name: 伺服器名稱
-            description: 伺服器描述
+            name: 此流程需要使用的輸入資料。
+            description: 此流程需要使用的輸入資料。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 未標註。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
         """
         self.mcp = FastMCP(name=name)
         self.name = name
@@ -41,12 +59,18 @@ class MCPServer:
         description: Optional[str] = None
     ):
         """
-        添加工具到伺服器
+        負責執行 MCPServer 中的 add_tool 流程，將新的輸入資料合併到目前物件狀態或流程紀錄中。
         
         Args:
-            func: 工具函式
-            name: 工具名稱（可選，預設使用函式名）
-            description: 工具描述（可選，預設使用函式文檔字串）
+            func: 此流程需要使用的輸入資料。
+            name: 此流程需要使用的輸入資料。
+            description: 此流程需要使用的輸入資料。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 未標註。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
         """
         # 使用裝飾器註冊工具
         if name or description:
@@ -62,13 +86,19 @@ class MCPServer:
         description: Optional[str] = None
     ):
         """
-        添加資源到伺服器
+        負責執行 MCPServer 中的 add_resource 流程，將新的輸入資料合併到目前物件狀態或流程紀錄中。
         
         Args:
-            func: 資源處理函式
-            uri: 資源 URI（可選）
-            name: 資源名稱（可選）
-            description: 資源描述（可選）
+            func: 此流程需要使用的輸入資料。
+            uri: 此流程需要使用的輸入資料。
+            name: 此流程需要使用的輸入資料。
+            description: 此流程需要使用的輸入資料。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 未標註。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
         """
         # 使用裝飾器註冊資源
         if uri:
@@ -83,12 +113,18 @@ class MCPServer:
         description: Optional[str] = None
     ):
         """
-        添加提示詞模板到伺服器
+        負責執行 MCPServer 中的 add_prompt 流程，將新的輸入資料合併到目前物件狀態或流程紀錄中。
         
         Args:
-            func: 提示詞生成函式
-            name: 提示詞名稱（可選）
-            description: 提示詞描述（可選）
+            func: 此流程需要使用的輸入資料。
+            name: 此流程需要使用的輸入資料。
+            description: 此流程需要使用的輸入資料。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 未標註。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
         """
         # 使用裝飾器註冊提示詞
         if name or description:
@@ -97,33 +133,33 @@ class MCPServer:
             self.mcp.prompt()(func)
         
     def run(self, transport: str = "stdio", **kwargs):
-        """執行伺服器
-
+        """
+        負責執行 MCPServer 中的 run 流程，啟動主要執行流程，串接輸入準備、核心處理與結果輸出。
+        
         Args:
-            transport: 傳輸方式 ("stdio", "http", "sse")
-            **kwargs: 傳輸特定的參數
-                - host: HTTP 伺服器主機（預設 "127.0.0.1"）
-                - port: HTTP 伺服器端口（預設 8000）
-                - 其他 FastMCP.run() 支援的參數
-
-        Examples:
-            # Stdio 傳輸（預設）
-            server.run()
-
-            # HTTP 傳輸
-            server.run(transport="http", host="0.0.0.0", port=8081)
-
-            # SSE 傳輸
-            server.run(transport="sse", host="0.0.0.0", port=8081)
+            transport: 此流程需要使用的輸入資料。
+            **kwargs: 此流程需要使用的輸入資料。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 未標註。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
         """
         self.mcp.run(transport=transport, **kwargs)
         
     def get_info(self) -> Dict[str, Any]:
         """
-        取得伺服器資訊
+        負責執行 MCPServer 中的 get_info 流程，依照 MCPServer 的流程需求處理 get_info 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            無。
         
         Returns:
-            伺服器資訊字典
+            執行結果；若函式標註回傳型別，預期型別為 Dict[str, Any]。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
         """
         return {
             "name": self.name,
@@ -134,38 +170,136 @@ class MCPServer:
 
 # 便捷的伺服器建構器
 class MCPServerBuilder:
-    """MCP 伺服器建構器，提供鏈式 API"""
+    """
+    負責在 protocols.mcp.server 中封裝 MCPServerBuilder，封裝此模組的狀態資料與主要操作流程。
+    
+    Args:
+        name: 此流程需要使用的輸入資料。
+        description: 此流程需要使用的輸入資料。
+    
+    Returns:
+        類別本身不直接回傳值；建立實例後可透過其方法操作狀態與流程。
+    
+    限制或副作用:
+        方法可能更新內部狀態、讀寫檔案、呼叫外部服務或產生日誌，需依使用情境確認。
+    """
 
     def __init__(self, name: str, description: Optional[str] = None):
+        """
+        負責執行 MCPServerBuilder 中的 __init__ 流程，初始化物件所需的設定、依賴與內部狀態，讓後續方法可以沿用同一份執行上下文。
+        
+        Args:
+            name: 此流程需要使用的輸入資料。
+            description: 此流程需要使用的輸入資料。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 未標註。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         self.server = MCPServer(name, description)
         
     def with_tool(self, func: Callable, name: Optional[str] = None, description: Optional[str] = None) -> 'MCPServerBuilder':
-        """添加工具（鏈式呼叫）"""
+        """
+        負責執行 MCPServerBuilder 中的 with_tool 流程，依照 MCPServerBuilder 的流程需求處理 with_tool 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            func: 此流程需要使用的輸入資料。
+            name: 此流程需要使用的輸入資料。
+            description: 此流程需要使用的輸入資料。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 'MCPServerBuilder'。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         self.server.add_tool(func, name, description)
         return self
         
     def with_resource(self, func: Callable, uri: Optional[str] = None, name: Optional[str] = None, description: Optional[str] = None) -> 'MCPServerBuilder':
-        """添加資源（鏈式呼叫）"""
+        """
+        負責執行 MCPServerBuilder 中的 with_resource 流程，依照 MCPServerBuilder 的流程需求處理 with_resource 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            func: 此流程需要使用的輸入資料。
+            uri: 此流程需要使用的輸入資料。
+            name: 此流程需要使用的輸入資料。
+            description: 此流程需要使用的輸入資料。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 'MCPServerBuilder'。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         self.server.add_resource(func, uri, name, description)
         return self
         
     def with_prompt(self, func: Callable, name: Optional[str] = None, description: Optional[str] = None) -> 'MCPServerBuilder':
-        """添加提示詞（鏈式呼叫）"""
+        """
+        負責執行 MCPServerBuilder 中的 with_prompt 流程，依照 MCPServerBuilder 的流程需求處理 with_prompt 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            func: 此流程需要使用的輸入資料。
+            name: 此流程需要使用的輸入資料。
+            description: 此流程需要使用的輸入資料。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 'MCPServerBuilder'。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         self.server.add_prompt(func, name, description)
         return self
         
     def build(self) -> MCPServer:
-        """建構伺服器"""
+        """
+        負責執行 MCPServerBuilder 中的 build 流程，建立後續流程需要的物件、資料結構或輸出區塊。
+        
+        Args:
+            無。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 MCPServer。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         return self.server
         
     def run(self):
-        """建構並執行伺服器"""
+        """
+        負責執行 MCPServerBuilder 中的 run 流程，啟動主要執行流程，串接輸入準備、核心處理與結果輸出。
+        
+        Args:
+            無。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 未標註。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         self.server.run()
 
 
 # 範例：建立一個簡單的 MCP 伺服器
 def create_example_server() -> MCPServer:
-    """建立一個範例 MCP 伺服器"""
+    """
+    負責執行 protocols.mcp.server 中的 create_example_server 流程，建立後續流程需要的物件、資料結構或輸出區塊。
+    
+    Args:
+        無。
+    
+    Returns:
+        執行結果；若函式標註回傳型別，預期型別為 MCPServer。
+    
+    限制或副作用:
+        可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+    """
     server = MCPServer(
         name="example-server",
         description="A simple example MCP server with calculator and greeting tools"
@@ -173,10 +307,17 @@ def create_example_server() -> MCPServer:
     
     # 添加一個簡單的計算器工具
     def calculator(expression: str) -> str:
-        """計算數學表達式
+        """
+        負責執行 protocols.mcp.server 中的 calculator 流程，依照 protocols.mcp.server 的流程需求處理 calculator 對應的資料轉換、狀態操作或結果產生。
         
         Args:
-            expression: 要計算的數學表達式，例如 "2 + 2" 或 "10 * 5"
+            expression: 此流程需要使用的輸入資料。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 str。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
         """
         try:
             # 安全的表達式求值（僅支援基本運算）
@@ -192,10 +333,17 @@ def create_example_server() -> MCPServer:
     
     # 添加一個問候工具
     def greet(name: str) -> str:
-        """生成友好的問候語
+        """
+        負責執行 protocols.mcp.server 中的 greet 流程，依照 protocols.mcp.server 的流程需求處理 greet 對應的資料轉換、狀態操作或結果產生。
         
         Args:
-            name: 要問候的人的名字
+            name: 此流程需要使用的輸入資料。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 str。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
         """
         return f"Hello, {name}! Welcome to the MCP server example."
     

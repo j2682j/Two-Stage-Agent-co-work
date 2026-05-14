@@ -24,14 +24,23 @@ SUPPORTED_PROVIDERS = Literal[
 
 class HelloAgentsLLM:
     """
-    為HelloAgents定制的LLM客戶端。
-    它用於呼叫任何相容OpenAI介面的服務，並預設使用流式回應。
-
-    設計理念：
-    - 參數優先，環境變數兜底
-    - 流式回應為預設，提供更好的使用者體驗
-    - 支援多種LLM提供商
-    - 統一的呼叫介面
+    負責在 core.llm 中封裝 HelloAgentsLLM，封裝此模組的狀態資料與主要操作流程。
+    
+    Args:
+        model: 用來呼叫模型或外部服務的模型名稱、客戶端或相關設定。
+        api_key: 用來呼叫模型或外部服務的模型名稱、客戶端或相關設定。
+        base_url: 用來呼叫模型或外部服務的模型名稱、客戶端或相關設定。
+        provider: 用來呼叫模型或外部服務的模型名稱、客戶端或相關設定。
+        temperature: 用來呼叫模型或外部服務的模型名稱、客戶端或相關設定。
+        max_tokens: 控制檢索、篩選或輸出數量的數值參數。
+        timeout: 用來呼叫模型或外部服務的模型名稱、客戶端或相關設定。
+        **kwargs: 用來呼叫模型或外部服務的模型名稱、客戶端或相關設定。
+    
+    Returns:
+        類別本身不直接回傳值；建立實例後可透過其方法操作狀態與流程。
+    
+    限制或副作用:
+        方法可能更新內部狀態、讀寫檔案、呼叫外部服務或產生日誌，需依使用情境確認。
     """
 
     def __init__(
@@ -46,17 +55,23 @@ class HelloAgentsLLM:
         **kwargs
     ):
         """
-        初始化客戶端。優先使用傳入參數，如果未提供，則從環境變數載入。
-        支援自動檢測provider或使用統一的LLM_*環境變數設定。
-
+        負責執行 HelloAgentsLLM 中的 __init__ 流程，初始化物件所需的設定、依賴與內部狀態，讓後續方法可以沿用同一份執行上下文。
+        
         Args:
-            model: 模型名稱，如果未提供則從環境變數LLM_MODEL_ID讀取
-            api_key: API密鑰，如果未提供則從環境變數讀取
-            base_url: 服務地址，如果未提供則從環境變數LLM_BASE_URL讀取
-            provider: LLM提供商，如果未提供則自動檢測
-            temperature: 溫度參數
-            max_tokens: 最大token 數
-            timeout: 逾時時間，從環境變數LLM_TIMEOUT讀取，預設60秒
+            model: 用來呼叫模型或外部服務的模型名稱、客戶端或相關設定。
+            api_key: 用來呼叫模型或外部服務的模型名稱、客戶端或相關設定。
+            base_url: 用來呼叫模型或外部服務的模型名稱、客戶端或相關設定。
+            provider: 用來呼叫模型或外部服務的模型名稱、客戶端或相關設定。
+            temperature: 用來呼叫模型或外部服務的模型名稱、客戶端或相關設定。
+            max_tokens: 控制檢索、篩選或輸出數量的數值參數。
+            timeout: 用來呼叫模型或外部服務的模型名稱、客戶端或相關設定。
+            **kwargs: 用來呼叫模型或外部服務的模型名稱、客戶端或相關設定。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 未標註。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
         """
         # 優先使用傳入參數，如果未提供，則從環境變數載入
         self.model = model or os.getenv("LLM_MODEL_ID")
@@ -88,13 +103,17 @@ class HelloAgentsLLM:
 
     def _auto_detect_provider(self, api_key: Optional[str], base_url: Optional[str]) -> str:
         """
-        自動檢測LLM提供商
-
-        檢測邏輯：
-        1. 優先檢查特定提供商的環境變數
-        2. 根據API密鑰格式判斷
-        3. 根據base_url判斷
-        4. 預設回傳通用設定
+        負責執行 HelloAgentsLLM 中的 _auto_detect_provider 流程，依照 HelloAgentsLLM 的流程需求處理 _auto_detect_provider 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            api_key: 用來呼叫模型或外部服務的模型名稱、客戶端或相關設定。
+            base_url: 用來呼叫模型或外部服務的模型名稱、客戶端或相關設定。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 str。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
         """
         # 1. 檢查特定提供商的環境變數
         if os.getenv("OPENAI_API_KEY"):
@@ -173,7 +192,19 @@ class HelloAgentsLLM:
         return "auto"
 
     def _resolve_credentials(self, api_key: Optional[str], base_url: Optional[str]) -> tuple[str, str]:
-        """根據provider解析API密鑰和base_url"""
+        """
+        負責執行 HelloAgentsLLM 中的 _resolve_credentials 流程，依照 HelloAgentsLLM 的流程需求處理 _resolve_credentials 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            api_key: 用來呼叫模型或外部服務的模型名稱、客戶端或相關設定。
+            base_url: 用來呼叫模型或外部服務的模型名稱、客戶端或相關設定。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 tuple[str, str]。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         if self.provider == "openai":
             resolved_api_key = api_key or os.getenv("OPENAI_API_KEY") or os.getenv("LLM_API_KEY")
             resolved_base_url = base_url or os.getenv("LLM_BASE_URL") or "https://api.openai.com/v1"
@@ -231,7 +262,18 @@ class HelloAgentsLLM:
             return resolved_api_key, resolved_base_url
 
     def _create_client(self) -> OpenAI:
-        """建立OpenAI客戶端"""
+        """
+        負責執行 HelloAgentsLLM 中的 _create_client 流程，依照 HelloAgentsLLM 的流程需求處理 _create_client 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            無。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 OpenAI。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         return OpenAI(
             api_key=self.api_key,
             base_url=self.base_url,
@@ -239,7 +281,18 @@ class HelloAgentsLLM:
         )
     
     def _get_default_model(self) -> str:
-        """取得預設模型"""
+        """
+        負責執行 HelloAgentsLLM 中的 _get_default_model 流程，依照 HelloAgentsLLM 的流程需求處理 _get_default_model 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            無。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 str。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         if self.provider == "openai":
             return "gpt-3.5-turbo"
         elif self.provider == "deepseek":
@@ -285,15 +338,17 @@ class HelloAgentsLLM:
 
     def think(self, messages: list[dict[str, str]], temperature: Optional[float] = None) -> Iterator[str]:
         """
-        呼叫大語言模型進行思考，並回傳流式回應。
-        這是主要的呼叫方法，預設使用流式回應以獲得更好的使用者體驗。
-
+        負責執行 HelloAgentsLLM 中的 think 流程，依照 HelloAgentsLLM 的流程需求處理 think 對應的資料轉換、狀態操作或結果產生。
+        
         Args:
-            messages: 消息列表
-            temperature: 溫度參數，如果未提供則使用初始化時的值
-
-        Yields:
-            str: 流式回應的文字片段
+            messages: 用來呼叫模型或外部服務的模型名稱、客戶端或相關設定。
+            temperature: 用來呼叫模型或外部服務的模型名稱、客戶端或相關設定。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 Iterator[str]。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
         """
         print(f"🧠 正在呼叫 {self.model} 模型...")
         try:
@@ -320,8 +375,17 @@ class HelloAgentsLLM:
 
     def invoke(self, messages: list[dict[str, str]], **kwargs) -> str:
         """
-        非流式呼叫LLM，回傳完整回應。
-        適用於不需要流式輸出的場景。
+        負責執行 HelloAgentsLLM 中的 invoke 流程，呼叫模型、工具或外部服務並整理回傳結果。
+        
+        Args:
+            messages: 用來呼叫模型或外部服務的模型名稱、客戶端或相關設定。
+            **kwargs: 用來呼叫模型或外部服務的模型名稱、客戶端或相關設定。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 str。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
         """
         try:
             response = self._client.chat.completions.create(
@@ -337,8 +401,17 @@ class HelloAgentsLLM:
 
     def stream_invoke(self, messages: list[dict[str, str]], **kwargs) -> Iterator[str]:
         """
-        流式呼叫LLM的別名方法，與think方法功能相同。
-        保持向後相容性。
+        負責執行 HelloAgentsLLM 中的 stream_invoke 流程，依照 HelloAgentsLLM 的流程需求處理 stream_invoke 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            messages: 用來呼叫模型或外部服務的模型名稱、客戶端或相關設定。
+            **kwargs: 用來呼叫模型或外部服務的模型名稱、客戶端或相關設定。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 Iterator[str]。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
         """
         temperature = kwargs.get('temperature')
         yield from self.think(messages, temperature)

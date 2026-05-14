@@ -14,7 +14,18 @@ import threading
 
 
 class DocumentStore(ABC):
-    """文檔儲存基類"""
+    """
+    負責在 memory.storage.document_store 中封裝 DocumentStore，管理記憶圖、任務紀錄、檢索結果或跨任務經驗的狀態與操作。
+    
+    Args:
+        無明確建構參數，可能透過 dataclass 欄位或預設值建立物件。
+    
+    Returns:
+        類別本身不直接回傳值；建立實例後可透過其方法操作狀態與流程。
+    
+    限制或副作用:
+        方法可能更新內部狀態、讀寫檔案、呼叫外部服務或產生日誌，需依使用情境確認。
+    """
     
     @abstractmethod
     def add_memory(
@@ -27,12 +38,40 @@ class DocumentStore(ABC):
         importance: float,
         properties: Dict[str, Any] = None
     ) -> str:
-        """添加記憶"""
+        """
+        負責執行 DocumentStore 中的 add_memory 流程，更新記憶圖、互動狀態、節點邊關係或追蹤紀錄。
+        
+        Args:
+            memory_id: 記憶系統提供的檢索結果、寫入資料或操作介面。
+            user_id: 記憶系統提供的檢索結果、寫入資料或操作介面。
+            content: 記憶系統提供的檢索結果、寫入資料或操作介面。
+            memory_type: 記憶系統提供的檢索結果、寫入資料或操作介面。
+            timestamp: 記憶系統提供的檢索結果、寫入資料或操作介面。
+            importance: 記憶系統提供的檢索結果、寫入資料或操作介面。
+            properties: 記憶系統提供的檢索結果、寫入資料或操作介面。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 str。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         pass
     
     @abstractmethod
     def get_memory(self, memory_id: str) -> Optional[Dict[str, Any]]:
-        """取得單個記憶"""
+        """
+        負責執行 DocumentStore 中的 get_memory 流程，依照 DocumentStore 的流程需求處理 get_memory 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            memory_id: 記憶系統提供的檢索結果、寫入資料或操作介面。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 Optional[Dict[str, Any]]。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         pass
     
     @abstractmethod
@@ -45,7 +84,23 @@ class DocumentStore(ABC):
         importance_threshold: Optional[float] = None,
         limit: int = 10
     ) -> List[Dict[str, Any]]:
-        """搜尋記憶"""
+        """
+        負責執行 DocumentStore 中的 search_memories 流程，從記憶圖、向量索引或任務關聯中取回相關案例與策略提醒。
+        
+        Args:
+            user_id: 已整理好的搜尋結果、共享資料包或可重用證據內容。
+            memory_type: 已整理好的搜尋結果、共享資料包或可重用證據內容。
+            start_time: 已整理好的搜尋結果、共享資料包或可重用證據內容。
+            end_time: 已整理好的搜尋結果、共享資料包或可重用證據內容。
+            importance_threshold: 控制檢索、篩選或輸出數量的數值參數。
+            limit: 控制檢索、篩選或輸出數量的數值參數。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 List[Dict[str, Any]]。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         pass
     
     @abstractmethod
@@ -56,37 +111,118 @@ class DocumentStore(ABC):
         importance: float = None,
         properties: Dict[str, Any] = None
     ) -> bool:
-        """更新記憶"""
+        """
+        負責執行 DocumentStore 中的 update_memory 流程，更新記憶圖、互動狀態、節點邊關係或追蹤紀錄。
+        
+        Args:
+            memory_id: 記憶系統提供的檢索結果、寫入資料或操作介面。
+            content: 記憶系統提供的檢索結果、寫入資料或操作介面。
+            importance: 記憶系統提供的檢索結果、寫入資料或操作介面。
+            properties: 記憶系統提供的檢索結果、寫入資料或操作介面。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 bool。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         pass
     
     @abstractmethod
     def delete_memory(self, memory_id: str) -> bool:
-        """刪除記憶"""
+        """
+        負責執行 DocumentStore 中的 delete_memory 流程，依照 DocumentStore 的流程需求處理 delete_memory 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            memory_id: 記憶系統提供的檢索結果、寫入資料或操作介面。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 bool。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         pass
     
     @abstractmethod
     def get_database_stats(self) -> Dict[str, Any]:
-        """取得資料庫統計資訊"""
+        """
+        負責執行 DocumentStore 中的 get_database_stats 流程，依照 DocumentStore 的流程需求處理 get_database_stats 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            無。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 Dict[str, Any]。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         pass
     
     @abstractmethod
     def add_document(self, content: str, metadata: Dict[str, Any] = None) -> str:
-        """添加文檔"""
+        """
+        負責執行 DocumentStore 中的 add_document 流程，更新記憶圖、互動狀態、節點邊關係或追蹤紀錄。
+        
+        Args:
+            content: 記憶系統提供的檢索結果、寫入資料或操作介面。
+            metadata: 目前流程所需的上下文、狀態或附加資訊。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 str。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         pass
     
     @abstractmethod
     def get_document(self, document_id: str) -> Optional[Dict[str, Any]]:
-        """取得文檔"""
+        """
+        負責執行 DocumentStore 中的 get_document 流程，依照 DocumentStore 的流程需求處理 get_document 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            document_id: 記憶系統提供的檢索結果、寫入資料或操作介面。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 Optional[Dict[str, Any]]。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         pass
 
 class SQLiteDocumentStore(DocumentStore):
-    """SQLite文檔儲存實現"""
+    """
+    負責在 memory.storage.document_store 中封裝 SQLiteDocumentStore，管理記憶圖、任務紀錄、檢索結果或跨任務經驗的狀態與操作。
+    
+    Args:
+        db_path: 記憶系統提供的檢索結果、寫入資料或操作介面。
+    
+    Returns:
+        類別本身不直接回傳值；建立實例後可透過其方法操作狀態與流程。
+    
+    限制或副作用:
+        方法可能更新內部狀態、讀寫檔案、呼叫外部服務或產生日誌，需依使用情境確認。
+    """
     
     _instances = {}  # 儲存已建立的實例
     _initialized_dbs = set()  # 儲存已初始化的資料庫路徑
     
     def __new__(cls, db_path: str = "./memory.db"):
-        """單例模式，同一路徑只建立一個實例"""
+        """
+        負責執行 SQLiteDocumentStore 中的 __new__ 流程，依照 SQLiteDocumentStore 的流程需求處理 __new__ 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            db_path: 記憶系統提供的檢索結果、寫入資料或操作介面。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 未標註。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         abs_path = os.path.abspath(db_path)
         if abs_path not in cls._instances:
             instance = super(SQLiteDocumentStore, cls).__new__(cls)
@@ -95,6 +231,18 @@ class SQLiteDocumentStore(DocumentStore):
     
     def __init__(self, db_path: str = "./memory.db"):
         # 避免重復初始化
+        """
+        負責執行 SQLiteDocumentStore 中的 __init__ 流程，初始化物件所需的設定、依賴與內部狀態，讓後續方法可以沿用同一份執行上下文。
+        
+        Args:
+            db_path: 記憶系統提供的檢索結果、寫入資料或操作介面。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 未標註。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         if hasattr(self, '_initialized'):
             return
             
@@ -114,14 +262,36 @@ class SQLiteDocumentStore(DocumentStore):
         self._initialized = True
     
     def _get_connection(self):
-        """取得執行緒本地連線"""
+        """
+        負責執行 SQLiteDocumentStore 中的 _get_connection 流程，依照 SQLiteDocumentStore 的流程需求處理 _get_connection 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            無。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 未標註。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         if not hasattr(self.local, 'connection'):
             self.local.connection = sqlite3.connect(self.db_path)
             self.local.connection.row_factory = sqlite3.Row  # 使結果可以按列名訪問
         return self.local.connection
     
     def _init_database(self):
-        """初始化資料庫表"""
+        """
+        負責執行 SQLiteDocumentStore 中的 _init_database 流程，依照 SQLiteDocumentStore 的流程需求處理 _init_database 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            無。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 未標註。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         conn = self._get_connection()
         cursor = conn.cursor()
         
@@ -216,7 +386,24 @@ class SQLiteDocumentStore(DocumentStore):
         importance: float,
         properties: Dict[str, Any] = None
     ) -> str:
-        """添加記憶"""
+        """
+        負責執行 SQLiteDocumentStore 中的 add_memory 流程，更新記憶圖、互動狀態、節點邊關係或追蹤紀錄。
+        
+        Args:
+            memory_id: 記憶系統提供的檢索結果、寫入資料或操作介面。
+            user_id: 記憶系統提供的檢索結果、寫入資料或操作介面。
+            content: 記憶系統提供的檢索結果、寫入資料或操作介面。
+            memory_type: 記憶系統提供的檢索結果、寫入資料或操作介面。
+            timestamp: 記憶系統提供的檢索結果、寫入資料或操作介面。
+            importance: 記憶系統提供的檢索結果、寫入資料或操作介面。
+            properties: 記憶系統提供的檢索結果、寫入資料或操作介面。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 str。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         conn = self._get_connection()
         cursor = conn.cursor()
         
@@ -242,7 +429,18 @@ class SQLiteDocumentStore(DocumentStore):
         return memory_id
     
     def get_memory(self, memory_id: str) -> Optional[Dict[str, Any]]:
-        """取得單個記憶"""
+        """
+        負責執行 SQLiteDocumentStore 中的 get_memory 流程，依照 SQLiteDocumentStore 的流程需求處理 get_memory 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            memory_id: 記憶系統提供的檢索結果、寫入資料或操作介面。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 Optional[Dict[str, Any]]。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         conn = self._get_connection()
         cursor = conn.cursor()
         
@@ -276,7 +474,23 @@ class SQLiteDocumentStore(DocumentStore):
         importance_threshold: Optional[float] = None,
         limit: int = 10
     ) -> List[Dict[str, Any]]:
-        """搜尋記憶"""
+        """
+        負責執行 SQLiteDocumentStore 中的 search_memories 流程，從記憶圖、向量索引或任務關聯中取回相關案例與策略提醒。
+        
+        Args:
+            user_id: 已整理好的搜尋結果、共享資料包或可重用證據內容。
+            memory_type: 已整理好的搜尋結果、共享資料包或可重用證據內容。
+            start_time: 已整理好的搜尋結果、共享資料包或可重用證據內容。
+            end_time: 已整理好的搜尋結果、共享資料包或可重用證據內容。
+            importance_threshold: 控制檢索、篩選或輸出數量的數值參數。
+            limit: 控制檢索、篩選或輸出數量的數值參數。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 List[Dict[str, Any]]。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         conn = self._get_connection()
         cursor = conn.cursor()
         
@@ -338,7 +552,21 @@ class SQLiteDocumentStore(DocumentStore):
         importance: float = None,
         properties: Dict[str, Any] = None
     ) -> bool:
-        """更新記憶"""
+        """
+        負責執行 SQLiteDocumentStore 中的 update_memory 流程，更新記憶圖、互動狀態、節點邊關係或追蹤紀錄。
+        
+        Args:
+            memory_id: 記憶系統提供的檢索結果、寫入資料或操作介面。
+            content: 記憶系統提供的檢索結果、寫入資料或操作介面。
+            importance: 記憶系統提供的檢索結果、寫入資料或操作介面。
+            properties: 記憶系統提供的檢索結果、寫入資料或操作介面。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 bool。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         conn = self._get_connection()
         cursor = conn.cursor()
         
@@ -374,7 +602,18 @@ class SQLiteDocumentStore(DocumentStore):
         return cursor.rowcount > 0
     
     def delete_memory(self, memory_id: str) -> bool:
-        """刪除記憶"""
+        """
+        負責執行 SQLiteDocumentStore 中的 delete_memory 流程，依照 SQLiteDocumentStore 的流程需求處理 delete_memory 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            memory_id: 記憶系統提供的檢索結果、寫入資料或操作介面。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 bool。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         conn = self._get_connection()
         cursor = conn.cursor()
         
@@ -385,7 +624,18 @@ class SQLiteDocumentStore(DocumentStore):
         return deleted_count > 0
     
     def get_database_stats(self) -> Dict[str, Any]:
-        """取得資料庫統計資訊"""
+        """
+        負責執行 SQLiteDocumentStore 中的 get_database_stats 流程，依照 SQLiteDocumentStore 的流程需求處理 get_database_stats 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            無。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 Dict[str, Any]。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         conn = self._get_connection()
         cursor = conn.cursor()
         
@@ -427,7 +677,19 @@ class SQLiteDocumentStore(DocumentStore):
         return stats
     
     def add_document(self, content: str, metadata: Dict[str, Any] = None) -> str:
-        """添加文檔"""
+        """
+        負責執行 SQLiteDocumentStore 中的 add_document 流程，更新記憶圖、互動狀態、節點邊關係或追蹤紀錄。
+        
+        Args:
+            content: 記憶系統提供的檢索結果、寫入資料或操作介面。
+            metadata: 目前流程所需的上下文、狀態或附加資訊。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 str。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         import uuid
         import time
         
@@ -445,13 +707,35 @@ class SQLiteDocumentStore(DocumentStore):
         )
     
     def get_document(self, document_id: str) -> Optional[Dict[str, Any]]:
-        """取得文檔"""
+        """
+        負責執行 SQLiteDocumentStore 中的 get_document 流程，依照 SQLiteDocumentStore 的流程需求處理 get_document 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            document_id: 記憶系統提供的檢索結果、寫入資料或操作介面。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 Optional[Dict[str, Any]]。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         return self.get_memory(document_id)
 
     def close(self):
-        """關閉資料庫連線"""
+        """
+        負責執行 SQLiteDocumentStore 中的 close 流程，清除或移除指定資源、狀態或註冊資料，維持後續流程的一致性。
+        
+        Args:
+            無。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 未標註。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         if hasattr(self.local, 'connection'):
             self.local.connection.close()
             delattr(self.local, 'connection')
             print("[OK] SQLite 連線已關閉")
-
+

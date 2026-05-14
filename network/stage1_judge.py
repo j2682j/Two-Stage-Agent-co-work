@@ -9,7 +9,31 @@ from .slm_agent import SLM_4b_Agent
 
 
 class Stage1Judge:
+    """
+    負責在 network.stage1_judge 中封裝 Stage1Judge，管理記憶圖、任務紀錄、檢索結果或跨任務經驗的狀態與操作。
+    
+    Args:
+        judge_model_name: 用來呼叫模型或外部服務的模型名稱、客戶端或相關設定。
+    
+    Returns:
+        類別本身不直接回傳值；建立實例後可透過其方法操作狀態與流程。
+    
+    限制或副作用:
+        方法可能更新內部狀態、讀寫檔案、呼叫外部服務或產生日誌，需依使用情境確認。
+    """
     def __init__(self, judge_model_name: str = "qwen3:8b"):
+        """
+        負責執行 Stage1Judge 中的 __init__ 流程，初始化物件所需的設定、依賴與內部狀態，讓後續方法可以沿用同一份執行上下文。
+        
+        Args:
+            judge_model_name: 用來呼叫模型或外部服務的模型名稱、客戶端或相關設定。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 未標註。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         self.judge_model_name = judge_model_name
 
     def evaluate_stage1_candidate(
@@ -18,6 +42,20 @@ class Stage1Judge:
         reasoning: str,
         final_answer: str,
     ) -> dict[str, Any]:
+        """
+        負責執行 Stage1Judge 中的 evaluate_stage1_candidate 流程，評估候選結果是否符合任務需求並回傳判定資訊。
+        
+        Args:
+            question: 目前要處理的任務、問題或查詢文字。
+            reasoning: 此流程需要使用的輸入資料。
+            final_answer: 此流程需要使用的輸入資料。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 dict[str, Any]。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         question_text = self._normalize_text(question)
         reasoning_text = self._normalize_text(reasoning)
         answer_text = self._normalize_text(final_answer)
@@ -87,7 +125,7 @@ class Stage1Judge:
 
         try:
             judge_agent = SLM_4b_Agent(model_name=self.judge_model_name)
-            raw_response = judge_agent.invoke(
+            raw_response, prompt_tokens, completion_tokens = judge_agent.invoke_with_usage(
                 [
                     {"role": "system", "content": "You are a strict JSON-only stage-1 reasoning judge."},
                     {"role": "user", "content": prompt},
@@ -113,6 +151,8 @@ class Stage1Judge:
                     "judge_reasoning": judge_reasoning,
                     "raw_response": raw_response,
                     "used_fallback": False,
+                    "prompt_tokens": prompt_tokens,
+                    "completion_tokens": completion_tokens,
                 }
         except Exception as e:
             return {
@@ -124,6 +164,8 @@ class Stage1Judge:
                 "judge_reasoning": "",
                 "raw_response": None,
                 "used_fallback": True,
+                "prompt_tokens": 0,
+                "completion_tokens": 0,
             }
 
         return {
@@ -135,13 +177,41 @@ class Stage1Judge:
             "judge_reasoning": "",
             "raw_response": None,
             "used_fallback": True,
+            "prompt_tokens": 0,
+            "completion_tokens": 0,
         }
 
     def stage1_importance_score(self, question: str, reasoning: str, final_answer: str) -> float:
+        """
+        負責執行 Stage1Judge 中的 stage1_importance_score 流程，依照 Stage1Judge 的流程需求處理 stage1_importance_score 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            question: 目前要處理的任務、問題或查詢文字。
+            reasoning: 評估、推理或工具執行後產生的結果與分數資料。
+            final_answer: 評估、推理或工具執行後產生的結果與分數資料。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 float。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         evaluation = self.evaluate_stage1_candidate(question, reasoning, final_answer)
         return self.adjust_stage1_importance(evaluation)
 
     def adjust_stage1_importance(self, evaluation: dict[str, Any]) -> float:
+        """
+        負責執行 Stage1Judge 中的 adjust_stage1_importance 流程，依照 Stage1Judge 的流程需求處理 adjust_stage1_importance 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            evaluation: 此流程需要使用的輸入資料。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 float。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         raw_score = self._coerce_score(evaluation.get("score", 0.0))
         is_acceptable = bool(evaluation.get("is_acceptable", False))
         approved_answer = self._normalize_text(evaluation.get("approved_answer"))
@@ -173,6 +243,20 @@ class Stage1Judge:
         return max(adjusted, 0.0)
 
     def _heuristic_stage1_score(self, question_text: str, reasoning_text: str, answer_text: str) -> float:
+        """
+        負責執行 Stage1Judge 中的 _heuristic_stage1_score 流程，依照 Stage1Judge 的流程需求處理 _heuristic_stage1_score 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            question_text: 評估、推理或工具執行後產生的結果與分數資料。
+            reasoning_text: 評估、推理或工具執行後產生的結果與分數資料。
+            answer_text: 評估、推理或工具執行後產生的結果與分數資料。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 float。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         if not reasoning_text:
             return 0.0
 
@@ -215,6 +299,18 @@ class Stage1Judge:
         return max(score, 0.0)
 
     def _coerce_score(self, value: Any) -> float:
+        """
+        負責執行 Stage1Judge 中的 _coerce_score 流程，依照 Stage1Judge 的流程需求處理 _coerce_score 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            value: 評估、推理或工具執行後產生的結果與分數資料。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 float。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         try:
             score = float(value)
         except (TypeError, ValueError):
@@ -222,11 +318,35 @@ class Stage1Judge:
         return max(0.0, min(10.0, score))
 
     def _normalize_text(self, text: Any) -> str:
+        """
+        負責執行 Stage1Judge 中的 _normalize_text 流程，依照 Stage1Judge 的流程需求處理 _normalize_text 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            text: 此流程需要使用的輸入資料。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 str。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         if text is None:
             return ""
         return re.sub(r"\s+", " ", str(text)).strip()
 
     def _extract_keywords(self, text: str) -> set[str]:
+        """
+        負責執行 Stage1Judge 中的 _extract_keywords 流程，依照 Stage1Judge 的流程需求處理 _extract_keywords 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            text: 此流程需要使用的輸入資料。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 set[str]。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         stopwords = {
             "the", "a", "an", "is", "are", "was", "were", "to", "of", "in", "on",
             "at", "for", "and", "or", "that", "this", "it", "as", "with", "by",

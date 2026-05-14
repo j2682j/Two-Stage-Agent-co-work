@@ -5,21 +5,52 @@ from .registry import ToolRegistry
 
 
 class ToolChain:
-    """工具鏈 - 支援多個工具的順序執行"""
+    """
+    負責在 tools.chain 中封裝 ToolChain，封裝工具呼叫、參數處理與工具結果回傳流程。
+    
+    Args:
+        name: 此流程需要使用的輸入資料。
+        description: 此流程需要使用的輸入資料。
+    
+    Returns:
+        類別本身不直接回傳值；建立實例後可透過其方法操作狀態與流程。
+    
+    限制或副作用:
+        方法可能更新內部狀態、讀寫檔案、呼叫外部服務或產生日誌，需依使用情境確認。
+    """
 
     def __init__(self, name: str, description: str):
+        """
+        負責執行 ToolChain 中的 __init__ 流程，初始化物件所需的設定、依賴與內部狀態，讓後續方法可以沿用同一份執行上下文。
+        
+        Args:
+            name: 此流程需要使用的輸入資料。
+            description: 此流程需要使用的輸入資料。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 未標註。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         self.name = name
         self.description = description
         self.steps: List[Dict[str, Any]] = []
 
     def add_step(self, tool_name: str, input_template: str, output_key: str = None):
         """
-        添加工具執行步驟
+        負責執行 ToolChain 中的 add_step 流程，將新的輸入資料合併到目前物件狀態或流程紀錄中。
         
         Args:
-            tool_name: 工具名稱
-            input_template: 輸入模板，支援變量替換，如 "{input}" 或 "{search_result}"
-            output_key: 輸出結果的鍵名，用於後續步驟引用
+            tool_name: 可呼叫的工具、工具名稱或工具註冊表。
+            input_template: 此流程需要使用的輸入資料。
+            output_key: 此流程需要使用的輸入資料。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 未標註。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
         """
         step = {
             "tool_name": tool_name,
@@ -31,15 +62,18 @@ class ToolChain:
 
     def execute(self, registry: ToolRegistry, input_data: str, context: Dict[str, Any] = None) -> str:
         """
-        執行工具鏈
+        負責執行 ToolChain 中的 execute 流程，依照 ToolChain 的流程需求處理 execute 對應的資料轉換、狀態操作或結果產生。
         
         Args:
-            registry: 工具註冊表
-            input_data: 初始輸入資料
-            context: 執行上下文，用於變量替換
-            
+            registry: 可呼叫的工具、工具名稱或工具註冊表。
+            input_data: 此流程需要使用的輸入資料。
+            context: 目前流程所需的上下文、狀態或附加資訊。
+        
         Returns:
-            最終執行結果
+            執行結果；若函式標註回傳型別，預期型別為 str。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
         """
         if not self.steps:
             return "[ERROR] 工具鏈為空，無法執行"
@@ -80,19 +114,66 @@ class ToolChain:
 
 
 class ToolChainManager:
-    """工具鏈管理器"""
+    """
+    負責在 tools.chain 中封裝 ToolChainManager，封裝工具呼叫、參數處理與工具結果回傳流程。
+    
+    Args:
+        registry: 可呼叫的工具、工具名稱或工具註冊表。
+    
+    Returns:
+        類別本身不直接回傳值；建立實例後可透過其方法操作狀態與流程。
+    
+    限制或副作用:
+        方法可能更新內部狀態、讀寫檔案、呼叫外部服務或產生日誌，需依使用情境確認。
+    """
 
     def __init__(self, registry: ToolRegistry):
+        """
+        負責執行 ToolChainManager 中的 __init__ 流程，初始化物件所需的設定、依賴與內部狀態，讓後續方法可以沿用同一份執行上下文。
+        
+        Args:
+            registry: 可呼叫的工具、工具名稱或工具註冊表。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 未標註。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         self.registry = registry
         self.chains: Dict[str, ToolChain] = {}
 
     def register_chain(self, chain: ToolChain):
-        """註冊工具鏈"""
+        """
+        負責執行 ToolChainManager 中的 register_chain 流程，依照 ToolChainManager 的流程需求處理 register_chain 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            chain: 此流程需要使用的輸入資料。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 未標註。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         self.chains[chain.name] = chain
         print(f"[OK] 工具鏈 '{chain.name}' 已註冊")
 
     def execute_chain(self, chain_name: str, input_data: str, context: Dict[str, Any] = None) -> str:
-        """執行指定的工具鏈"""
+        """
+        負責執行 ToolChainManager 中的 execute_chain 流程，依照 ToolChainManager 的流程需求處理 execute_chain 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            chain_name: 此流程需要使用的輸入資料。
+            input_data: 此流程需要使用的輸入資料。
+            context: 目前流程所需的上下文、狀態或附加資訊。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 str。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         if chain_name not in self.chains:
             return f"[ERROR] 工具鏈 '{chain_name}' 不存在"
 
@@ -100,11 +181,33 @@ class ToolChainManager:
         return chain.execute(self.registry, input_data, context)
 
     def list_chains(self) -> List[str]:
-        """列出所有已註冊的工具鏈"""
+        """
+        負責執行 ToolChainManager 中的 list_chains 流程，依照 ToolChainManager 的流程需求處理 list_chains 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            無。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 List[str]。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         return list(self.chains.keys())
 
     def get_chain_info(self, chain_name: str) -> Optional[Dict[str, Any]]:
-        """取得工具鏈資訊"""
+        """
+        負責執行 ToolChainManager 中的 get_chain_info 流程，依照 ToolChainManager 的流程需求處理 get_chain_info 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            chain_name: 此流程需要使用的輸入資料。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 Optional[Dict[str, Any]]。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         if chain_name not in self.chains:
             return None
         
@@ -126,7 +229,18 @@ class ToolChainManager:
 
 # 便捷函式
 def create_research_chain() -> ToolChain:
-    """建立一個研究工具鏈：搜尋 -> 計算 -> 總結"""
+    """
+    負責執行 tools.chain 中的 create_research_chain 流程，建立後續流程需要的物件、資料結構或輸出區塊。
+    
+    Args:
+        無。
+    
+    Returns:
+        執行結果；若函式標註回傳型別，預期型別為 ToolChain。
+    
+    限制或副作用:
+        可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+    """
     chain = ToolChain(
         name="research_and_calculate",
         description="搜尋資訊並進行相關計算"
@@ -150,7 +264,18 @@ def create_research_chain() -> ToolChain:
 
 
 def create_simple_chain() -> ToolChain:
-    """建立一個簡單的工具鏈範例"""
+    """
+    負責執行 tools.chain 中的 create_simple_chain 流程，建立後續流程需要的物件、資料結構或輸出區塊。
+    
+    Args:
+        無。
+    
+    Returns:
+        執行結果；若函式標註回傳型別，預期型別為 ToolChain。
+    
+    限制或副作用:
+        可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+    """
     chain = ToolChain(
         name="simple_demo",
         description="簡單的工具鏈演示"

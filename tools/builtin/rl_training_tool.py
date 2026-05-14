@@ -11,20 +11,32 @@ from ..base import Tool, ToolParameter
 
 
 class RLTrainingTool(Tool):
-    """RL訓練工具
-
-    支援的訓練算法：
-    - SFT: Supervised Fine-Tuning (監督微調)
-    - GRPO: Group Relative Policy Optimization (群體相對策略優化)
-
-    支援的功能：
-    - 訓練模型 (train)
-    - 載入資料集 (load_dataset)
-    - 建立獎勵函式 (create_reward)
-    - 評估模型 (evaluate)
+    """
+    負責在 tools.builtin.rl_training_tool 中封裝 RLTrainingTool，封裝工具呼叫、參數處理與工具結果回傳流程。
+    
+    Args:
+        無明確建構參數，可能透過 dataclass 欄位或預設值建立物件。
+    
+    Returns:
+        類別本身不直接回傳值；建立實例後可透過其方法操作狀態與流程。
+    
+    限制或副作用:
+        方法可能更新內部狀態、讀寫檔案、呼叫外部服務或產生日誌，需依使用情境確認。
     """
 
     def __init__(self):
+        """
+        負責執行 RLTrainingTool 中的 __init__ 流程，初始化物件所需的設定、依賴與內部狀態，讓後續方法可以沿用同一份執行上下文。
+        
+        Args:
+            無。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 未標註。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         super().__init__(
             name="rl_training",
             description=(
@@ -48,56 +60,50 @@ class RLTrainingTool(Tool):
 
     def register_dataset(self, name: str, dataset) -> None:
         """
-        註冊自定義資料集
-
+        負責執行 RLTrainingTool 中的 register_dataset 流程，依照 RLTrainingTool 的流程需求處理 register_dataset 對應的資料轉換、狀態操作或結果產生。
+        
         Args:
-            name: 資料集名稱
-            dataset: 資料集對象(HuggingFace Dataset)
+            name: 此流程需要使用的輸入資料。
+            dataset: 此流程需要使用的輸入資料。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 None。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
         """
         self.custom_datasets[name] = dataset
         print(f"[OK] 已註冊自定義資料集: {name}")
 
     def register_reward_function(self, name: str, reward_fn) -> None:
         """
-        註冊自定義獎勵函式
-
+        負責執行 RLTrainingTool 中的 register_reward_function 流程，依照 RLTrainingTool 的流程需求處理 register_reward_function 對應的資料轉換、狀態操作或結果產生。
+        
         Args:
-            name: 獎勵函式名稱
-            reward_fn: 獎勵函式(接受completions和kwargs,回傳rewards列表)
+            name: 此流程需要使用的輸入資料。
+            reward_fn: 此流程需要使用的輸入資料。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 None。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
         """
         self.custom_reward_functions[name] = reward_fn
         print(f"[OK] 已註冊自定義獎勵函式: {name}")
 
     def run(self, parameters: Dict[str, Any]) -> str:
         """
-        執行RL相關操作
-
+        負責執行 RLTrainingTool 中的 run 流程，啟動主要執行流程，串接輸入準備、核心處理與結果輸出。
+        
         Args:
-            parameters: 操作參數，包括：
-                - action: 操作類型 ("train", "load_dataset", "create_reward", "evaluate")
-
-                訓練參數 (action="train"):
-                - algorithm: 訓練算法 ("sft", "grpo")
-                - model_name: 模型名稱（預設: "Qwen/Qwen2-0.5B-Instruct"）
-                - dataset: 資料集名稱（預設: "gsm8k"）
-                - max_samples: 最大樣本數（用於快速測試）
-                - num_epochs: 訓練輪數（預設: 3）
-                - output_dir: 輸出目錄（預設: "./output"）
-                - use_lora: 是否使用LoRA（預設: True）
-                - batch_size: 批次大小（預設: 4）
-
-                資料集載入參數 (action="load_dataset"):
-                - format: 資料格式 ("sft", "rl")
-                - split: 資料集劃分 ("train", "test")
-                - max_samples: 最大樣本數
-
-                獎勵函式參數 (action="create_reward"):
-                - reward_type: 獎勵類型 ("accuracy", "length_penalty", "step")
-                - penalty_weight: 長度懲罰權重（僅length_penalty）
-                - step_bonus: 步驟獎勵（僅step）
-
+            parameters: 此流程需要使用的輸入資料。
+        
         Returns:
-            操作結果的JSON字串
+            執行結果；若函式標註回傳型別，預期型別為 str。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
         """
         # 檢查TRL是否可用
         if not self.trl_available:
@@ -139,7 +145,18 @@ class RLTrainingTool(Tool):
             return json.dumps(error_result, ensure_ascii=False, indent=2)
 
     def _handle_train(self, parameters: Dict[str, Any]) -> str:
-        """處理訓練操作"""
+        """
+        負責執行 RLTrainingTool 中的 _handle_train 流程，依照 RLTrainingTool 的流程需求處理 _handle_train 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            parameters: 此流程需要使用的輸入資料。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 str。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         algorithm = parameters.get("algorithm", "sft").lower()
         model_name = parameters.get("model_name", "Qwen/Qwen2-0.5B-Instruct")
         dataset_name = parameters.get("dataset", "gsm8k")
@@ -222,7 +239,18 @@ class RLTrainingTool(Tool):
         return json.dumps(result, ensure_ascii=False, indent=2)
 
     def _handle_load_dataset(self, parameters: Dict[str, Any]) -> str:
-        """處理資料集載入操作"""
+        """
+        負責執行 RLTrainingTool 中的 _handle_load_dataset 流程，依照 RLTrainingTool 的流程需求處理 _handle_load_dataset 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            parameters: 此流程需要使用的輸入資料。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 str。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         from hello_agents.rl import create_sft_dataset, create_rl_dataset
 
         format_type = parameters.get("format", "sft").lower()
@@ -250,7 +278,18 @@ class RLTrainingTool(Tool):
         return json.dumps(result, ensure_ascii=False, indent=2)
 
     def _handle_create_reward(self, parameters: Dict[str, Any]) -> str:
-        """處理獎勵函式建立操作"""
+        """
+        負責執行 RLTrainingTool 中的 _handle_create_reward 流程，依照 RLTrainingTool 的流程需求處理 _handle_create_reward 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            parameters: 此流程需要使用的輸入資料。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 str。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         from hello_agents.rl import (
             create_accuracy_reward,
             create_length_penalty_reward,
@@ -306,7 +345,18 @@ class RLTrainingTool(Tool):
         return json.dumps(result, ensure_ascii=False, indent=2)
 
     def _handle_evaluate(self, parameters: Dict[str, Any]) -> str:
-        """處理模型評估操作"""
+        """
+        負責執行 RLTrainingTool 中的 _handle_evaluate 流程，依照 RLTrainingTool 的流程需求處理 _handle_evaluate 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            parameters: 此流程需要使用的輸入資料。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 str。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         try:
             from hello_agents.rl import (
                 create_rl_dataset,
@@ -429,7 +479,28 @@ class RLTrainingTool(Tool):
         use_tensorboard: bool = True,
         wandb_project: Optional[str] = None
     ) -> Dict[str, Any]:
-        """執行SFT訓練"""
+        """
+        負責執行 RLTrainingTool 中的 _train_sft 流程，依照 RLTrainingTool 的流程需求處理 _train_sft 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            model_name: 用來呼叫模型或外部服務的模型名稱、客戶端或相關設定。
+            dataset_name: 此流程需要使用的輸入資料。
+            max_samples: 控制檢索、篩選或輸出數量的數值參數。
+            num_epochs: 此流程需要使用的輸入資料。
+            output_dir: 此流程需要使用的輸入資料。
+            use_lora: 此流程需要使用的輸入資料。
+            batch_size: 此流程需要使用的輸入資料。
+            custom_dataset: 此流程需要使用的輸入資料。
+            use_wandb: 此流程需要使用的輸入資料。
+            use_tensorboard: 此流程需要使用的輸入資料。
+            wandb_project: 此流程需要使用的輸入資料。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 Dict[str, Any]。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         from hello_agents.rl import (
             SFTTrainerWrapper,
             TrainingConfig,
@@ -498,7 +569,29 @@ class RLTrainingTool(Tool):
         use_tensorboard: bool = True,
         wandb_project: Optional[str] = None
     ) -> Dict[str, Any]:
-        """執行GRPO訓練"""
+        """
+        負責執行 RLTrainingTool 中的 _train_grpo 流程，依照 RLTrainingTool 的流程需求處理 _train_grpo 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            model_name: 用來呼叫模型或外部服務的模型名稱、客戶端或相關設定。
+            dataset_name: 此流程需要使用的輸入資料。
+            max_samples: 控制檢索、篩選或輸出數量的數值參數。
+            num_epochs: 此流程需要使用的輸入資料。
+            output_dir: 此流程需要使用的輸入資料。
+            use_lora: 此流程需要使用的輸入資料。
+            batch_size: 此流程需要使用的輸入資料。
+            custom_dataset: 此流程需要使用的輸入資料。
+            custom_reward: 此流程需要使用的輸入資料。
+            use_wandb: 此流程需要使用的輸入資料。
+            use_tensorboard: 此流程需要使用的輸入資料。
+            wandb_project: 此流程需要使用的輸入資料。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 Dict[str, Any]。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         from hello_agents.rl import (
             GRPOTrainerWrapper,
             TrainingConfig,
@@ -571,7 +664,18 @@ class RLTrainingTool(Tool):
         }
     
     def get_parameters(self) -> List[ToolParameter]:
-        """取得工具參數定義"""
+        """
+        負責執行 RLTrainingTool 中的 get_parameters 流程，依照 RLTrainingTool 的流程需求處理 get_parameters 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            無。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 List[ToolParameter]。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         return [
             ToolParameter(
                 name="action",
@@ -668,16 +772,19 @@ def train_with_sft(
     output_dir: str = "./output/sft"
 ) -> str:
     """
-    使用SFT訓練模型（便捷函式）
-
+    負責執行 tools.builtin.rl_training_tool 中的 train_with_sft 流程，依照 tools.builtin.rl_training_tool 的流程需求處理 train_with_sft 對應的資料轉換、狀態操作或結果產生。
+    
     Args:
-        model_name: 模型名稱
-        max_samples: 最大樣本數
-        num_epochs: 訓練輪數
-        output_dir: 輸出目錄
-
+        model_name: 用來呼叫模型或外部服務的模型名稱、客戶端或相關設定。
+        max_samples: 控制檢索、篩選或輸出數量的數值參數。
+        num_epochs: 此流程需要使用的輸入資料。
+        output_dir: 此流程需要使用的輸入資料。
+    
     Returns:
-        訓練結果JSON字串
+        執行結果；若函式標註回傳型別，預期型別為 str。
+    
+    限制或副作用:
+        可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
     """
     tool = RLTrainingTool()
     return tool.run({
@@ -697,16 +804,19 @@ def train_with_grpo(
     output_dir: str = "./output/grpo"
 ) -> str:
     """
-    使用GRPO訓練模型（便捷函式）
-
+    負責執行 tools.builtin.rl_training_tool 中的 train_with_grpo 流程，依照 tools.builtin.rl_training_tool 的流程需求處理 train_with_grpo 對應的資料轉換、狀態操作或結果產生。
+    
     Args:
-        model_name: 模型名稱
-        max_samples: 最大樣本數
-        num_epochs: 訓練輪數
-        output_dir: 輸出目錄
-
+        model_name: 用來呼叫模型或外部服務的模型名稱、客戶端或相關設定。
+        max_samples: 控制檢索、篩選或輸出數量的數值參數。
+        num_epochs: 此流程需要使用的輸入資料。
+        output_dir: 此流程需要使用的輸入資料。
+    
     Returns:
-        訓練結果JSON字串
+        執行結果；若函式標註回傳型別，預期型別為 str。
+    
+    限制或副作用:
+        可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
     """
     tool = RLTrainingTool()
     return tool.run({
@@ -725,15 +835,18 @@ def load_dataset(
     max_samples: int = 100
 ) -> str:
     """
-    載入資料集（便捷函式）
-
+    負責執行 tools.builtin.rl_training_tool 中的 load_dataset 流程，讀取本地或外部資料來源並轉換成系統可處理的格式。
+    
     Args:
-        format_type: 資料格式 ("sft", "rl")
-        split: 資料集劃分 ("train", "test")
-        max_samples: 最大樣本數
-
+        format_type: 此流程需要使用的輸入資料。
+        split: 此流程需要使用的輸入資料。
+        max_samples: 控制檢索、篩選或輸出數量的數值參數。
+    
     Returns:
-        資料集資訊JSON字串
+        執行結果；若函式標註回傳型別，預期型別為 str。
+    
+    限制或副作用:
+        可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
     """
     tool = RLTrainingTool()
     return tool.run({
@@ -749,16 +862,17 @@ def create_reward_function(
     **kwargs
 ) -> str:
     """
-    建立獎勵函式（便捷函式）
-
+    負責執行 tools.builtin.rl_training_tool 中的 create_reward_function 流程，建立後續流程需要的物件、資料結構或輸出區塊。
+    
     Args:
-        reward_type: 獎勵類型 ("accuracy", "length_penalty", "step")
-        **kwargs: 其他參數
-            - penalty_weight: 長度懲罰權重（僅length_penalty）
-            - step_bonus: 步驟獎勵（僅step）
-
+        reward_type: 此流程需要使用的輸入資料。
+        **kwargs: 此流程需要使用的輸入資料。
+    
     Returns:
-        獎勵函式資訊JSON字串
+        執行結果；若函式標註回傳型別，預期型別為 str。
+    
+    限制或副作用:
+        可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
     """
     tool = RLTrainingTool()
     params = {
@@ -774,14 +888,17 @@ def evaluate_model(
     max_samples: int = 100
 ) -> str:
     """
-    評估模型性能（便捷函式）
-
+    負責執行 tools.builtin.rl_training_tool 中的 evaluate_model 流程，評估候選結果是否符合任務需求並回傳判定資訊。
+    
     Args:
-        model_path: 模型路徑
-        max_samples: 評估樣本數
-
+        model_path: 用來呼叫模型或外部服務的模型名稱、客戶端或相關設定。
+        max_samples: 控制檢索、篩選或輸出數量的數值參數。
+    
     Returns:
-        評估結果JSON字串
+        執行結果；若函式標註回傳型別，預期型別為 str。
+    
+    限制或副作用:
+        可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
     """
     tool = RLTrainingTool()
     return tool.run({

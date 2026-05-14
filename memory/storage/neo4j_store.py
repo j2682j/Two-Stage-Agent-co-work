@@ -1,4 +1,4 @@
-﻿"""
+"""
 Neo4j圖形資料庫儲存實現
 """
 
@@ -17,7 +17,25 @@ except ImportError:
 logger = logging.getLogger(__name__)
 
 class Neo4jGraphStore:
-    """Neo4j圖形資料庫儲存實現"""
+    """
+    負責在 memory.storage.neo4j_store 中封裝 Neo4jGraphStore，管理記憶圖、任務紀錄、檢索結果或跨任務經驗的狀態與操作。
+    
+    Args:
+        uri: 記憶系統提供的檢索結果、寫入資料或操作介面。
+        username: 記憶系統提供的檢索結果、寫入資料或操作介面。
+        password: 記憶系統提供的檢索結果、寫入資料或操作介面。
+        database: 記憶系統提供的檢索結果、寫入資料或操作介面。
+        max_connection_lifetime: 控制檢索、篩選或輸出數量的數值參數。
+        max_connection_pool_size: 控制檢索、篩選或輸出數量的數值參數。
+        connection_acquisition_timeout: 記憶系統提供的檢索結果、寫入資料或操作介面。
+        **kwargs: 記憶系統提供的檢索結果、寫入資料或操作介面。
+    
+    Returns:
+        類別本身不直接回傳值；建立實例後可透過其方法操作狀態與流程。
+    
+    限制或副作用:
+        方法可能更新內部狀態、讀寫檔案、呼叫外部服務或產生日誌，需依使用情境確認。
+    """
     
     def __init__(
         self,
@@ -31,16 +49,23 @@ class Neo4jGraphStore:
         **kwargs
     ):
         """
-        初始化Neo4j圖儲存 (支援云API)
+        負責執行 Neo4jGraphStore 中的 __init__ 流程，初始化物件所需的設定、依賴與內部狀態，讓後續方法可以沿用同一份執行上下文。
         
         Args:
-            uri: Neo4j連線URI (本地: bolt://localhost:7687, 云: neo4j+s://xxx.databases.neo4j.io)
-            username: 使用者名
-            password: 密碼
-            database: 資料庫名稱
-            max_connection_lifetime: 最大連線生命周期(秒)
-            max_connection_pool_size: 最大連線池大小
-            connection_acquisition_timeout: 連線取得逾時(秒)
+            uri: 記憶系統提供的檢索結果、寫入資料或操作介面。
+            username: 記憶系統提供的檢索結果、寫入資料或操作介面。
+            password: 記憶系統提供的檢索結果、寫入資料或操作介面。
+            database: 記憶系統提供的檢索結果、寫入資料或操作介面。
+            max_connection_lifetime: 控制檢索、篩選或輸出數量的數值參數。
+            max_connection_pool_size: 控制檢索、篩選或輸出數量的數值參數。
+            connection_acquisition_timeout: 記憶系統提供的檢索結果、寫入資料或操作介面。
+            **kwargs: 記憶系統提供的檢索結果、寫入資料或操作介面。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 未標註。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
         """
         if not NEO4J_AVAILABLE:
             raise ImportError(
@@ -64,7 +89,18 @@ class Neo4jGraphStore:
         self._create_indexes()
     
     def _initialize_driver(self, **config):
-        """初始化Neo4j驅動"""
+        """
+        負責執行 Neo4jGraphStore 中的 _initialize_driver 流程，依照 Neo4jGraphStore 的流程需求處理 _initialize_driver 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            **config: 控制此流程行為的設定資料。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 未標註。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         try:
             self.driver = GraphDatabase.driver(
                 self.uri,
@@ -98,7 +134,18 @@ class Neo4jGraphStore:
             raise
     
     def _create_indexes(self):
-        """建立必要的索引以提高查詢性能"""
+        """
+        負責執行 Neo4jGraphStore 中的 _create_indexes 流程，依照 Neo4jGraphStore 的流程需求處理 _create_indexes 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            無。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 未標註。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         indexes = [
             # 實體索引
             "CREATE INDEX entity_id_index IF NOT EXISTS FOR (e:Entity) ON (e.id)",
@@ -122,16 +169,19 @@ class Neo4jGraphStore:
     
     def add_entity(self, entity_id: str, name: str, entity_type: str, properties: Dict[str, Any] = None) -> bool:
         """
-        添加實體節點
+        負責執行 Neo4jGraphStore 中的 add_entity 流程，更新記憶圖、互動狀態、節點邊關係或追蹤紀錄。
         
         Args:
-            entity_id: 實體ID
-            name: 實體名稱
-            entity_type: 實體類型
-            properties: 附加屬性
+            entity_id: 記憶系統提供的檢索結果、寫入資料或操作介面。
+            name: 記憶系統提供的檢索結果、寫入資料或操作介面。
+            entity_type: 記憶系統提供的檢索結果、寫入資料或操作介面。
+            properties: 記憶系統提供的檢索結果、寫入資料或操作介面。
         
         Returns:
-            bool: 是否成功
+            執行結果；若函式標註回傳型別，預期型別為 bool。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
         """
         try:
             props = properties or {}
@@ -170,16 +220,19 @@ class Neo4jGraphStore:
         properties: Dict[str, Any] = None
     ) -> bool:
         """
-        添加實體間關系
+        負責執行 Neo4jGraphStore 中的 add_relationship 流程，更新記憶圖、互動狀態、節點邊關係或追蹤紀錄。
         
         Args:
-            from_entity_id: 源實體ID
-            to_entity_id: 目標實體ID  
-            relationship_type: 關系類型
-            properties: 關系屬性
+            from_entity_id: 記憶系統提供的檢索結果、寫入資料或操作介面。
+            to_entity_id: 記憶系統提供的檢索結果、寫入資料或操作介面。
+            relationship_type: 記憶系統提供的檢索結果、寫入資料或操作介面。
+            properties: 記憶系統提供的檢索結果、寫入資料或操作介面。
         
         Returns:
-            bool: 是否成功
+            執行結果；若函式標註回傳型別，預期型別為 bool。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
         """
         try:
             props = properties or {}
@@ -223,16 +276,19 @@ class Neo4jGraphStore:
         limit: int = 50
     ) -> List[Dict[str, Any]]:
         """
-        查找相關實體
+        負責執行 Neo4jGraphStore 中的 find_related_entities 流程，從記憶圖、向量索引或任務關聯中取回相關案例與策略提醒。
         
         Args:
-            entity_id: 起始實體ID
-            relationship_types: 關系類型過濾
-            max_depth: 最大搜尋深度
-            limit: 結果限制
+            entity_id: 記憶系統提供的檢索結果、寫入資料或操作介面。
+            relationship_types: 記憶系統提供的檢索結果、寫入資料或操作介面。
+            max_depth: 控制檢索、篩選或輸出數量的數值參數。
+            limit: 控制檢索、篩選或輸出數量的數值參數。
         
         Returns:
-            List[Dict]: 相關實體列表
+            執行結果；若函式標註回傳型別，預期型別為 List[Dict[str, Any]]。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
         """
         try:
             # 建構關系類型過濾
@@ -270,15 +326,18 @@ class Neo4jGraphStore:
     
     def search_entities_by_name(self, name_pattern: str, entity_types: List[str] = None, limit: int = 20) -> List[Dict[str, Any]]:
         """
-        按名稱搜尋實體
+        負責執行 Neo4jGraphStore 中的 search_entities_by_name 流程，從記憶圖、向量索引或任務關聯中取回相關案例與策略提醒。
         
         Args:
-            name_pattern: 名稱模式 (支援部分匹配)
-            entity_types: 實體類型過濾
-            limit: 結果限制
+            name_pattern: 已整理好的搜尋結果、共享資料包或可重用證據內容。
+            entity_types: 已整理好的搜尋結果、共享資料包或可重用證據內容。
+            limit: 控制檢索、篩選或輸出數量的數值參數。
         
         Returns:
-            List[Dict]: 匹配的實體列表
+            執行結果；若函式標註回傳型別，預期型別為 List[Dict[str, Any]]。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
         """
         try:
             # 建構類型過濾
@@ -314,13 +373,16 @@ class Neo4jGraphStore:
     
     def get_entity_relationships(self, entity_id: str) -> List[Dict[str, Any]]:
         """
-        取得實體的所有關系
+        負責執行 Neo4jGraphStore 中的 get_entity_relationships 流程，依照 Neo4jGraphStore 的流程需求處理 get_entity_relationships 對應的資料轉換、狀態操作或結果產生。
         
         Args:
-            entity_id: 實體ID
+            entity_id: 記憶系統提供的檢索結果、寫入資料或操作介面。
         
         Returns:
-            List[Dict]: 關系列表
+            執行結果；若函式標註回傳型別，預期型別為 List[Dict[str, Any]]。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
         """
         try:
             query = """
@@ -352,13 +414,16 @@ class Neo4jGraphStore:
     
     def delete_entity(self, entity_id: str) -> bool:
         """
-        刪除實體及其所有關系
+        負責執行 Neo4jGraphStore 中的 delete_entity 流程，依照 Neo4jGraphStore 的流程需求處理 delete_entity 對應的資料轉換、狀態操作或結果產生。
         
         Args:
-            entity_id: 實體ID
+            entity_id: 記憶系統提供的檢索結果、寫入資料或操作介面。
         
         Returns:
-            bool: 是否成功
+            執行結果；若函式標註回傳型別，預期型別為 bool。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
         """
         try:
             query = """
@@ -380,10 +445,16 @@ class Neo4jGraphStore:
     
     def clear_all(self) -> bool:
         """
-        清空所有資料
+        負責執行 Neo4jGraphStore 中的 clear_all 流程，清除或移除指定資源、狀態或註冊資料，維持後續流程的一致性。
+        
+        Args:
+            無。
         
         Returns:
-            bool: 是否成功
+            執行結果；若函式標註回傳型別，預期型別為 bool。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
         """
         try:
             query = "MATCH (n) DETACH DELETE n"
@@ -404,10 +475,16 @@ class Neo4jGraphStore:
     
     def get_stats(self) -> Dict[str, Any]:
         """
-        取得圖形資料庫統計資訊
+        負責執行 Neo4jGraphStore 中的 get_stats 流程，依照 Neo4jGraphStore 的流程需求處理 get_stats 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            無。
         
         Returns:
-            Dict: 統計資訊
+            執行結果；若函式標註回傳型別，預期型別為 Dict[str, Any]。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
         """
         try:
             queries = {
@@ -432,10 +509,16 @@ class Neo4jGraphStore:
     
     def health_check(self) -> bool:
         """
-        健康檢查
+        負責執行 Neo4jGraphStore 中的 health_check 流程，依照 Neo4jGraphStore 的流程需求處理 health_check 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            無。
         
         Returns:
-            bool: 服務是否健康
+            執行結果；若函式標註回傳型別，預期型別為 bool。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
         """
         try:
             with self.driver.session(database=self.database) as session:
@@ -447,7 +530,18 @@ class Neo4jGraphStore:
             return False
     
     def __del__(self):
-        """析構函式，清理資源"""
+        """
+        負責執行 Neo4jGraphStore 中的 __del__ 流程，依照 Neo4jGraphStore 的流程需求處理 __del__ 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            無。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 未標註。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         if hasattr(self, 'driver') and self.driver:
             try:
                 self.driver.close()

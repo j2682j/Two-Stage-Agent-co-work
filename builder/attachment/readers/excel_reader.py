@@ -9,10 +9,47 @@ from ..models import AttachmentReaderConfig
 
 
 class ExcelAttachmentReader:
+    """
+    負責在 builder.attachment.readers.excel_reader 中封裝 ExcelAttachmentReader，封裝附件讀取與內容萃取流程，將檔案轉成可推理的證據。
+    
+    Args:
+        config: 控制此流程行為的設定資料。
+    
+    Returns:
+        類別本身不直接回傳值；建立實例後可透過其方法操作狀態與流程。
+    
+    限制或副作用:
+        方法可能更新內部狀態、讀寫檔案、呼叫外部服務或產生日誌，需依使用情境確認。
+    """
     def __init__(self, config: AttachmentReaderConfig) -> None:
+        """
+        負責執行 ExcelAttachmentReader 中的 __init__ 流程，初始化物件所需的設定、依賴與內部狀態，讓後續方法可以沿用同一份執行上下文。
+        
+        Args:
+            config: 控制此流程行為的設定資料。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 None。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         self.config = config
 
     def read_xlsx(self, question: str, file_path: Path) -> str:
+        """
+        負責執行 ExcelAttachmentReader 中的 read_xlsx 流程，讀取表格資料並整理成可控長度的文字或結構化摘要。
+        
+        Args:
+            question: 目前要處理的任務、問題或查詢文字。
+            file_path: 要讀取或寫入的檔案或目錄路徑。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 str。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         try:
             import openpyxl
         except ImportError:
@@ -82,6 +119,19 @@ class ExcelAttachmentReader:
         return "\n\n".join(section for section in sections if section)
 
     def read_xls(self, question: str, file_path: Path) -> str:
+        """
+        負責執行 ExcelAttachmentReader 中的 read_xls 流程，讀取表格資料並整理成可控長度的文字或結構化摘要。
+        
+        Args:
+            question: 目前要處理的任務、問題或查詢文字。
+            file_path: 要讀取或寫入的檔案或目錄路徑。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 str。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         try:
             import pandas as pd
         except ImportError:
@@ -120,12 +170,37 @@ class ExcelAttachmentReader:
         return "\n\n".join(section for section in sections if section)
 
     def _safe_int(self, value: Any, default: int = 0) -> int:
+        """
+        負責執行 ExcelAttachmentReader 中的 _safe_int 流程，依照 ExcelAttachmentReader 的流程需求處理 _safe_int 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            value: 此流程需要使用的輸入資料。
+            default: 此流程需要使用的輸入資料。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 int。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         try:
             return int(value or default)
         except Exception:
             return default
 
     def _get_excel_fill_color(self, cell: Any) -> str:
+        """
+        負責執行 ExcelAttachmentReader 中的 _get_excel_fill_color 流程，依照 ExcelAttachmentReader 的流程需求處理 _get_excel_fill_color 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            cell: 此流程需要使用的輸入資料。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 str。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         fill = getattr(cell, "fill", None)
         if fill is None or getattr(fill, "fill_type", None) is None:
             return ""
@@ -146,6 +221,18 @@ class ExcelAttachmentReader:
         return ""
 
     def _format_color_rows(self, color_rows: list[list[str]]) -> str:
+        """
+        負責執行 ExcelAttachmentReader 中的 _format_color_rows 流程，依照 ExcelAttachmentReader 的流程需求處理 _format_color_rows 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            color_rows: 此流程需要使用的輸入資料。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 str。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         lines = ["Cell colors:"]
         for idx, row in enumerate(color_rows[: self.config.max_table_rows], start=1):
             lines.append(f"row {idx}: " + " | ".join(row))
@@ -154,6 +241,18 @@ class ExcelAttachmentReader:
         return "\n".join(lines)
 
     def _classify_excel_question(self, question: str) -> str:
+        """
+        負責執行 ExcelAttachmentReader 中的 _classify_excel_question 流程，依照 ExcelAttachmentReader 的流程需求處理 _classify_excel_question 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            question: 目前要處理的任務、問題或查詢文字。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 str。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         normalized = str(question or "").lower()
         color_markers = [
             "color",
@@ -191,6 +290,18 @@ class ExcelAttachmentReader:
         return "balanced"
 
     def _excel_row_limit_for_strategy(self, strategy: str) -> int:
+        """
+        負責執行 ExcelAttachmentReader 中的 _excel_row_limit_for_strategy 流程，依照 ExcelAttachmentReader 的流程需求處理 _excel_row_limit_for_strategy 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            strategy: 控制檢索、篩選或輸出數量的數值參數。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 int。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         if strategy == "color_grid":
             return self.config.max_table_rows
         if strategy == "table_summary":
@@ -206,6 +317,22 @@ class ExcelAttachmentReader:
         max_row: int,
         max_column: int,
     ) -> str:
+        """
+        負責執行 ExcelAttachmentReader 中的 _build_excel_color_section 流程，依照 ExcelAttachmentReader 的流程需求處理 _build_excel_color_section 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            strategy: 此流程需要使用的輸入資料。
+            color_rows: 此流程需要使用的輸入資料。
+            colored_cells: 此流程需要使用的輸入資料。
+            max_row: 控制檢索、篩選或輸出數量的數值參數。
+            max_column: 控制檢索、篩選或輸出數量的數值參數。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 str。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         if not color_rows and not colored_cells:
             return ""
 
@@ -228,6 +355,19 @@ class ExcelAttachmentReader:
         return "\n".join(lines)
 
     def _unique_excel_colors(self, color_rows: list[list[str]], colored_cells: list[str]) -> list[str]:
+        """
+        負責執行 ExcelAttachmentReader 中的 _unique_excel_colors 流程，依照 ExcelAttachmentReader 的流程需求處理 _unique_excel_colors 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            color_rows: 此流程需要使用的輸入資料。
+            colored_cells: 此流程需要使用的輸入資料。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 list[str]。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         colors: set[str] = set()
         for row in color_rows:
             for item in row:
@@ -240,6 +380,18 @@ class ExcelAttachmentReader:
         return sorted(colors)
 
     def _summarize_excel_rows(self, rows: list[list[str]]) -> str:
+        """
+        負責執行 ExcelAttachmentReader 中的 _summarize_excel_rows 流程，依照 ExcelAttachmentReader 的流程需求處理 _summarize_excel_rows 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            rows: 此流程需要使用的輸入資料。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 str。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         if len(rows) < 2:
             return ""
 
@@ -281,6 +433,19 @@ class ExcelAttachmentReader:
         return "\n".join(lines) if added else ""
 
     def _build_question_oriented_excel_summary(self, question: str, rows: list[list[str]]) -> str:
+        """
+        負責執行 ExcelAttachmentReader 中的 _build_question_oriented_excel_summary 流程，依照 ExcelAttachmentReader 的流程需求處理 _build_question_oriented_excel_summary 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            question: 目前要處理的任務、問題或查詢文字。
+            rows: 此流程需要使用的輸入資料。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 str。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         normalized_question = str(question or "").lower()
         if not rows or not ("food" in normalized_question and "drink" in normalized_question):
             return ""
@@ -336,6 +501,19 @@ class ExcelAttachmentReader:
         return "Question-oriented calculations:\n" + "\n".join(candidates[:6])
 
     def _build_food_total_from_item_columns(self, header: list[str], data: list[list[str]]) -> str:
+        """
+        負責執行 ExcelAttachmentReader 中的 _build_food_total_from_item_columns 流程，依照 ExcelAttachmentReader 的流程需求處理 _build_food_total_from_item_columns 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            header: 此流程需要使用的輸入資料。
+            data: 此流程需要使用的輸入資料。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 str。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         drink_markers = {"drink", "drinks", "beverage", "beverages", "soda", "coffee", "tea", "juice", "water"}
         non_item_markers = {"location", "store", "branch", "city", "date", "id", "name"}
         included_columns: list[str] = []
@@ -371,6 +549,18 @@ class ExcelAttachmentReader:
         )
 
     def _try_parse_number(self, value: Any) -> float | None:
+        """
+        負責執行 ExcelAttachmentReader 中的 _try_parse_number 流程，依照 ExcelAttachmentReader 的流程需求處理 _try_parse_number 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            value: 此流程需要使用的輸入資料。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 float | None。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         text = compact_single_line(value, default="")
         if not text:
             return None

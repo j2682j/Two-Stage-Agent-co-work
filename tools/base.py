@@ -9,24 +9,32 @@ import re
 
 
 def tool_action(name: str = None, description: str = None):
-    """裝飾器：標記一個方法為可展開的工具 action
-
-    使用方式:
-        @tool_action("memory_add", "添加新記憶")
-        def _add_memory(self, content: str, importance: float = 0.5) -> str:
-            '''添加記憶
-
-            Args:
-                content: 記憶內容
-                importance: 重要性分數
-            '''
-            ...
-
+    """
+    負責執行 tools.base 中的 tool_action 流程，依照 tools.base 的流程需求處理 tool_action 對應的資料轉換、狀態操作或結果產生。
+    
     Args:
-        name: 工具名稱（如果不提供，從方法名自動生成）
-        description: 工具描述（如果不提供，從 docstring 提取）
+        name: 此流程需要使用的輸入資料。
+        description: 此流程需要使用的輸入資料。
+    
+    Returns:
+        執行結果；若函式標註回傳型別，預期型別為 未標註。
+    
+    限制或副作用:
+        可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
     """
     def decorator(func: Callable):
+        """
+        負責執行 tools.base 中的 decorator 流程，依照 tools.base 的流程需求處理 decorator 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            func: 此流程需要使用的輸入資料。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 未標註。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         func._is_tool_action = True
         func._tool_name = name
         func._tool_description = description
@@ -35,7 +43,18 @@ def tool_action(name: str = None, description: str = None):
 
 
 class ToolParameter(BaseModel):
-    """工具參數定義"""
+    """
+    負責在 tools.base 中封裝 ToolParameter，封裝工具呼叫、參數處理與工具結果回傳流程。
+    
+    Args:
+        無明確建構參數，可能透過 dataclass 欄位或預設值建立物件。
+    
+    Returns:
+        類別本身不直接回傳值；建立實例後可透過其方法操作狀態與流程。
+    
+    限制或副作用:
+        方法可能更新內部狀態、讀寫檔案、呼叫外部服務或產生日誌，需依使用情境確認。
+    """
     name: str
     type: str
     description: str
@@ -44,24 +63,35 @@ class ToolParameter(BaseModel):
 
 
 class Tool(ABC):
-    """工具基類
-
-    支援兩種使用模式：
-    1. 普通模式：工具作為單一實體使用
-    2. 可展開模式：工具可以展開為多個獨立的子工具（每個子工具對應一個功能）
-
-    展開模式支援兩種實現方式：
-    - 手動定義子工具類（傳統方式）
-    - 使用 @tool_action 裝飾器自動生成（推薦）
+    """
+    負責在 tools.base 中封裝 Tool，封裝工具呼叫、參數處理與工具結果回傳流程。
+    
+    Args:
+        name: 此流程需要使用的輸入資料。
+        description: 此流程需要使用的輸入資料。
+        expandable: 此流程需要使用的輸入資料。
+    
+    Returns:
+        類別本身不直接回傳值；建立實例後可透過其方法操作狀態與流程。
+    
+    限制或副作用:
+        方法可能更新內部狀態、讀寫檔案、呼叫外部服務或產生日誌，需依使用情境確認。
     """
 
     def __init__(self, name: str, description: str, expandable: bool = False):
-        """初始化工具
-
+        """
+        負責執行 Tool 中的 __init__ 流程，初始化物件所需的設定、依賴與內部狀態，讓後續方法可以沿用同一份執行上下文。
+        
         Args:
-            name: 工具名稱
-            description: 工具描述
-            expandable: 是否可展開為多個子工具
+            name: 此流程需要使用的輸入資料。
+            description: 此流程需要使用的輸入資料。
+            expandable: 此流程需要使用的輸入資料。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 未標註。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
         """
         self.name = name
         self.description = description
@@ -69,22 +99,48 @@ class Tool(ABC):
 
     @abstractmethod
     def run(self, parameters: Dict[str, Any]) -> str:
-        """執行工具"""
+        """
+        負責執行 Tool 中的 run 流程，啟動主要執行流程，串接輸入準備、核心處理與結果輸出。
+        
+        Args:
+            parameters: 此流程需要使用的輸入資料。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 str。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         pass
 
     @abstractmethod
     def get_parameters(self) -> List[ToolParameter]:
-        """取得工具參數定義"""
+        """
+        負責執行 Tool 中的 get_parameters 流程，依照 Tool 的流程需求處理 get_parameters 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            無。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 List[ToolParameter]。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         pass
 
     def get_expanded_tools(self) -> Optional[List['Tool']]:
-        """取得展開後的子工具列表
-
-        預設實現：自動從標記了 @tool_action 的方法生成子工具
-        子類可以重寫此方法提供自定義的展開邏輯
-
+        """
+        負責執行 Tool 中的 get_expanded_tools 流程，依照 Tool 的流程需求處理 get_expanded_tools 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            無。
+        
         Returns:
-            如果工具支援展開，回傳子工具列表；否則回傳 None
+            執行結果；若函式標註回傳型別，預期型別為 Optional[List['Tool']]。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
         """
         if not self.expandable:
             return None
@@ -104,12 +160,34 @@ class Tool(ABC):
         return tools if tools else None
 
     def validate_parameters(self, parameters: Dict[str, Any]) -> bool:
-        """驗證參數"""
+        """
+        負責執行 Tool 中的 validate_parameters 流程，檢查目前輸入、狀態或條件是否符合流程繼續執行的要求。
+        
+        Args:
+            parameters: 此流程需要使用的輸入資料。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 bool。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         required_params = [p.name for p in self.get_parameters() if p.required]
         return all(param in parameters for param in required_params)
 
     def to_dict(self) -> Dict[str, Any]:
-        """轉換為字典格式"""
+        """
+        負責執行 Tool 中的 to_dict 流程，將內部資料整理成日誌、提示詞、摘要或指定的輸出格式。
+        
+        Args:
+            無。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 Dict[str, Any]。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         return {
             "name": self.name,
             "description": self.description,
@@ -117,12 +195,17 @@ class Tool(ABC):
         }
 
     def to_openai_schema(self) -> Dict[str, Any]:
-        """轉換為 OpenAI function calling schema 格式
-
-        用於 FunctionCallAgent，使工具能夠被 OpenAI 原生 function calling 使用
-
+        """
+        負責執行 Tool 中的 to_openai_schema 流程，將內部資料整理成日誌、提示詞、摘要或指定的輸出格式。
+        
+        Args:
+            無。
+        
         Returns:
-            符合 OpenAI function calling 標準的 schema
+            執行結果；若函式標註回傳型別，預期型別為 Dict[str, Any]。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
         """
         parameters = self.get_parameters()
 
@@ -165,23 +248,68 @@ class Tool(ABC):
         }
 
     def __str__(self) -> str:
+        """
+        負責執行 Tool 中的 __str__ 流程，依照 Tool 的流程需求處理 __str__ 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            無。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 str。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         return f"Tool(name={self.name})"
 
     def __repr__(self) -> str:
+        """
+        負責執行 Tool 中的 __repr__ 流程，依照 Tool 的流程需求處理 __repr__ 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            無。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 str。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         return self.__str__()
 
 
 class AutoGeneratedTool(Tool):
-    """自動生成的工具 - 從方法簽名和 docstring 自動提取參數"""
+    """
+    負責在 tools.base 中封裝 AutoGeneratedTool，封裝工具呼叫、參數處理與工具結果回傳流程。
+    
+    Args:
+        parent: 此流程需要使用的輸入資料。
+        method: 此流程需要使用的輸入資料。
+        name: 此流程需要使用的輸入資料。
+        description: 此流程需要使用的輸入資料。
+    
+    Returns:
+        類別本身不直接回傳值；建立實例後可透過其方法操作狀態與流程。
+    
+    限制或副作用:
+        方法可能更新內部狀態、讀寫檔案、呼叫外部服務或產生日誌，需依使用情境確認。
+    """
 
     def __init__(self, parent: Tool, method: Callable, name: str = None, description: str = None):
-        """初始化自動生成的工具
-
+        """
+        負責執行 AutoGeneratedTool 中的 __init__ 流程，初始化物件所需的設定、依賴與內部狀態，讓後續方法可以沿用同一份執行上下文。
+        
         Args:
-            parent: 父工具實例
-            method: 被裝飾的方法
-            name: 工具名稱（如果為 None，從方法名生成）
-            description: 工具描述（如果為 None，從 docstring 提取）
+            parent: 此流程需要使用的輸入資料。
+            method: 此流程需要使用的輸入資料。
+            name: 此流程需要使用的輸入資料。
+            description: 此流程需要使用的輸入資料。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 未標註。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
         """
         self.parent = parent
         self.method = method
@@ -202,7 +330,18 @@ class AutoGeneratedTool(Tool):
         self._parameters = self._parse_parameters()
 
     def _extract_description_from_docstring(self) -> str:
-        """從 docstring 提取描述"""
+        """
+        負責執行 AutoGeneratedTool 中的 _extract_description_from_docstring 流程，依照 AutoGeneratedTool 的流程需求處理 _extract_description_from_docstring 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            無。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 str。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         doc = inspect.getdoc(self.method)
         if not doc:
             return f"執行 {self.method.__name__}"
@@ -217,7 +356,18 @@ class AutoGeneratedTool(Tool):
         return f"執行 {self.method.__name__}"
 
     def _parse_parameters(self) -> List[ToolParameter]:
-        """從方法簽名和 docstring 自動提取參數"""
+        """
+        負責執行 AutoGeneratedTool 中的 _parse_parameters 流程，依照 AutoGeneratedTool 的流程需求處理 _parse_parameters 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            無。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 List[ToolParameter]。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         sig = inspect.signature(self.method)
         type_hints = get_type_hints(self.method)
         docstring = inspect.getdoc(self.method) or ""
@@ -252,12 +402,17 @@ class AutoGeneratedTool(Tool):
         return parameters
 
     def _parse_param_descriptions(self, docstring: str) -> Dict[str, str]:
-        """從 docstring 解析參數描述
-
-        支援格式:
-            Args:
-                param_name: 參數描述
-                another_param: 另一個參數描述
+        """
+        負責執行 AutoGeneratedTool 中的 _parse_param_descriptions 流程，依照 AutoGeneratedTool 的流程需求處理 _parse_param_descriptions 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            docstring: 此流程需要使用的輸入資料。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 Dict[str, str]。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
         """
         descriptions = {}
 
@@ -283,7 +438,18 @@ class AutoGeneratedTool(Tool):
         return descriptions
 
     def _python_type_to_tool_type(self, py_type) -> str:
-        """將 Python 類型轉換為工具類型字串"""
+        """
+        負責執行 AutoGeneratedTool 中的 _python_type_to_tool_type 流程，依照 AutoGeneratedTool 的流程需求處理 _python_type_to_tool_type 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            py_type: 此流程需要使用的輸入資料。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 str。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         # 處理泛型類型
         origin = getattr(py_type, '__origin__', None)
         if origin is not None:
@@ -305,9 +471,31 @@ class AutoGeneratedTool(Tool):
         return type_map.get(py_type, "string")
 
     def get_parameters(self) -> List[ToolParameter]:
-        """取得參數列表"""
+        """
+        負責執行 AutoGeneratedTool 中的 get_parameters 流程，依照 AutoGeneratedTool 的流程需求處理 get_parameters 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            無。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 List[ToolParameter]。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         return self._parameters
 
     def run(self, parameters: Dict[str, Any]) -> str:
-        """執行方法"""
+        """
+        負責執行 AutoGeneratedTool 中的 run 流程，啟動主要執行流程，串接輸入準備、核心處理與結果輸出。
+        
+        Args:
+            parameters: 此流程需要使用的輸入資料。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 str。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         return self.method(**parameters)

@@ -7,6 +7,18 @@ from utils.network_utils import normalize_text
 
 
 class SearchQueryPlanner:
+    """
+    負責在 builder.search_query_planner 中封裝 SearchQueryPlanner，封裝此模組的狀態資料與主要操作流程。
+    
+    Args:
+        無明確建構參數，可能透過 dataclass 欄位或預設值建立物件。
+    
+    Returns:
+        類別本身不直接回傳值；建立實例後可透過其方法操作狀態與流程。
+    
+    限制或副作用:
+        方法可能更新內部狀態、讀寫檔案、呼叫外部服務或產生日誌，需依使用情境確認。
+    """
     SEARCH_STOPWORDS = {
         "a",
         "an",
@@ -105,6 +117,19 @@ class SearchQueryPlanner:
     }
 
     def plan(self, question: str, max_queries: int = 3) -> dict[str, Any]:
+        """
+        負責執行 SearchQueryPlanner 中的 plan 流程，依照 SearchQueryPlanner 的流程需求處理 plan 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            question: 目前要處理的任務、問題或查詢文字。
+            max_queries: 控制檢索、篩選或輸出數量的數值參數。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 dict[str, Any]。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         text = normalize_text(question)
         if not text:
             return {
@@ -158,6 +183,18 @@ class SearchQueryPlanner:
         }
 
     def _build_core_query(self, question: str) -> str:
+        """
+        負責執行 SearchQueryPlanner 中的 _build_core_query 流程，依照 SearchQueryPlanner 的流程需求處理 _build_core_query 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            question: 目前要處理的任務、問題或查詢文字。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 str。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         clauses = self._split_into_clauses(question)
         kept_clauses = []
         for clause in clauses:
@@ -179,6 +216,20 @@ class SearchQueryPlanner:
         return core
 
     def _build_keyword_query(self, question: str, *, core_query: str, year_tokens: list[str]) -> str:
+        """
+        負責執行 SearchQueryPlanner 中的 _build_keyword_query 流程，依照 SearchQueryPlanner 的流程需求處理 _build_keyword_query 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            question: 目前要處理的任務、問題或查詢文字。
+            core_query: 已整理好的搜尋結果、共享資料包或可重用證據內容。
+            year_tokens: 已整理好的搜尋結果、共享資料包或可重用證據內容。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 str。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         entities = self._extract_entity_phrases(question)
         tokens = self._extract_focus_tokens(core_query)
 
@@ -215,6 +266,22 @@ class SearchQueryPlanner:
         source_hints: list[str],
         year_tokens: list[str],
     ) -> str:
+        """
+        負責執行 SearchQueryPlanner 中的 _build_source_query 流程，依照 SearchQueryPlanner 的流程需求處理 _build_source_query 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            question: 目前要處理的任務、問題或查詢文字。
+            core_query: 已整理好的搜尋結果、共享資料包或可重用證據內容。
+            keyword_query: 已整理好的搜尋結果、共享資料包或可重用證據內容。
+            source_hints: 已整理好的搜尋結果、共享資料包或可重用證據內容。
+            year_tokens: 已整理好的搜尋結果、共享資料包或可重用證據內容。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 str。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         base = keyword_query or core_query
         if not base:
             return ""
@@ -236,11 +303,35 @@ class SearchQueryPlanner:
         return ""
 
     def _split_into_clauses(self, text: str) -> list[str]:
+        """
+        負責執行 SearchQueryPlanner 中的 _split_into_clauses 流程，依照 SearchQueryPlanner 的流程需求處理 _split_into_clauses 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            text: 已整理好的搜尋結果、共享資料包或可重用證據內容。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 list[str]。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         raw = re.split(r"(?<=[.?!])\s+|\n+", text)
         clauses = [segment.strip() for segment in raw if segment.strip()]
         return clauses or [text.strip()]
 
     def _detect_source_hints(self, text: str) -> list[str]:
+        """
+        負責執行 SearchQueryPlanner 中的 _detect_source_hints 流程，依照 SearchQueryPlanner 的流程需求處理 _detect_source_hints 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            text: 已整理好的搜尋結果、共享資料包或可重用證據內容。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 list[str]。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         lowered = text.lower()
         hints = []
         for marker, hint in self.SOURCE_MARKERS.items():
@@ -249,6 +340,18 @@ class SearchQueryPlanner:
         return hints
 
     def _extract_year_tokens(self, text: str) -> list[str]:
+        """
+        負責執行 SearchQueryPlanner 中的 _extract_year_tokens 流程，依照 SearchQueryPlanner 的流程需求處理 _extract_year_tokens 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            text: 已整理好的搜尋結果、共享資料包或可重用證據內容。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 list[str]。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         tokens: list[str] = []
         consumed_years: set[str] = set()
 
@@ -273,6 +376,18 @@ class SearchQueryPlanner:
         return tokens[:3]
 
     def _extract_entity_phrases(self, text: str) -> list[str]:
+        """
+        負責執行 SearchQueryPlanner 中的 _extract_entity_phrases 流程，依照 SearchQueryPlanner 的流程需求處理 _extract_entity_phrases 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            text: 已整理好的搜尋結果、共享資料包或可重用證據內容。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 list[str]。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         phrases: list[str] = []
 
         for quote in re.findall(r'"([^"]+)"|\'([^\']+)\'', text):
@@ -294,6 +409,18 @@ class SearchQueryPlanner:
         return phrases[:4]
 
     def _extract_focus_tokens(self, text: str) -> list[str]:
+        """
+        負責執行 SearchQueryPlanner 中的 _extract_focus_tokens 流程，依照 SearchQueryPlanner 的流程需求處理 _extract_focus_tokens 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            text: 已整理好的搜尋結果、共享資料包或可重用證據內容。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 list[str]。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         lowered = normalize_text(text).lower()
         lowered = re.sub(r"[^\w\s]", " ", lowered)
         tokens = []
@@ -307,9 +434,33 @@ class SearchQueryPlanner:
         return tokens[:8]
 
     def _normalize_query_key(self, query: str) -> str:
+        """
+        負責執行 SearchQueryPlanner 中的 _normalize_query_key 流程，依照 SearchQueryPlanner 的流程需求處理 _normalize_query_key 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            query: 目前要處理的任務、問題或查詢文字。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 str。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         return re.sub(r"\s+", " ", normalize_text(query).lower()).strip()
 
     def _trim_leading_entity_stopwords(self, candidate: str) -> str:
+        """
+        負責執行 SearchQueryPlanner 中的 _trim_leading_entity_stopwords 流程，依照 SearchQueryPlanner 的流程需求處理 _trim_leading_entity_stopwords 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            candidate: 模型、節點或工具產生的候選回覆內容。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 str。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         tokens = candidate.split()
         while tokens and tokens[0] in self.LEADING_ENTITY_STOPWORDS:
             tokens = tokens[1:]

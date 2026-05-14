@@ -5,6 +5,19 @@ from typing import Any, Optional
 
 
 def answer_equivalence(answer_a: str, answer_b: str) -> bool:
+    """
+    負責執行 utils.network_utils 中的 answer_equivalence 流程，依照 utils.network_utils 的流程需求處理 answer_equivalence 對應的資料轉換、狀態操作或結果產生。
+    
+    Args:
+        answer_a: 此流程需要使用的輸入資料。
+        answer_b: 此流程需要使用的輸入資料。
+    
+    Returns:
+        執行結果；若函式標註回傳型別，預期型別為 bool。
+    
+    限制或副作用:
+        可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+    """
     math_a = extract_math_answer(answer_a)
     math_b = extract_math_answer(answer_b)
 
@@ -69,6 +82,18 @@ def answer_equivalence(answer_a: str, answer_b: str) -> bool:
 
 
 def normalize_text(text: Any) -> str:
+    """
+    負責執行 utils.network_utils 中的 normalize_text 流程，整理呼叫端傳入的資料，清理格式並轉換為後續流程可使用的內容。
+    
+    Args:
+        text: 此流程需要使用的輸入資料。
+    
+    Returns:
+        執行結果；若函式標註回傳型別，預期型別為 str。
+    
+    限制或副作用:
+        可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+    """
     if text is None:
         return ""
     text = str(text).strip()
@@ -78,12 +103,36 @@ def normalize_text(text: Any) -> str:
 
 
 def normalize_for_exact(text: Any) -> str:
+    """
+    負責執行 utils.network_utils 中的 normalize_for_exact 流程，整理呼叫端傳入的資料，清理格式並轉換為後續流程可使用的內容。
+    
+    Args:
+        text: 此流程需要使用的輸入資料。
+    
+    Returns:
+        執行結果；若函式標註回傳型別，預期型別為 str。
+    
+    限制或副作用:
+        可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+    """
     text = normalize_text(text).lower()
     text = text.strip(" \n\r\t.,;:!?\"'")
     return text
 
 
 def extract_choice_answer(text: Any) -> Optional[str]:
+    """
+    負責執行 utils.network_utils 中的 extract_choice_answer 流程，解析模型輸出並取出答案、決策、排序或 JSON 結構。
+    
+    Args:
+        text: 此流程需要使用的輸入資料。
+    
+    Returns:
+        執行結果；若函式標註回傳型別，預期型別為 Optional[str]。
+    
+    限制或副作用:
+        可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+    """
     text = normalize_text(text)
 
     direct = re.fullmatch(r"\(?([A-Da-d])\)?", text, re.IGNORECASE)
@@ -103,6 +152,18 @@ def extract_choice_answer(text: Any) -> Optional[str]:
 
 
 def extract_math_answer(text: Any) -> Optional[str]:
+    """
+    負責執行 utils.network_utils 中的 extract_math_answer 流程，解析模型輸出並取出答案、決策、排序或 JSON 結構。
+    
+    Args:
+        text: 此流程需要使用的輸入資料。
+    
+    Returns:
+        執行結果；若函式標註回傳型別，預期型別為 Optional[str]。
+    
+    限制或副作用:
+        可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+    """
     text = normalize_text(text)
 
     patterns = [
@@ -124,6 +185,18 @@ def extract_math_answer(text: Any) -> Optional[str]:
 
 
 def normalize_number(value: str) -> str:
+    """
+    負責執行 utils.network_utils 中的 normalize_number 流程，整理呼叫端傳入的資料，清理格式並轉換為後續流程可使用的內容。
+    
+    Args:
+        value: 此流程需要使用的輸入資料。
+    
+    Returns:
+        執行結果；若函式標註回傳型別，預期型別為 str。
+    
+    限制或副作用:
+        可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+    """
     try:
         dec = Decimal(value)
         return format(dec.normalize(), "f").rstrip("0").rstrip(".") or "0"
@@ -132,6 +205,18 @@ def normalize_number(value: str) -> str:
 
 
 def detect_answer_type(text: Any) -> str:
+    """
+    負責執行 utils.network_utils 中的 detect_answer_type 流程，依照 utils.network_utils 的流程需求處理 detect_answer_type 對應的資料轉換、狀態操作或結果產生。
+    
+    Args:
+        text: 此流程需要使用的輸入資料。
+    
+    Returns:
+        執行結果；若函式標註回傳型別，預期型別為 str。
+    
+    限制或副作用:
+        可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+    """
     if extract_choice_answer(text) is not None:
         return "choice"
     if extract_math_answer(text) is not None:
@@ -140,6 +225,18 @@ def detect_answer_type(text: Any) -> str:
 
 
 def extract_key_info(text: Any) -> dict[str, Any]:
+    """
+    負責執行 utils.network_utils 中的 extract_key_info 流程，解析輸入內容並萃取後續流程需要使用的結構化資料。
+    
+    Args:
+        text: 此流程需要使用的輸入資料。
+    
+    Returns:
+        執行結果；若函式標註回傳型別，預期型別為 dict[str, Any]。
+    
+    限制或副作用:
+        可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+    """
     text = normalize_text(text)
 
     lower = text.lower()
@@ -189,6 +286,19 @@ def extract_key_info(text: Any) -> dict[str, Any]:
 
 
 def cheap_key_match(info_a: dict[str, Any], info_b: dict[str, Any]) -> Optional[bool]:
+    """
+    負責執行 utils.network_utils 中的 cheap_key_match 流程，依照 utils.network_utils 的流程需求處理 cheap_key_match 對應的資料轉換、狀態操作或結果產生。
+    
+    Args:
+        info_a: 此流程需要使用的輸入資料。
+        info_b: 此流程需要使用的輸入資料。
+    
+    Returns:
+        執行結果；若函式標註回傳型別，預期型別為 Optional[bool]。
+    
+    限制或副作用:
+        可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+    """
     if info_a["normalized_text"] == info_b["normalized_text"]:
         return True
 
@@ -216,6 +326,18 @@ def cheap_key_match(info_a: dict[str, Any], info_b: dict[str, Any]) -> Optional[
 
 
 def should_use_calculator(question: str) -> bool:
+    """
+    負責執行 utils.network_utils 中的 should_use_calculator 流程，檢查目前輸入、狀態或條件是否符合流程繼續執行的要求。
+    
+    Args:
+        question: 目前要處理的任務、問題或查詢文字。
+    
+    Returns:
+        執行結果；若函式標註回傳型別，預期型別為 bool。
+    
+    限制或副作用:
+        可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+    """
     text = normalize_text(question).lower()
 
     math_keywords = [
@@ -247,6 +369,18 @@ def should_use_calculator(question: str) -> bool:
 
 
 def should_use_search(question: str) -> bool:
+    """
+    負責執行 utils.network_utils 中的 should_use_search 流程，檢查目前輸入、狀態或條件是否符合流程繼續執行的要求。
+    
+    Args:
+        question: 目前要處理的任務、問題或查詢文字。
+    
+    Returns:
+        執行結果；若函式標註回傳型別，預期型別為 bool。
+    
+    限制或副作用:
+        可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+    """
     text = normalize_text(question).lower()
 
     search_keywords = [

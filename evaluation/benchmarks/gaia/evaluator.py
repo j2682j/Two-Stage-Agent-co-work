@@ -15,23 +15,20 @@ from .metrics import GAIAMetrics
 
 
 class GAIAEvaluator:
-    """GAIA 評估器
-
-    評估智慧代理的通用AI 助理能力,包括:
-    - 問題理解和推理
-    - 多步驟問題解決
-    - 工具使用能力
-    - 答案準確性
-
-    GAIA評估采用嚴格的答案匹配標準:
-    - 精確匹配: 答案完全一致
-    - 部分匹配: 答案包含正確資訊但格式不同
-
-    Attributes:
-        dataset: GAIA 資料集
-        metrics: 評估指標計算器
-        level: 難度等級
-        strict_mode: 是否使用嚴格匹配模式
+    """
+    負責在 evaluation.benchmarks.gaia.evaluator 中封裝 GAIAEvaluator，封裝 benchmark 評估、答案判定、分數計算或報告資料整理流程。
+    
+    Args:
+        dataset: 此流程需要使用的輸入資料。
+        level: 此流程需要使用的輸入資料。
+        local_data_dir: 此流程需要使用的輸入資料。
+        strict_mode: 此流程需要使用的輸入資料。
+    
+    Returns:
+        類別本身不直接回傳值；建立實例後可透過其方法操作狀態與流程。
+    
+    限制或副作用:
+        方法可能更新內部狀態、讀寫檔案、呼叫外部服務或產生日誌，需依使用情境確認。
     """
 
     def __init__(
@@ -41,13 +38,20 @@ class GAIAEvaluator:
         local_data_dir: Optional[str] = None,
         strict_mode: bool = True
     ):
-        """初始化 GAIA 評估器
-
+        """
+        負責執行 GAIAEvaluator 中的 __init__ 流程，初始化物件所需的設定、依賴與內部狀態，讓後續方法可以沿用同一份執行上下文。
+        
         Args:
-            dataset: GAIA 資料集,如果為 None 則自動建立
-            level: 難度等級 (1-3)
-            local_data_dir: 本地資料目錄
-            strict_mode: 是否使用嚴格匹配模式
+            dataset: 此流程需要使用的輸入資料。
+            level: 此流程需要使用的輸入資料。
+            local_data_dir: 此流程需要使用的輸入資料。
+            strict_mode: 此流程需要使用的輸入資料。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 未標註。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
         """
         self.dataset = dataset if dataset is not None else GAIADataset(
             level=level,
@@ -58,14 +62,18 @@ class GAIAEvaluator:
         self.strict_mode = strict_mode
         
     def evaluate(self, agent: Any, max_samples: Optional[int] = None) -> Dict[str, Any]:
-        """評估智慧代理
-
+        """
+        負責執行 GAIAEvaluator 中的 evaluate 流程，評估 benchmark 任務的回答結果並產生分數、判定或分析資料。
+        
         Args:
-            agent: 要評估的智慧代理
-            max_samples: 最大評估樣本數,None表示評估全部
-
+            agent: 此流程需要使用的輸入資料。
+            max_samples: 控制檢索、篩選或輸出數量的數值參數。
+        
         Returns:
-            評估結果字典,包含各項指標
+            執行結果；若函式標註回傳型別，預期型別為 Dict[str, Any]。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
         """
         print(f"\n[INFO] 開始 GAIA 評估...")
         print(f"   智慧代理: {getattr(agent, 'name', 'Unknown')}")
@@ -161,14 +169,18 @@ class GAIAEvaluator:
         return final_results
     
     def evaluate_sample(self, agent: Any, sample: Dict[str, Any]) -> Dict[str, Any]:
-        """評估單個樣本
-
+        """
+        負責執行 GAIAEvaluator 中的 evaluate_sample 流程，評估 benchmark 任務的回答結果並產生分數、判定或分析資料。
+        
         Args:
-            agent: 要評估的智慧代理
-            sample: 樣本資料
-
+            agent: 此流程需要使用的輸入資料。
+            sample: 此流程需要使用的輸入資料。
+        
         Returns:
-            單個樣本的評估結果
+            執行結果；若函式標註回傳型別，預期型別為 Dict[str, Any]。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
         """
         response = ""
         predicted_answer = None
@@ -240,7 +252,18 @@ class GAIAEvaluator:
             }
 
     def _create_empty_results(self, agent: Any) -> Dict[str, Any]:
-        """建立空的評估結果"""
+        """
+        負責執行 GAIAEvaluator 中的 _create_empty_results 流程，依照 GAIAEvaluator 的流程需求處理 _create_empty_results 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            agent: 此流程需要使用的輸入資料。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 Dict[str, Any]。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         return {
             "benchmark": "GAIA",
             "agent_name": getattr(agent, 'name', 'Unknown'),
@@ -256,13 +279,33 @@ class GAIAEvaluator:
         }
 
     def _build_prompt(self, question: str, sample: Dict[str, Any]) -> str:
-        """Build the prompt from the original GAIA question text only."""
+        """
+        負責執行 GAIAEvaluator 中的 _build_prompt 流程，依照 GAIAEvaluator 的流程需求處理 _build_prompt 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            question: 目前要處理的任務、問題或查詢文字。
+            sample: 此流程需要使用的輸入資料。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 str。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         return str(question or "").strip()
 
     def _extract_answer(self, response: str) -> str:
-        """從回應中提取答案（GAIA格式）
-
-        GAIA要求答案格式為：FINAL ANSWER: [答案]
+        """
+        負責執行 GAIAEvaluator 中的 _extract_answer 流程，依照 GAIAEvaluator 的流程需求處理 _extract_answer 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            response: 模型、節點或工具產生的候選回覆內容。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 str。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
         """
         # 首先嘗試提取GAIA官方格式的答案
         final_answer_pattern = r'FINAL ANSWER:\s*(.+?)(?:\n|$)'
@@ -296,7 +339,19 @@ class GAIAEvaluator:
         return response.strip()
 
     def _check_exact_match(self, predicted: str, expected: str) -> bool:
-        """檢查精確匹配"""
+        """
+        負責執行 GAIAEvaluator 中的 _check_exact_match 流程，依照 GAIAEvaluator 的流程需求處理 _check_exact_match 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            predicted: 此流程需要使用的輸入資料。
+            expected: 此流程需要使用的輸入資料。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 bool。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         if not predicted or not expected:
             return False
 
@@ -307,7 +362,19 @@ class GAIAEvaluator:
         return pred_normalized == exp_normalized
 
     def _check_partial_match(self, predicted: str, expected: str) -> bool:
-        """檢查部分匹配"""
+        """
+        負責執行 GAIAEvaluator 中的 _check_partial_match 流程，依照 GAIAEvaluator 的流程需求處理 _check_partial_match 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            predicted: 此流程需要使用的輸入資料。
+            expected: 此流程需要使用的輸入資料。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 bool。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         if not predicted or not expected:
             return False
 
@@ -331,12 +398,17 @@ class GAIAEvaluator:
         return overlap / len(exp_words) >= 0.7
 
     def _normalize_answer(self, answer: str) -> str:
-        """標準化答案字串（GAIA官方標準化規則）
-
-        根據GAIA論文的標準化規則：
-        1. 數字：移除逗號分隔符和單位符號
-        2. 字串：移除冠詞、轉小寫、移除多余空格
-        3. 列表：按逗號分隔，每個元素獨立標準化
+        """
+        負責執行 GAIAEvaluator 中的 _normalize_answer 流程，依照 GAIAEvaluator 的流程需求處理 _normalize_answer 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            answer: 模型、節點或工具產生的候選回覆內容。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 str。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
         """
         if not answer:
             return ""
@@ -354,7 +426,18 @@ class GAIAEvaluator:
             return self._normalize_single_answer(answer)
 
     def _normalize_single_answer(self, answer: str) -> str:
-        """標準化單個答案（不包含逗號的答案）"""
+        """
+        負責執行 GAIAEvaluator 中的 _normalize_single_answer 流程，依照 GAIAEvaluator 的流程需求處理 _normalize_single_answer 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            answer: 模型、節點或工具產生的候選回覆內容。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 str。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         answer = answer.strip().lower()
 
         # 移除常見的冠詞
@@ -385,16 +468,19 @@ class GAIAEvaluator:
         output_path: Union[str, Path],
         include_reasoning: bool = True
     ) -> None:
-        """匯出為GAIA官方格式
-
-        GAIA格式要求：
-        - JSONL格式（每行一個JSON對象）
-        - 每個對象包含：task_id, model_answer, reasoning_trace（可選）
-
+        """
+        負責執行 GAIAEvaluator 中的 export_to_gaia_format 流程，依照 GAIAEvaluator 的流程需求處理 export_to_gaia_format 對應的資料轉換、狀態操作或結果產生。
+        
         Args:
-            results: 評估結果
-            output_path: 輸出檔案路徑
-            include_reasoning: 是否包含推理軌跡
+            results: 此流程需要使用的輸入資料。
+            output_path: 要讀取或寫入的檔案或目錄路徑。
+            include_reasoning: 控制是否啟用此項資料、功能或處理分支的布林開關。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 None。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
         """
         output_path = Path(output_path)
         output_path.parent.mkdir(parents=True, exist_ok=True)

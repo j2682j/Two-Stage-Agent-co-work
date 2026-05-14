@@ -14,7 +14,22 @@ from ..storage import SQLiteDocumentStore, QdrantVectorStore
 from ..embedding import get_text_embedder, get_dimension
 
 class Perception:
-    """感知資料紀錄。"""
+    """
+    負責在 memory.types.perceptual 中封裝 Perception，管理記憶圖、任務紀錄、檢索結果或跨任務經驗的狀態與操作。
+    
+    Args:
+        perception_id: 記憶系統提供的檢索結果、寫入資料或操作介面。
+        data: 記憶系統提供的檢索結果、寫入資料或操作介面。
+        modality: 記憶系統提供的檢索結果、寫入資料或操作介面。
+        encoding: 記憶系統提供的檢索結果、寫入資料或操作介面。
+        metadata: 目前流程所需的上下文、狀態或附加資訊。
+    
+    Returns:
+        類別本身不直接回傳值；建立實例後可透過其方法操作狀態與流程。
+    
+    限制或副作用:
+        方法可能更新內部狀態、讀寫檔案、呼叫外部服務或產生日誌，需依使用情境確認。
+    """
     
     def __init__(
         self,
@@ -24,6 +39,22 @@ class Perception:
         encoding: Optional[List[float]] = None,
         metadata: Dict[str, Any] = None
     ):
+        """
+        負責執行 Perception 中的 __init__ 流程，初始化物件所需的設定、依賴與內部狀態，讓後續方法可以沿用同一份執行上下文。
+        
+        Args:
+            perception_id: 記憶系統提供的檢索結果、寫入資料或操作介面。
+            data: 記憶系統提供的檢索結果、寫入資料或操作介面。
+            modality: 記憶系統提供的檢索結果、寫入資料或操作介面。
+            encoding: 記憶系統提供的檢索結果、寫入資料或操作介面。
+            metadata: 目前流程所需的上下文、狀態或附加資訊。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 未標註。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         self.perception_id = perception_id
         self.data = data
         self.modality = modality  # text, image, audio, video, structured
@@ -33,7 +64,18 @@ class Perception:
         self.data_hash = self._calculate_hash()
     
     def _calculate_hash(self) -> str:
-        """計算資料的穩定雜湊值。"""
+        """
+        負責執行 Perception 中的 _calculate_hash 流程，依照 Perception 的流程需求處理 _calculate_hash 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            無。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 str。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         if isinstance(self.data, str):
             return hashlib.md5(self.data.encode()).hexdigest()
         elif isinstance(self.data, bytes):
@@ -42,9 +84,34 @@ class Perception:
             return hashlib.md5(str(self.data).encode()).hexdigest()
 
 class PerceptualMemory(BaseMemory):
-    """用來保存文字、圖像、音訊等感知輸入的記憶庫。"""
+    """
+    負責在 memory.types.perceptual 中封裝 PerceptualMemory，管理記憶圖、任務紀錄、檢索結果或跨任務經驗的狀態與操作。
+    
+    Args:
+        config: 控制此流程行為的設定資料。
+        storage_backend: 記憶系統提供的檢索結果、寫入資料或操作介面。
+    
+    Returns:
+        類別本身不直接回傳值；建立實例後可透過其方法操作狀態與流程。
+    
+    限制或副作用:
+        方法可能更新內部狀態、讀寫檔案、呼叫外部服務或產生日誌，需依使用情境確認。
+    """
     
     def __init__(self, config: MemoryConfig, storage_backend=None):
+        """
+        負責執行 PerceptualMemory 中的 __init__ 流程，初始化物件所需的設定、依賴與內部狀態，讓後續方法可以沿用同一份執行上下文。
+        
+        Args:
+            config: 控制此流程行為的設定資料。
+            storage_backend: 記憶系統提供的檢索結果、寫入資料或操作介面。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 未標註。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         super().__init__(config, storage_backend)
         
         # 感知資料儲存（記憶體快取）
@@ -134,7 +201,18 @@ class PerceptualMemory(BaseMemory):
         self.encoders = self._init_encoders()
     
     def add(self, memory_item: MemoryItem) -> str:
-        """添加感知記憶（SQLite權威 + Qdrant向量）"""
+        """
+        負責執行 PerceptualMemory 中的 add 流程，更新記憶圖、互動狀態、節點邊關係或追蹤紀錄。
+        
+        Args:
+            memory_item: 記憶系統提供的檢索結果、寫入資料或操作介面。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 str。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         modality = memory_item.metadata.get("modality", "text")
         raw_data = memory_item.metadata.get("raw_data", memory_item.content)
         if modality not in self.supported_modalities:
@@ -194,7 +272,20 @@ class PerceptualMemory(BaseMemory):
         return memory_item.id
     
     def retrieve(self, query: str, limit: int = 5, **kwargs) -> List[MemoryItem]:
-        """搜尋感知記憶（可篩模態；同模態向量搜尋+時間/重要性融合）"""
+        """
+        負責執行 PerceptualMemory 中的 retrieve 流程，從記憶圖、向量索引或任務關聯中取回相關案例與策略提醒。
+        
+        Args:
+            query: 目前要處理的任務、問題或查詢文字。
+            limit: 控制檢索、篩選或輸出數量的數值參數。
+            **kwargs: 記憶系統提供的檢索結果、寫入資料或操作介面。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 List[MemoryItem]。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         user_id = kwargs.get("user_id")
         target_modality = kwargs.get("target_modality")  # 可選：限制目標模態
         query_modality = kwargs.get("query_modality", target_modality or "text")
@@ -282,7 +373,21 @@ class PerceptualMemory(BaseMemory):
         importance: float = None,
         metadata: Dict[str, Any] = None
     ) -> bool:
-        """更新感知記憶"""
+        """
+        負責執行 PerceptualMemory 中的 update 流程，更新記憶圖、互動狀態、節點邊關係或追蹤紀錄。
+        
+        Args:
+            memory_id: 記憶系統提供的檢索結果、寫入資料或操作介面。
+            content: 記憶系統提供的檢索結果、寫入資料或操作介面。
+            importance: 記憶系統提供的檢索結果、寫入資料或操作介面。
+            metadata: 目前流程所需的上下文、狀態或附加資訊。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 bool。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         updated = False
         modality_cache = None
         for memory in self.perceptual_memories:
@@ -330,7 +435,18 @@ class PerceptualMemory(BaseMemory):
         return updated
     
     def remove(self, memory_id: str) -> bool:
-        """刪除感知記憶"""
+        """
+        負責執行 PerceptualMemory 中的 remove 流程，清除或移除指定資源、狀態或註冊資料，維持後續流程的一致性。
+        
+        Args:
+            memory_id: 記憶系統提供的檢索結果、寫入資料或操作介面。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 bool。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         removed = False
         for i, memory in enumerate(self.perceptual_memories):
             if memory.id == memory_id:
@@ -359,11 +475,35 @@ class PerceptualMemory(BaseMemory):
         return removed
     
     def has_memory(self, memory_id: str) -> bool:
-        """檢查記憶是否存在"""
+        """
+        負責執行 PerceptualMemory 中的 has_memory 流程，檢查目前輸入、狀態或條件是否符合流程繼續執行的要求。
+        
+        Args:
+            memory_id: 記憶系統提供的檢索結果、寫入資料或操作介面。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 bool。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         return any(memory.id == memory_id for memory in self.perceptual_memories)
     
     def forget(self, strategy: str = "importance_based", threshold: float = 0.1, max_age_days: int = 30) -> int:
-        """感知記憶遺忘機制（硬刪除）"""
+        """
+        負責執行 PerceptualMemory 中的 forget 流程，依照 PerceptualMemory 的流程需求處理 forget 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            strategy: 記憶系統提供的檢索結果、寫入資料或操作介面。
+            threshold: 控制檢索、篩選或輸出數量的數值參數。
+            max_age_days: 控制檢索、篩選或輸出數量的數值參數。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 int。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         forgotten_count = 0
         current_time = datetime.now()
         
@@ -401,7 +541,18 @@ class PerceptualMemory(BaseMemory):
         return forgotten_count
 
     def clear(self):
-        """清空所有感知記憶"""
+        """
+        負責執行 PerceptualMemory 中的 clear 流程，清除或移除指定資源、狀態或註冊資料，維持後續流程的一致性。
+        
+        Args:
+            無。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 未標註。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         self.perceptual_memories.clear()
         self.perceptions.clear()
         self.modality_index.clear()
@@ -419,11 +570,33 @@ class PerceptualMemory(BaseMemory):
                 pass
 
     def get_all(self) -> List[MemoryItem]:
-        """取得所有感知記憶"""
+        """
+        負責執行 PerceptualMemory 中的 get_all 流程，依照 PerceptualMemory 的流程需求處理 get_all 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            無。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 List[MemoryItem]。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         return self.perceptual_memories.copy()
     
     def get_stats(self) -> Dict[str, Any]:
-        """取得感知記憶統計資訊"""
+        """
+        負責執行 PerceptualMemory 中的 get_stats 流程，依照 PerceptualMemory 的流程需求處理 get_stats 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            無。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 Dict[str, Any]。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         # 硬刪除模式：所有記憶都是活躍的
         active_memories = self.perceptual_memories
         
@@ -456,7 +629,21 @@ class PerceptualMemory(BaseMemory):
         target_modality: str = None,
         limit: int = 5
     ) -> List[MemoryItem]:
-        """跨模態搜尋"""
+        """
+        負責執行 PerceptualMemory 中的 cross_modal_search 流程，依照 PerceptualMemory 的流程需求處理 cross_modal_search 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            query: 目前要處理的任務、問題或查詢文字。
+            query_modality: 已整理好的搜尋結果、共享資料包或可重用證據內容。
+            target_modality: 已整理好的搜尋結果、共享資料包或可重用證據內容。
+            limit: 控制檢索、篩選或輸出數量的數值參數。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 List[MemoryItem]。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         return self.retrieve(
             query=str(query),
             limit=limit,
@@ -465,7 +652,19 @@ class PerceptualMemory(BaseMemory):
         )
     
     def get_by_modality(self, modality: str, limit: int = 10) -> List[MemoryItem]:
-        """按模態取得記憶"""
+        """
+        負責執行 PerceptualMemory 中的 get_by_modality 流程，依照 PerceptualMemory 的流程需求處理 get_by_modality 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            modality: 記憶系統提供的檢索結果、寫入資料或操作介面。
+            limit: 控制檢索、篩選或輸出數量的數值參數。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 List[MemoryItem]。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         if modality not in self.modality_index:
             return []
         
@@ -481,7 +680,19 @@ class PerceptualMemory(BaseMemory):
         return results
     
     def generate_content(self, prompt: str, target_modality: str) -> Optional[str]:
-        """基於感知記憶生成內容"""
+        """
+        負責執行 PerceptualMemory 中的 generate_content 流程，依照 PerceptualMemory 的流程需求處理 generate_content 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            prompt: 記憶系統提供的檢索結果、寫入資料或操作介面。
+            target_modality: 記憶系統提供的檢索結果、寫入資料或操作介面。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 Optional[str]。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         # 簡化的內容生成實現
         # 實際應用中需要使用生成模型
         
@@ -502,7 +713,18 @@ class PerceptualMemory(BaseMemory):
         return f"生成的{target_modality}內容（基於{len(relevant_memories)}個相關記憶）"
     
     def _init_encoders(self) -> Dict[str, Any]:
-        """初始化編碼器（輕量、確定性，統一輸出self.vector_dim維）"""
+        """
+        負責執行 PerceptualMemory 中的 _init_encoders 流程，依照 PerceptualMemory 的流程需求處理 _init_encoders 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            無。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 Dict[str, Any]。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         encoders = {}
         for modality in self.supported_modalities:
             if modality == "text":
@@ -516,7 +738,20 @@ class PerceptualMemory(BaseMemory):
         return encoders
     
     def _encode_perception(self, data: Any, modality: str, memory_id: str) -> Perception:
-        """編碼感知資料"""
+        """
+        負責執行 PerceptualMemory 中的 _encode_perception 流程，依照 PerceptualMemory 的流程需求處理 _encode_perception 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            data: 記憶系統提供的檢索結果、寫入資料或操作介面。
+            modality: 記憶系統提供的檢索結果、寫入資料或操作介面。
+            memory_id: 記憶系統提供的檢索結果、寫入資料或操作介面。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 Perception。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         encoding = self._encode_data(data, modality)
         
         perception = Perception(
@@ -530,7 +765,19 @@ class PerceptualMemory(BaseMemory):
         return perception
     
     def _encode_data(self, data: Any, modality: str) -> List[float]:
-        """編碼資料為固定維度向量（按模態維度對齊）"""
+        """
+        負責執行 PerceptualMemory 中的 _encode_data 流程，依照 PerceptualMemory 的流程需求處理 _encode_data 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            data: 記憶系統提供的檢索結果、寫入資料或操作介面。
+            modality: 記憶系統提供的檢索結果、寫入資料或操作介面。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 List[float]。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         target_dim = self._get_dim_for_modality(modality)
         encoder = self.encoders.get(modality, self._default_encoder)
         vec = encoder(data)
@@ -543,14 +790,36 @@ class PerceptualMemory(BaseMemory):
         return vec
     
     def _text_encoder(self, text: str) -> List[float]:
-        """文字編碼器（使用嵌入模型）"""
+        """
+        負責執行 PerceptualMemory 中的 _text_encoder 流程，依照 PerceptualMemory 的流程需求處理 _text_encoder 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            text: 記憶系統提供的檢索結果、寫入資料或操作介面。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 List[float]。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         emb = self.text_embedder.encode(text or "")
         if hasattr(emb, "tolist"):
             emb = emb.tolist()
         return emb
     
     def _image_encoder_hash(self, image_data: Any) -> List[float]:
-        """圖像編碼器（輕量確定性哈希向量，跨環境穩定）"""
+        """
+        負責執行 PerceptualMemory 中的 _image_encoder_hash 流程，依照 PerceptualMemory 的流程需求處理 _image_encoder_hash 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            image_data: 記憶系統提供的檢索結果、寫入資料或操作介面。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 List[float]。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         try:
             if isinstance(image_data, (bytes, bytearray)):
                 data_bytes = bytes(image_data)
@@ -565,7 +834,18 @@ class PerceptualMemory(BaseMemory):
             return self._hash_to_vector(str(image_data), self._get_dim_for_modality("image"))
 
     def _image_encoder(self, image_data: Any) -> List[float]:
-        """圖像編碼器（優先CLIP，不可用則哈希）"""
+        """
+        負責執行 PerceptualMemory 中的 _image_encoder 流程，依照 PerceptualMemory 的流程需求處理 _image_encoder 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            image_data: 記憶系統提供的檢索結果、寫入資料或操作介面。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 List[float]。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         if self._clip_model is None or self._clip_processor is None:
             return self._image_encoder_hash(image_data)
         try:
@@ -587,7 +867,18 @@ class PerceptualMemory(BaseMemory):
             return self._image_encoder_hash(image_data)
     
     def _audio_encoder_hash(self, audio_data: Any) -> List[float]:
-        """音頻編碼器（輕量確定性哈希向量）"""
+        """
+        負責執行 PerceptualMemory 中的 _audio_encoder_hash 流程，依照 PerceptualMemory 的流程需求處理 _audio_encoder_hash 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            audio_data: 記憶系統提供的檢索結果、寫入資料或操作介面。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 List[float]。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         try:
             if isinstance(audio_data, (bytes, bytearray)):
                 data_bytes = bytes(audio_data)
@@ -602,7 +893,18 @@ class PerceptualMemory(BaseMemory):
             return self._hash_to_vector(str(audio_data), self._get_dim_for_modality("audio"))
 
     def _audio_encoder(self, audio_data: Any) -> List[float]:
-        """音頻編碼器（優先CLAP，不可用則哈希）"""
+        """
+        負責執行 PerceptualMemory 中的 _audio_encoder 流程，依照 PerceptualMemory 的流程需求處理 _audio_encoder 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            audio_data: 記憶系統提供的檢索結果、寫入資料或操作介面。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 List[float]。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         if self._clap_model is None or self._clap_processor is None:
             return self._audio_encoder_hash(audio_data)
         try:
@@ -633,14 +935,37 @@ class PerceptualMemory(BaseMemory):
             return self._audio_encoder_hash(audio_data)
 
     def _default_encoder(self, data: Any) -> List[float]:
-        """預設編碼器（退化為文字嵌入或哈希）"""
+        """
+        負責執行 PerceptualMemory 中的 _default_encoder 流程，依照 PerceptualMemory 的流程需求處理 _default_encoder 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            data: 記憶系統提供的檢索結果、寫入資料或操作介面。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 List[float]。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         try:
             return self._text_encoder(str(data))
         except Exception:
             return self._hash_to_vector(str(data), self.vector_dim)
     
     def _calculate_similarity(self, encoding1: List[float], encoding2: List[float]) -> float:
-        """計算編碼相似度"""
+        """
+        負責執行 PerceptualMemory 中的 _calculate_similarity 流程，依照 PerceptualMemory 的流程需求處理 _calculate_similarity 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            encoding1: 記憶系統提供的檢索結果、寫入資料或操作介面。
+            encoding2: 記憶系統提供的檢索結果、寫入資料或操作介面。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 float。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         if not encoding1 or not encoding2:
             return 0.0
         
@@ -660,13 +985,49 @@ class PerceptualMemory(BaseMemory):
         return dot_product / (norm1 * norm2)
 
     def _hash_to_vector(self, data_str: str, dim: int) -> List[float]:
-        """將字串哈希為固定維度的[0,1]向量（確定性）"""
+        """
+        負責執行 PerceptualMemory 中的 _hash_to_vector 流程，依照 PerceptualMemory 的流程需求處理 _hash_to_vector 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            data_str: 記憶系統提供的檢索結果、寫入資料或操作介面。
+            dim: 記憶系統提供的檢索結果、寫入資料或操作介面。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 List[float]。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         seed = int(hashlib.sha256(data_str.encode("utf-8", errors="ignore")).hexdigest(), 16) % (2**32)
         rng = random.Random(seed)
         return [rng.random() for _ in range(dim)]
 
     class _no_grad:
+        """
+        負責在 memory.types.perceptual 中封裝 _no_grad，管理記憶圖、任務紀錄、檢索結果或跨任務經驗的狀態與操作。
+        
+        Args:
+            無明確建構參數，可能透過 dataclass 欄位或預設值建立物件。
+        
+        Returns:
+            類別本身不直接回傳值；建立實例後可透過其方法操作狀態與流程。
+        
+        限制或副作用:
+            方法可能更新內部狀態、讀寫檔案、呼叫外部服務或產生日誌，需依使用情境確認。
+        """
         def __enter__(self):
+            """
+            負責執行 _no_grad 中的 __enter__ 流程，依照 _no_grad 的流程需求處理 __enter__ 對應的資料轉換、狀態操作或結果產生。
+            
+            Args:
+                無。
+            
+            Returns:
+                執行結果；若函式標註回傳型別，預期型別為 未標註。
+            
+            限制或副作用:
+                可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+            """
             try:
                 import torch
                 self.prev = torch.is_grad_enabled()
@@ -675,6 +1036,20 @@ class PerceptualMemory(BaseMemory):
                 self.prev = None
             return self
         def __exit__(self, exc_type, exc, tb):
+            """
+            負責執行 _no_grad 中的 __exit__ 流程，依照 _no_grad 的流程需求處理 __exit__ 對應的資料轉換、狀態操作或結果產生。
+            
+            Args:
+                exc_type: 記憶系統提供的檢索結果、寫入資料或操作介面。
+                exc: 記憶系統提供的檢索結果、寫入資料或操作介面。
+                tb: 記憶系統提供的檢索結果、寫入資料或操作介面。
+            
+            Returns:
+                執行結果；若函式標註回傳型別，預期型別為 未標註。
+            
+            限制或副作用:
+                可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+            """
             try:
                 import torch
                 if self.prev is not None:
@@ -683,10 +1058,34 @@ class PerceptualMemory(BaseMemory):
                 pass
 
     def _get_vector_store_for_modality(self, modality: Optional[str]) -> QdrantVectorStore:
+        """
+        負責執行 PerceptualMemory 中的 _get_vector_store_for_modality 流程，依照 PerceptualMemory 的流程需求處理 _get_vector_store_for_modality 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            modality: 記憶系統提供的檢索結果、寫入資料或操作介面。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 QdrantVectorStore。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         mod = (modality or "text").lower()
         return self.vector_stores.get(mod, self.vector_stores["text"])
 
     def _get_dim_for_modality(self, modality: Optional[str]) -> int:
+        """
+        負責執行 PerceptualMemory 中的 _get_dim_for_modality 流程，依照 PerceptualMemory 的流程需求處理 _get_dim_for_modality 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            modality: 記憶系統提供的檢索結果、寫入資料或操作介面。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 int。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         mod = (modality or "text").lower()
         if mod == "image":
             return int(self._image_dim or self.vector_dim)

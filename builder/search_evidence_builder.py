@@ -9,7 +9,37 @@ from .evidence_builder import EvidenceBuilder
 
 
 class SearchEvidenceBuilder(EvidenceBuilder):
+    """
+    負責在 builder.search_evidence_builder 中封裝 SearchEvidenceBuilder，封裝此模組的狀態資料與主要操作流程。
+    
+    Args:
+        tool_manager: 已整理好的搜尋結果、共享資料包或可重用證據內容。
+        memory_tool: 已整理好的搜尋結果、共享資料包或可重用證據內容。
+        runtime: 目前流程所需的上下文、狀態或附加資訊。
+        search_query_planner: 已整理好的搜尋結果、共享資料包或可重用證據內容。
+    
+    Returns:
+        類別本身不直接回傳值；建立實例後可透過其方法操作狀態與流程。
+    
+    限制或副作用:
+        方法可能更新內部狀態、讀寫檔案、呼叫外部服務或產生日誌，需依使用情境確認。
+    """
     def __init__(self, tool_manager=None, memory_tool=None, runtime=None, *, search_query_planner=None):
+        """
+        負責執行 SearchEvidenceBuilder 中的 __init__ 流程，初始化物件所需的設定、依賴與內部狀態，讓後續方法可以沿用同一份執行上下文。
+        
+        Args:
+            tool_manager: 已整理好的搜尋結果、共享資料包或可重用證據內容。
+            memory_tool: 已整理好的搜尋結果、共享資料包或可重用證據內容。
+            runtime: 目前流程所需的上下文、狀態或附加資訊。
+            search_query_planner: 已整理好的搜尋結果、共享資料包或可重用證據內容。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 未標註。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         super().__init__(
             tool_manager=tool_manager,
             memory_tool=memory_tool,
@@ -26,6 +56,22 @@ class SearchEvidenceBuilder(EvidenceBuilder):
         max_chars_per_section: int = 300,
         max_total_chars: int = 900,
     ) -> str:
+        """
+        負責執行 SearchEvidenceBuilder 中的 summarize_search_output 流程，將內部資料整理成日誌、提示詞、摘要或指定的輸出格式。
+        
+        Args:
+            search_output_text: 已整理好的搜尋結果、共享資料包或可重用證據內容。
+            question: 目前要處理的任務、問題或查詢文字。
+            max_sections: 控制檢索、篩選或輸出數量的數值參數。
+            max_chars_per_section: 控制檢索、篩選或輸出數量的數值參數。
+            max_total_chars: 控制檢索、篩選或輸出數量的數值參數。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 str。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         cleaned = self._clean_search_text(search_output_text)
         if not cleaned:
             return ""
@@ -55,6 +101,22 @@ class SearchEvidenceBuilder(EvidenceBuilder):
         max_chars_per_result: int = 240,
         max_total_chars: int = 900,
     ) -> str:
+        """
+        負責執行 SearchEvidenceBuilder 中的 summarize_structured_search_result 流程，將內部資料整理成日誌、提示詞、摘要或指定的輸出格式。
+        
+        Args:
+            search_result: 已整理好的搜尋結果、共享資料包或可重用證據內容。
+            question: 目前要處理的任務、問題或查詢文字。
+            max_results: 控制檢索、篩選或輸出數量的數值參數。
+            max_chars_per_result: 控制檢索、篩選或輸出數量的數值參數。
+            max_total_chars: 控制檢索、篩選或輸出數量的數值參數。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 str。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         payload = search_result.get("raw_result")
         if not isinstance(payload, dict):
             return ""
@@ -103,6 +165,22 @@ class SearchEvidenceBuilder(EvidenceBuilder):
         max_chars_per_section: int = 300,
         max_total_chars: int = 900,
     ) -> str:
+        """
+        負責執行 SearchEvidenceBuilder 中的 build_search_evidence_block 流程，建立任務需要的證據區塊，整理搜尋、附件或工具輸出的可引用內容。
+        
+        Args:
+            search_result: 已整理好的搜尋結果、共享資料包或可重用證據內容。
+            question: 目前要處理的任務、問題或查詢文字。
+            max_sections: 控制檢索、篩選或輸出數量的數值參數。
+            max_chars_per_section: 控制檢索、篩選或輸出數量的數值參數。
+            max_total_chars: 控制檢索、篩選或輸出數量的數值參數。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 str。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         if not search_result or not search_result.get("ok"):
             return ""
 
@@ -139,6 +217,22 @@ class SearchEvidenceBuilder(EvidenceBuilder):
         max_chars_per_query: int = 320,
         max_total_chars: int = 1000,
     ) -> str:
+        """
+        負責執行 SearchEvidenceBuilder 中的 build_planned_search_evidence_block 流程，建立任務需要的證據區塊，整理搜尋、附件或工具輸出的可引用內容。
+        
+        Args:
+            search_runs: 已整理好的搜尋結果、共享資料包或可重用證據內容。
+            question: 目前要處理的任務、問題或查詢文字。
+            max_queries: 控制檢索、篩選或輸出數量的數值參數。
+            max_chars_per_query: 控制檢索、篩選或輸出數量的數值參數。
+            max_total_chars: 控制檢索、篩選或輸出數量的數值參數。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 str。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         if not search_runs:
             return ""
 
@@ -183,6 +277,18 @@ class SearchEvidenceBuilder(EvidenceBuilder):
         return body
 
     def _clean_search_text(self, text: Any) -> str:
+        """
+        負責執行 SearchEvidenceBuilder 中的 _clean_search_text 流程，依照 SearchEvidenceBuilder 的流程需求處理 _clean_search_text 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            text: 已整理好的搜尋結果、共享資料包或可重用證據內容。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 str。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         if text is None:
             return ""
 
@@ -194,6 +300,18 @@ class SearchEvidenceBuilder(EvidenceBuilder):
         return text.strip()
 
     def _split_search_sections(self, text: str) -> list[str]:
+        """
+        負責執行 SearchEvidenceBuilder 中的 _split_search_sections 流程，依照 SearchEvidenceBuilder 的流程需求處理 _split_search_sections 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            text: 已整理好的搜尋結果、共享資料包或可重用證據內容。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 list[str]。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         if not text:
             return []
 
@@ -204,6 +322,18 @@ class SearchEvidenceBuilder(EvidenceBuilder):
         return [line.strip() for line in text.splitlines() if line.strip()]
 
     def _extract_query_keywords(self, question: str) -> set[str]:
+        """
+        負責執行 SearchEvidenceBuilder 中的 _extract_query_keywords 流程，依照 SearchEvidenceBuilder 的流程需求處理 _extract_query_keywords 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            question: 目前要處理的任務、問題或查詢文字。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 set[str]。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         text = normalize_text(question).lower()
         text = re.sub(r"[^\w\s]", " ", text)
 
@@ -243,6 +373,18 @@ class SearchEvidenceBuilder(EvidenceBuilder):
         return set(tokens)
 
     def _looks_like_metadata_section(self, section: str) -> bool:
+        """
+        負責執行 SearchEvidenceBuilder 中的 _looks_like_metadata_section 流程，依照 SearchEvidenceBuilder 的流程需求處理 _looks_like_metadata_section 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            section: 已整理好的搜尋結果、共享資料包或可重用證據內容。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 bool。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         lower = section.lower().strip()
 
         metadata_markers = [
@@ -261,6 +403,19 @@ class SearchEvidenceBuilder(EvidenceBuilder):
         return False
 
     def _score_search_section(self, section: str, question_keywords: set[str]) -> int:
+        """
+        負責執行 SearchEvidenceBuilder 中的 _score_search_section 流程，依照 SearchEvidenceBuilder 的流程需求處理 _score_search_section 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            section: 已整理好的搜尋結果、共享資料包或可重用證據內容。
+            question_keywords: 已整理好的搜尋結果、共享資料包或可重用證據內容。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 int。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         lower = normalize_text(section).lower()
         score = 0
 
@@ -280,6 +435,19 @@ class SearchEvidenceBuilder(EvidenceBuilder):
         return score
 
     def _rank_search_sections(self, sections: list[str], question: str) -> list[str]:
+        """
+        負責執行 SearchEvidenceBuilder 中的 _rank_search_sections 流程，依照 SearchEvidenceBuilder 的流程需求處理 _rank_search_sections 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            sections: 已整理好的搜尋結果、共享資料包或可重用證據內容。
+            question: 目前要處理的任務、問題或查詢文字。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 list[str]。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         question_keywords = self._extract_query_keywords(question)
 
         scored_sections = []

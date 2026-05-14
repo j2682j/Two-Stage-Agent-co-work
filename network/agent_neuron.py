@@ -1,4 +1,4 @@
-﻿import random
+import random
 from typing import Any
 
 from parser import AgentReplyParser, Stage1ReplyParser, Stage2ReplyParser, try_parse_json
@@ -7,7 +7,33 @@ from builder.evidence_builder import EvidenceBuilder
 
 
 class AgentNeuron:
+    """
+    負責在 network.agent_neuron 中封裝 AgentNeuron，管理記憶圖、任務紀錄、檢索結果或跨任務經驗的狀態與操作。
+    
+    Args:
+        model_name: 用來呼叫模型或外部服務的模型名稱、客戶端或相關設定。
+        parse_json: 此流程需要使用的輸入資料。
+    
+    Returns:
+        類別本身不直接回傳值；建立實例後可透過其方法操作狀態與流程。
+    
+    限制或副作用:
+        方法可能更新內部狀態、讀寫檔案、呼叫外部服務或產生日誌，需依使用情境確認。
+    """
     def __init__(self, model_name, parse_json=try_parse_json):
+        """
+        負責執行 AgentNeuron 中的 __init__ 流程，初始化物件所需的設定、依賴與內部狀態，讓後續方法可以沿用同一份執行上下文。
+        
+        Args:
+            model_name: 用來呼叫模型或外部服務的模型名稱、客戶端或相關設定。
+            parse_json: 此流程需要使用的輸入資料。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 未標註。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         self.model_name = model_name
         self.rng = random.Random(2026)
         self.runtime = None
@@ -52,6 +78,21 @@ class AgentNeuron:
         include_routed_tools: bool = True,
         include_attachment: bool = True,
     ) -> dict[str, Any]:
+        """
+        負責執行 AgentNeuron 中的 _build_stage_evidence 流程，依照 AgentNeuron 的流程需求處理 _build_stage_evidence 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            question: 目前要處理的任務、問題或查詢文字。
+            stage: 目前執行的階段、輪次或流程位置。
+            include_routed_tools: 控制是否啟用此項資料、功能或處理分支的布林開關。
+            include_attachment: 控制是否啟用此項資料、功能或處理分支的布林開關。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 dict[str, Any]。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         runtime = getattr(self, "runtime", None)
         tool_manager = getattr(runtime, "tool_manager", None)
         builder = getattr(runtime, "evidence_builder", None)
@@ -98,15 +139,65 @@ class AgentNeuron:
         expected_weight_count: int | None,
         require_final_answer: bool = True,
     ) -> dict[str, Any]:
+        """
+        負責執行 AgentNeuron 中的 parse_reply 流程，解析輸入內容並萃取後續流程需要使用的結構化資料。
+        
+        Args:
+            reply: 模型、節點或工具產生的候選回覆內容。
+            expected_weight_count: 此流程需要使用的輸入資料。
+            require_final_answer: 此流程需要使用的輸入資料。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 dict[str, Any]。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         return self.reply_parser.parse(reply, expected_weight_count, require_final_answer=require_final_answer)
 
     def get_reply(self):
+        """
+        負責執行 AgentNeuron 中的 get_reply 流程，依照 AgentNeuron 的流程需求處理 get_reply 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            無。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 未標註。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         return self.reply
 
     def get_answer(self):
+        """
+        負責執行 AgentNeuron 中的 get_answer 流程，依照 AgentNeuron 的流程需求處理 get_answer 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            無。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 未標註。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         return self.answer
 
     def deactivate(self):
+        """
+        負責執行 AgentNeuron 中的 deactivate 流程，依照 AgentNeuron 的流程需求處理 deactivate 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            無。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 未標註。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         self.reasoning = ""
         self.active = False
         self.reply = None
@@ -134,8 +225,48 @@ class AgentNeuron:
         self.stage2_solver_context = ""
         self.stage2_routing = {}
 
+    def _record_token_usage(self, stage: str, *, extra: dict[str, Any] | None = None) -> None:
+        """
+        負責執行 AgentNeuron 中的 _record_token_usage 流程，依照 AgentNeuron 的流程需求處理 _record_token_usage 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            stage: 目前執行的階段、輪次或流程位置。
+            extra: 此流程需要使用的輸入資料。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 None。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
+        runtime = getattr(self, "runtime", None)
+        if runtime is None:
+            return
+        runtime.record_token_usage(
+            {
+                "stage": stage,
+                "agent_id": getattr(self, "model_name", "unknown_agent"),
+                "model_name": getattr(self, "model_name", "unknown"),
+                "prompt_tokens": self.prompt_tokens,
+                "completion_tokens": self.completion_tokens,
+                **dict(extra or {}),
+            }
+        )
+
     def get_context(self):
         # 先放入 system prompt，再蒐集目前可用的前序 agent 回覆
+        """
+        負責執行 AgentNeuron 中的 get_context 流程，依照 AgentNeuron 的流程需求處理 get_context 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            無。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 未標註。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         contexts = [{"role": "system", "content": self.helper.SYSTEM_PROMPT}]
         formers = [
             ({"reasoning": edge.a1.reasoning, "final_answer": edge.a1.answer}, eid)
@@ -145,6 +276,18 @@ class AgentNeuron:
         return contexts, formers
 
     def activate(self, question):
+        """
+        負責執行 AgentNeuron 中的 activate 流程，依照 AgentNeuron 的流程需求處理 activate 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            question: 目前要處理的任務、問題或查詢文字。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 未標註。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         self.question = question
         self.active = True
 
@@ -275,6 +418,7 @@ class AgentNeuron:
                 else:
                     print("[WARN] repair 後仍無法解析，將此節點標記為失敗並跳過")
                     print(f"[WARN] parse_reply error: {type(retry_error).__name__}: {retry_error}")
+                    self._record_token_usage("stage1_agent", extra={"node_success": False, "parse_failed": True})
                     self.reasoning = ""
                     self.answer = ""
                     self.active = False
@@ -284,6 +428,7 @@ class AgentNeuron:
 
         self.reasoning = parsed["reasoning"]
         self.answer = parsed["final_answer"]
+        self._record_token_usage("stage1_agent", extra={"node_success": True, "parse_failed": False})
         weights = parsed["weights"]
         print("=" * 20)
         print("Agent回覆已解析")
@@ -321,6 +466,22 @@ class AgentNeuron:
         importance: float = None,
         shared_search_bundle: dict[str, Any] | None = None,
     ):
+        """
+        負責執行 AgentNeuron 中的 activate_stage2 流程，依照 AgentNeuron 的流程需求處理 activate_stage2 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            question: 目前要處理的任務、問題或查詢文字。
+            tool_manager: 此流程需要使用的輸入資料。
+            stage1_result: 評估、推理或工具執行後產生的結果與分數資料。
+            importance: 此流程需要使用的輸入資料。
+            shared_search_bundle: 已整理好的搜尋結果、共享資料包或可重用證據內容。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 未標註。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         self.question = question
         self.active = True
         self.stage2_reply = None
@@ -433,6 +594,7 @@ class AgentNeuron:
             self.stage2_answer = parsed["final_answer"]
             self.stage2_success = True
             self.stage2_error = None
+            self._record_token_usage("stage2_agent", extra={"node_success": True})
 
             return {
                 "answer": self.stage2_answer,
@@ -452,6 +614,7 @@ class AgentNeuron:
                 self.stage2_tool_usage = tool_usage
                 self.stage2_success = True
                 self.stage2_error = None
+                self._record_token_usage("stage2_agent", extra={"node_success": True, "parse_fallback": True})
 
                 return {
                     "answer": self.stage2_answer,
@@ -468,6 +631,7 @@ class AgentNeuron:
             self.stage2_success = False
             self.stage2_error = str(e)
             self.stage2_reply = None
+            self._record_token_usage("stage2_agent", extra={"node_success": False, "error": str(e)})
 
             return {
                 "answer": None,
@@ -479,6 +643,18 @@ class AgentNeuron:
             }
 
     def get_conversation(self):
+        """
+        負責執行 AgentNeuron 中的 get_conversation 流程，依照 AgentNeuron 的流程需求處理 get_conversation 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            無。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 未標註。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         if not self.active:
             return []
 
@@ -490,8 +666,34 @@ class AgentNeuron:
 
 
 class NeuronEdge:
+    """
+    負責在 network.agent_neuron 中封裝 NeuronEdge，管理記憶圖、任務紀錄、檢索結果或跨任務經驗的狀態與操作。
+    
+    Args:
+        a1: 圖結構中的節點、邊或相關識別資料。
+        a2: 圖結構中的節點、邊或相關識別資料。
+    
+    Returns:
+        類別本身不直接回傳值；建立實例後可透過其方法操作狀態與流程。
+    
+    限制或副作用:
+        方法可能更新內部狀態、讀寫檔案、呼叫外部服務或產生日誌，需依使用情境確認。
+    """
     def __init__(self, a1, a2):
         # a1 -> a2 的連線邊，weight 表示 a1 對 a2 的影響權重
+        """
+        負責執行 NeuronEdge 中的 __init__ 流程，初始化物件所需的設定、依賴與內部狀態，讓後續方法可以沿用同一份執行上下文。
+        
+        Args:
+            a1: 圖結構中的節點、邊或相關識別資料。
+            a2: 圖結構中的節點、邊或相關識別資料。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 未標註。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         self.weight = 0
         self.a1 = a1
         self.a2 = a2
@@ -499,4 +701,16 @@ class NeuronEdge:
         self.a2.from_edges.append(self)
 
     def zero_weight(self):
+        """
+        負責執行 NeuronEdge 中的 zero_weight 流程，依照 NeuronEdge 的流程需求處理 zero_weight 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            無。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 未標註。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         self.weight = 0

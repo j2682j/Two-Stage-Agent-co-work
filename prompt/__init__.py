@@ -5,6 +5,7 @@ from .builder import (
     PromptBuilder,
     PromptPacket,
 )
+from .bfcl_prompt_builder import BFCLPromptBuilder
 from .decision_prompt_builder import DecisionPromptBuilder
 from .repair_prompt_builder import RepairPromptBuilder
 from .ranking_prompt_builder import RankingPromptBuilder
@@ -17,6 +18,7 @@ __all__ = [
     "PromptPacket",
     "PromptBuildConfig",
     "PromptBuilder",
+    "BFCLPromptBuilder",
     "Stage1PromptBuilder",
     "Stage2PromptBuilder",
     "RankingPromptBuilder",

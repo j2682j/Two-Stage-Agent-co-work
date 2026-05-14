@@ -43,22 +43,50 @@ DEFAULT_EXECUTOR_PROMPT = """
 """
 
 class Planner:
-    """規劃器 - 負責將複雜問題分解為簡單步驟"""
+    """
+    負責在 agents.plan_solve_agent 中封裝 Planner，封裝代理節點的推理、工具使用、訊息傳遞或協作控制邏輯。
+    
+    Args:
+        llm_client: 用來呼叫模型或外部服務的模型名稱、客戶端或相關設定。
+        prompt_template: 此流程需要使用的輸入資料。
+    
+    Returns:
+        類別本身不直接回傳值；建立實例後可透過其方法操作狀態與流程。
+    
+    限制或副作用:
+        方法可能更新內部狀態、讀寫檔案、呼叫外部服務或產生日誌，需依使用情境確認。
+    """
 
     def __init__(self, llm_client: HelloAgentsLLM, prompt_template: Optional[str] = None):
+        """
+        負責執行 Planner 中的 __init__ 流程，初始化物件所需的設定、依賴與內部狀態，讓後續方法可以沿用同一份執行上下文。
+        
+        Args:
+            llm_client: 用來呼叫模型或外部服務的模型名稱、客戶端或相關設定。
+            prompt_template: 此流程需要使用的輸入資料。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 未標註。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         self.llm_client = llm_client
         self.prompt_template = prompt_template if prompt_template else DEFAULT_PLANNER_PROMPT
 
     def plan(self, question: str, **kwargs) -> List[str]:
         """
-        生成執行計劃
-
+        負責執行 Planner 中的 plan 流程，依照 Planner 的流程需求處理 plan 對應的資料轉換、狀態操作或結果產生。
+        
         Args:
-            question: 要解決的問題
-            **kwargs: LLM呼叫參數
-
+            question: 目前要處理的任務、問題或查詢文字。
+            **kwargs: 此流程需要使用的輸入資料。
+        
         Returns:
-            步驟列表
+            執行結果；若函式標註回傳型別，預期型別為 List[str]。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
         """
         prompt = self.prompt_template.format(question=question)
         messages = [{"role": "user", "content": prompt}]
@@ -81,23 +109,51 @@ class Planner:
             return []
 
 class Executor:
-    """執行器 - 負責按計劃逐步執行"""
+    """
+    負責在 agents.plan_solve_agent 中封裝 Executor，封裝代理節點的推理、工具使用、訊息傳遞或協作控制邏輯。
+    
+    Args:
+        llm_client: 用來呼叫模型或外部服務的模型名稱、客戶端或相關設定。
+        prompt_template: 此流程需要使用的輸入資料。
+    
+    Returns:
+        類別本身不直接回傳值；建立實例後可透過其方法操作狀態與流程。
+    
+    限制或副作用:
+        方法可能更新內部狀態、讀寫檔案、呼叫外部服務或產生日誌，需依使用情境確認。
+    """
 
     def __init__(self, llm_client: HelloAgentsLLM, prompt_template: Optional[str] = None):
+        """
+        負責執行 Executor 中的 __init__ 流程，初始化物件所需的設定、依賴與內部狀態，讓後續方法可以沿用同一份執行上下文。
+        
+        Args:
+            llm_client: 用來呼叫模型或外部服務的模型名稱、客戶端或相關設定。
+            prompt_template: 此流程需要使用的輸入資料。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 未標註。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         self.llm_client = llm_client
         self.prompt_template = prompt_template if prompt_template else DEFAULT_EXECUTOR_PROMPT
 
     def execute(self, question: str, plan: List[str], **kwargs) -> str:
         """
-        按計劃執行任務
-
+        負責執行 Executor 中的 execute 流程，依照 Executor 的流程需求處理 execute 對應的資料轉換、狀態操作或結果產生。
+        
         Args:
-            question: 原始問題
-            plan: 執行計劃
-            **kwargs: LLM呼叫參數
-
+            question: 目前要處理的任務、問題或查詢文字。
+            plan: 此流程需要使用的輸入資料。
+            **kwargs: 此流程需要使用的輸入資料。
+        
         Returns:
-            最終答案
+            執行結果；若函式標註回傳型別，預期型別為 str。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
         """
         history = ""
         final_answer = ""
@@ -123,15 +179,20 @@ class Executor:
 
 class PlanAndSolveAgent(Agent):
     """
-    Plan and Solve Agent - 分解規劃與逐步執行的智慧代理
+    負責在 agents.plan_solve_agent 中封裝 PlanAndSolveAgent，封裝代理節點的推理、工具使用、訊息傳遞或協作控制邏輯。
     
-    這個Agent能夠：
-    1. 將複雜問題分解為簡單步驟
-    2. 按照計劃逐步執行
-    3. 維護執行歷史和上下文
-    4. 得出最終答案
+    Args:
+        name: 此流程需要使用的輸入資料。
+        llm: 用來呼叫模型或外部服務的模型名稱、客戶端或相關設定。
+        system_prompt: 此流程需要使用的輸入資料。
+        config: 控制此流程行為的設定資料。
+        custom_prompts: 此流程需要使用的輸入資料。
     
-    特別適合多步驟推理、數學問題、複雜分析等任務。
+    Returns:
+        類別本身不直接回傳值；建立實例後可透過其方法操作狀態與流程。
+    
+    限制或副作用:
+        方法可能更新內部狀態、讀寫檔案、呼叫外部服務或產生日誌，需依使用情境確認。
     """
     
     def __init__(
@@ -143,14 +204,20 @@ class PlanAndSolveAgent(Agent):
         custom_prompts: Optional[Dict[str, str]] = None
     ):
         """
-        初始化PlanAndSolveAgent
-
+        負責執行 PlanAndSolveAgent 中的 __init__ 流程，初始化物件所需的設定、依賴與內部狀態，讓後續方法可以沿用同一份執行上下文。
+        
         Args:
-            name: Agent名稱
-            llm: LLM實例
-            system_prompt: 系統提示詞
-            config: 設定對象
-            custom_prompts: 自定義提示詞模板 {"planner": "", "executor": ""}
+            name: 此流程需要使用的輸入資料。
+            llm: 用來呼叫模型或外部服務的模型名稱、客戶端或相關設定。
+            system_prompt: 此流程需要使用的輸入資料。
+            config: 控制此流程行為的設定資料。
+            custom_prompts: 此流程需要使用的輸入資料。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 未標註。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
         """
         super().__init__(name, llm, system_prompt, config)
 
@@ -167,14 +234,17 @@ class PlanAndSolveAgent(Agent):
     
     def run(self, input_text: str, **kwargs) -> str:
         """
-        執行Plan and Solve Agent
+        負責執行 PlanAndSolveAgent 中的 run 流程，啟動主要執行流程，串接輸入準備、核心處理與結果輸出。
         
         Args:
-            input_text: 要解決的問題
-            **kwargs: 其他參數
-            
+            input_text: 此流程需要使用的輸入資料。
+            **kwargs: 此流程需要使用的輸入資料。
+        
         Returns:
-            最終答案
+            執行結果；若函式標註回傳型別，預期型別為 str。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
         """
         print(f"\n🤖 {self.name} 開始處理問題: {input_text}")
         

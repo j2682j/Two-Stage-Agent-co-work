@@ -16,7 +16,23 @@ import json
 # 實際使用時可以根據需要呼叫 agent-connect 的具體模組
 
 class ServiceInfo:
-    """服務資訊"""
+    """
+    負責在 protocols.anp.implementation 中封裝 ServiceInfo，封裝此模組的狀態資料與主要操作流程。
+    
+    Args:
+        service_id: 此流程需要使用的輸入資料。
+        service_type: 此流程需要使用的輸入資料。
+        endpoint: 此流程需要使用的輸入資料。
+        service_name: 此流程需要使用的輸入資料。
+        capabilities: 此流程需要使用的輸入資料。
+        metadata: 目前流程所需的上下文、狀態或附加資訊。
+    
+    Returns:
+        類別本身不直接回傳值；建立實例後可透過其方法操作狀態與流程。
+    
+    限制或副作用:
+        方法可能更新內部狀態、讀寫檔案、呼叫外部服務或產生日誌，需依使用情境確認。
+    """
 
     def __init__(
         self,
@@ -27,6 +43,23 @@ class ServiceInfo:
         capabilities: Optional[List[str]] = None,
         metadata: Optional[Dict[str, Any]] = None
     ):
+        """
+        負責執行 ServiceInfo 中的 __init__ 流程，初始化物件所需的設定、依賴與內部狀態，讓後續方法可以沿用同一份執行上下文。
+        
+        Args:
+            service_id: 此流程需要使用的輸入資料。
+            service_type: 此流程需要使用的輸入資料。
+            endpoint: 此流程需要使用的輸入資料。
+            service_name: 此流程需要使用的輸入資料。
+            capabilities: 此流程需要使用的輸入資料。
+            metadata: 目前流程所需的上下文、狀態或附加資訊。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 未標註。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         self.service_id = service_id
         self.service_type = service_type
         self.endpoint = endpoint
@@ -35,7 +68,18 @@ class ServiceInfo:
         self.metadata = metadata or {}
 
     def to_dict(self) -> Dict[str, Any]:
-        """轉換為字典"""
+        """
+        負責執行 ServiceInfo 中的 to_dict 流程，將內部資料整理成日誌、提示詞、摘要或指定的輸出格式。
+        
+        Args:
+            無。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 Dict[str, Any]。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         return {
             "service_id": self.service_id,
             "service_type": self.service_type,
@@ -47,7 +91,18 @@ class ServiceInfo:
 
     @classmethod
     def from_dict(cls, data: Dict[str, Any]) -> 'ServiceInfo':
-        """從字典建立"""
+        """
+        負責執行 ServiceInfo 中的 from_dict 流程，依照 ServiceInfo 的流程需求處理 from_dict 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            data: 此流程需要使用的輸入資料。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 'ServiceInfo'。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         return cls(
             service_id=data["service_id"],
             service_type=data["service_type"],
@@ -59,34 +114,62 @@ class ServiceInfo:
 
 
 class ANPDiscovery:
-    """基於 agent-connect 的服務發現實現"""
+    """
+    負責在 protocols.anp.implementation 中封裝 ANPDiscovery，封裝此模組的狀態資料與主要操作流程。
+    
+    Args:
+        無明確建構參數，可能透過 dataclass 欄位或預設值建立物件。
+    
+    Returns:
+        類別本身不直接回傳值；建立實例後可透過其方法操作狀態與流程。
+    
+    限制或副作用:
+        方法可能更新內部狀態、讀寫檔案、呼叫外部服務或產生日誌，需依使用情境確認。
+    """
     
     def __init__(self):
-        """初始化服務發現"""
+        """
+        負責執行 ANPDiscovery 中的 __init__ 流程，初始化物件所需的設定、依賴與內部狀態，讓後續方法可以沿用同一份執行上下文。
+        
+        Args:
+            無。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 未標註。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         self._services: Dict[str, ServiceInfo] = {}
         
     def register_service(self, service: ServiceInfo) -> bool:
         """
-        註冊服務
+        負責執行 ANPDiscovery 中的 register_service 流程，依照 ANPDiscovery 的流程需求處理 register_service 對應的資料轉換、狀態操作或結果產生。
         
         Args:
-            service: 服務資訊
-            
+            service: 此流程需要使用的輸入資料。
+        
         Returns:
-            是否註冊成功
+            執行結果；若函式標註回傳型別，預期型別為 bool。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
         """
         self._services[service.service_id] = service
         return True
         
     def unregister_service(self, service_id: str) -> bool:
         """
-        注銷服務
+        負責執行 ANPDiscovery 中的 unregister_service 流程，依照 ANPDiscovery 的流程需求處理 unregister_service 對應的資料轉換、狀態操作或結果產生。
         
         Args:
-            service_id: 服務 ID
-            
+            service_id: 此流程需要使用的輸入資料。
+        
         Returns:
-            是否注銷成功
+            執行結果；若函式標註回傳型別，預期型別為 bool。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
         """
         if service_id in self._services:
             del self._services[service_id]
@@ -99,14 +182,17 @@ class ANPDiscovery:
         filters: Optional[Dict[str, Any]] = None
     ) -> List[ServiceInfo]:
         """
-        發現服務
+        負責執行 ANPDiscovery 中的 discover_services 流程，依照 ANPDiscovery 的流程需求處理 discover_services 對應的資料轉換、狀態操作或結果產生。
         
         Args:
-            service_type: 服務類型（可選）
-            filters: 過濾條件（可選）
-            
+            service_type: 此流程需要使用的輸入資料。
+            filters: 此流程需要使用的輸入資料。
+        
         Returns:
-            服務列表
+            執行結果；若函式標註回傳型別，預期型別為 List[ServiceInfo]。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
         """
         services = list(self._services.values())
         
@@ -117,6 +203,18 @@ class ANPDiscovery:
         # 按元資料過濾
         if filters:
             def matches_filters(service: ServiceInfo) -> bool:
+                """
+                負責執行 ANPDiscovery 中的 matches_filters 流程，依照 ANPDiscovery 的流程需求處理 matches_filters 對應的資料轉換、狀態操作或結果產生。
+                
+                Args:
+                    service: 此流程需要使用的輸入資料。
+                
+                Returns:
+                    執行結果；若函式標註回傳型別，預期型別為 bool。
+                
+                限制或副作用:
+                    可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+                """
                 for key, value in filters.items():
                     if service.metadata.get(key) != value:
                         return False
@@ -127,30 +225,61 @@ class ANPDiscovery:
         
     def get_service(self, service_id: str) -> Optional[ServiceInfo]:
         """
-        取得服務資訊
+        負責執行 ANPDiscovery 中的 get_service 流程，依照 ANPDiscovery 的流程需求處理 get_service 對應的資料轉換、狀態操作或結果產生。
         
         Args:
-            service_id: 服務 ID
-            
+            service_id: 此流程需要使用的輸入資料。
+        
         Returns:
-            服務資訊，如果不存在則回傳 None
+            執行結果；若函式標註回傳型別，預期型別為 Optional[ServiceInfo]。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
         """
         return self._services.get(service_id)
         
     def list_all_services(self) -> List[ServiceInfo]:
-        """列出所有服務"""
+        """
+        負責執行 ANPDiscovery 中的 list_all_services 流程，依照 ANPDiscovery 的流程需求處理 list_all_services 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            無。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 List[ServiceInfo]。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         return list(self._services.values())
 
 
 class ANPNetwork:
-    """基於 agent-connect 的網路管理實現"""
+    """
+    負責在 protocols.anp.implementation 中封裝 ANPNetwork，管理記憶圖、任務紀錄、檢索結果或跨任務經驗的狀態與操作。
+    
+    Args:
+        network_id: 此流程需要使用的輸入資料。
+    
+    Returns:
+        類別本身不直接回傳值；建立實例後可透過其方法操作狀態與流程。
+    
+    限制或副作用:
+        方法可能更新內部狀態、讀寫檔案、呼叫外部服務或產生日誌，需依使用情境確認。
+    """
     
     def __init__(self, network_id: str = "default"):
         """
-        初始化網路管理器
+        負責執行 ANPNetwork 中的 __init__ 流程，初始化物件所需的設定、依賴與內部狀態，讓後續方法可以沿用同一份執行上下文。
         
         Args:
-            network_id: 網路 ID
+            network_id: 此流程需要使用的輸入資料。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 未標註。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
         """
         self.network_id = network_id
         self._nodes: Dict[str, Dict[str, Any]] = {}
@@ -158,12 +287,18 @@ class ANPNetwork:
         
     def add_node(self, node_id: str, endpoint: str, metadata: Optional[Dict[str, Any]] = None):
         """
-        添加節點到網路
+        負責執行 ANPNetwork 中的 add_node 流程，更新記憶圖、互動狀態、節點邊關係或追蹤紀錄。
         
         Args:
-            node_id: 節點 ID
-            endpoint: 節點端點
-            metadata: 節點元資料
+            node_id: 目前執行或需要記錄的代理節點識別資訊。
+            endpoint: 圖結構中的節點、邊或相關識別資料。
+            metadata: 目前流程所需的上下文、狀態或附加資訊。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 未標註。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
         """
         self._nodes[node_id] = {
             "node_id": node_id,
@@ -175,13 +310,16 @@ class ANPNetwork:
         
     def remove_node(self, node_id: str) -> bool:
         """
-        從網路中移除節點
+        負責執行 ANPNetwork 中的 remove_node 流程，清除或移除指定資源、狀態或註冊資料，維持後續流程的一致性。
         
         Args:
-            node_id: 節點 ID
-            
+            node_id: 目前執行或需要記錄的代理節點識別資訊。
+        
         Returns:
-            是否移除成功
+            執行結果；若函式標註回傳型別，預期型別為 bool。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
         """
         if node_id in self._nodes:
             del self._nodes[node_id]
@@ -195,11 +333,17 @@ class ANPNetwork:
         
     def connect_nodes(self, from_node: str, to_node: str):
         """
-        連線兩個節點
+        負責執行 ANPNetwork 中的 connect_nodes 流程，依照 ANPNetwork 的流程需求處理 connect_nodes 對應的資料轉換、狀態操作或結果產生。
         
         Args:
-            from_node: 源節點 ID
-            to_node: 目標節點 ID
+            from_node: 圖結構中的節點、邊或相關識別資料。
+            to_node: 圖結構中的節點、邊或相關識別資料。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 未標註。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
         """
         if from_node in self._connections and to_node in self._nodes:
             if to_node not in self._connections[from_node]:
@@ -212,15 +356,18 @@ class ANPNetwork:
         message: Dict[str, Any]
     ) -> Optional[List[str]]:
         """
-        路由消息（簡單的直接路由）
+        負責執行 ANPNetwork 中的 route_message 流程，根據任務特徵、候選答案或評分結果選擇後續節點、工具或流程分支。
         
         Args:
-            from_node: 源節點 ID
-            to_node: 目標節點 ID
-            message: 消息內容
-            
+            from_node: 圖結構中的節點、邊或相關識別資料。
+            to_node: 圖結構中的節點、邊或相關識別資料。
+            message: 模型、節點或工具產生的候選回覆內容。
+        
         Returns:
-            路由路徑，如果無法路由則回傳 None
+            執行結果；若函式標註回傳型別，預期型別為 Optional[List[str]]。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
         """
         if from_node not in self._nodes or to_node not in self._nodes:
             return None
@@ -238,14 +385,17 @@ class ANPNetwork:
         
     def broadcast_message(self, from_node: str, message: Dict[str, Any]) -> List[str]:
         """
-        廣播消息到所有連線的節點
+        負責執行 ANPNetwork 中的 broadcast_message 流程，依照 ANPNetwork 的流程需求處理 broadcast_message 對應的資料轉換、狀態操作或結果產生。
         
         Args:
-            from_node: 源節點 ID
-            message: 消息內容
-            
+            from_node: 圖結構中的節點、邊或相關識別資料。
+            message: 模型、節點或工具產生的候選回覆內容。
+        
         Returns:
-            接收消息的節點列表
+            執行結果；若函式標註回傳型別，預期型別為 List[str]。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
         """
         if from_node not in self._connections:
             return []
@@ -254,10 +404,16 @@ class ANPNetwork:
         
     def get_network_stats(self) -> Dict[str, Any]:
         """
-        取得網路統計資訊
+        負責執行 ANPNetwork 中的 get_network_stats 流程，依照 ANPNetwork 的流程需求處理 get_network_stats 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            無。
         
         Returns:
-            網路統計資訊
+            執行結果；若函式標註回傳型別，預期型別為 Dict[str, Any]。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
         """
         total_connections = sum(len(conns) for conns in self._connections.values())
         active_nodes = sum(1 for node in self._nodes.values() if node["status"] == "active")
@@ -272,13 +428,16 @@ class ANPNetwork:
         
     def get_node_info(self, node_id: str) -> Optional[Dict[str, Any]]:
         """
-        取得節點資訊
+        負責執行 ANPNetwork 中的 get_node_info 流程，依照 ANPNetwork 的流程需求處理 get_node_info 對應的資料轉換、狀態操作或結果產生。
         
         Args:
-            node_id: 節點 ID
-            
+            node_id: 目前執行或需要記錄的代理節點識別資訊。
+        
         Returns:
-            節點資訊，如果不存在則回傳 None
+            執行結果；若函式標註回傳型別，預期型別為 Optional[Dict[str, Any]]。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
         """
         if node_id in self._nodes:
             node_info = self._nodes[node_id].copy()
@@ -289,7 +448,18 @@ class ANPNetwork:
 
 # 範例：建立一個簡單的 ANP 網路
 def create_example_network() -> ANPNetwork:
-    """建立一個範例 ANP 網路"""
+    """
+    負責執行 protocols.anp.implementation 中的 create_example_network 流程，建立後續流程需要的物件、資料結構或輸出區塊。
+    
+    Args:
+        無。
+    
+    Returns:
+        執行結果；若函式標註回傳型別，預期型別為 ANPNetwork。
+    
+    限制或副作用:
+        可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+    """
     network = ANPNetwork(network_id="example_network")
     
     # 添加節點

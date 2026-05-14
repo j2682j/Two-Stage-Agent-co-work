@@ -11,26 +11,33 @@ import numpy as np
 
 
 class BFCLMetrics:
-    """BFCL 評估指標計算器
-
-    計算工具呼叫相關的評估指標:
-    - 正確率 (Accuracy): 完全正確的比例
-    - AST 匹配度 (AST Match): 抽象語法樹匹配度
-    - 參數正確率 (Parameter Accuracy): 參數正確的比例
-    - F1分數: 精確率和召回率的調和平均
-    - 執行成功率: 可執行函式呼叫的成功率
+    """
+    負責在 evaluation.benchmarks.bfcl.metrics 中封裝 BFCLMetrics，封裝 benchmark 評估、答案判定、分數計算或報告資料整理流程。
+    
+    Args:
+        無明確建構參數，可能透過 dataclass 欄位或預設值建立物件。
+    
+    Returns:
+        類別本身不直接回傳值；建立實例後可透過其方法操作狀態與流程。
+    
+    限制或副作用:
+        方法可能更新內部狀態、讀寫檔案、呼叫外部服務或產生日誌，需依使用情境確認。
     """
 
     @staticmethod
     def calculate_accuracy(predictions: List[Any], references: List[Any]) -> float:
-        """計算正確率
-
+        """
+        負責執行 BFCLMetrics 中的 calculate_accuracy 流程，依照 BFCLMetrics 的流程需求處理 calculate_accuracy 對應的資料轉換、狀態操作或結果產生。
+        
         Args:
-            predictions: 預測結果列表
-            references: 參考答案列表
-
+            predictions: 此流程需要使用的輸入資料。
+            references: 此流程需要使用的輸入資料。
+        
         Returns:
-            正確率 (0-1)
+            執行結果；若函式標註回傳型別，預期型別為 float。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
         """
         if not predictions or not references:
             return 0.0
@@ -41,14 +48,18 @@ class BFCLMetrics:
 
     @staticmethod
     def calculate_ast_match(predicted: str, expected: str) -> float:
-        """計算 AST 匹配度
-
+        """
+        負責執行 BFCLMetrics 中的 calculate_ast_match 流程，依照 BFCLMetrics 的流程需求處理 calculate_ast_match 對應的資料轉換、狀態操作或結果產生。
+        
         Args:
-            predicted: 預測的函式呼叫
-            expected: 期望的函式呼叫
-
+            predicted: 此流程需要使用的輸入資料。
+            expected: 此流程需要使用的輸入資料。
+        
         Returns:
-            匹配度 (0-1)
+            執行結果；若函式標註回傳型別，預期型別為 float。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
         """
         try:
             # 嘗試解析為AST
@@ -72,7 +83,19 @@ class BFCLMetrics:
 
     @staticmethod
     def _calculate_string_similarity(s1: str, s2: str) -> float:
-        """計算字串相似度（簡化版Levenshtein距離）"""
+        """
+        負責執行 BFCLMetrics 中的 _calculate_string_similarity 流程，依照 BFCLMetrics 的流程需求處理 _calculate_string_similarity 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            s1: 此流程需要使用的輸入資料。
+            s2: 此流程需要使用的輸入資料。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 float。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         if s1 == s2:
             return 1.0
         if not s1 or not s2:
@@ -95,14 +118,18 @@ class BFCLMetrics:
         predicted_params: Dict[str, Any],
         expected_params: Dict[str, Any]
     ) -> float:
-        """計算參數正確率
-
+        """
+        負責執行 BFCLMetrics 中的 calculate_parameter_accuracy 流程，依照 BFCLMetrics 的流程需求處理 calculate_parameter_accuracy 對應的資料轉換、狀態操作或結果產生。
+        
         Args:
-            predicted_params: 預測的參數
-            expected_params: 期望的參數
-
+            predicted_params: 此流程需要使用的輸入資料。
+            expected_params: 此流程需要使用的輸入資料。
+        
         Returns:
-            參數正確率 (0-1)
+            執行結果；若函式標註回傳型別，預期型別為 float。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
         """
         if not expected_params:
             return 1.0 if not predicted_params else 0.0
@@ -121,7 +148,19 @@ class BFCLMetrics:
 
     @staticmethod
     def _values_match(v1: Any, v2: Any) -> bool:
-        """比較兩個值是否匹配"""
+        """
+        負責執行 BFCLMetrics 中的 _values_match 流程，依照 BFCLMetrics 的流程需求處理 _values_match 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            v1: 此流程需要使用的輸入資料。
+            v2: 此流程需要使用的輸入資料。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 bool。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         # 處理數值類型
         if isinstance(v1, (int, float)) and isinstance(v2, (int, float)):
             return abs(v1 - v2) < 1e-6
@@ -146,13 +185,17 @@ class BFCLMetrics:
         return v1 == v2
 
     def compute_metrics(self, results: List[Dict[str, Any]]) -> Dict[str, Any]:
-        """計算綜合指標
-
+        """
+        負責執行 BFCLMetrics 中的 compute_metrics 流程，依照 BFCLMetrics 的流程需求處理 compute_metrics 對應的資料轉換、狀態操作或結果產生。
+        
         Args:
-            results: 評估結果列表
-
+            results: 此流程需要使用的輸入資料。
+        
         Returns:
-            指標字典，包含各種評估指標
+            執行結果；若函式標註回傳型別，預期型別為 Dict[str, Any]。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
         """
         if not results:
             return self._empty_metrics()
@@ -189,7 +232,18 @@ class BFCLMetrics:
         }
 
     def _empty_metrics(self) -> Dict[str, Any]:
-        """回傳空指標"""
+        """
+        負責執行 BFCLMetrics 中的 _empty_metrics 流程，依照 BFCLMetrics 的流程需求處理 _empty_metrics 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            無。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 Dict[str, Any]。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         return {
             "total_samples": 0,
             "success_count": 0,
@@ -202,7 +256,18 @@ class BFCLMetrics:
         }
 
     def _compute_category_metrics(self, results: List[Dict[str, Any]]) -> Dict[str, Dict[str, Any]]:
-        """計算分類別指標"""
+        """
+        負責執行 BFCLMetrics 中的 _compute_category_metrics 流程，依照 BFCLMetrics 的流程需求處理 _compute_category_metrics 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            results: 此流程需要使用的輸入資料。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 Dict[str, Dict[str, Any]]。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         categories = {}
 
         for result in results:
@@ -235,7 +300,18 @@ class BFCLMetrics:
         return category_metrics
 
     def _compute_function_call_stats(self, results: List[Dict[str, Any]]) -> Dict[str, Any]:
-        """計算函式呼叫統計"""
+        """
+        負責執行 BFCLMetrics 中的 _compute_function_call_stats 流程，依照 BFCLMetrics 的流程需求處理 _compute_function_call_stats 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            results: 此流程需要使用的輸入資料。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 Dict[str, Any]。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         total_calls = 0
         successful_calls = 0
         function_names = set()
@@ -259,7 +335,18 @@ class BFCLMetrics:
         }
 
     def _compute_score_distribution(self, scores: List[float]) -> Dict[str, Any]:
-        """計算分數分布"""
+        """
+        負責執行 BFCLMetrics 中的 _compute_score_distribution 流程，依照 BFCLMetrics 的流程需求處理 _compute_score_distribution 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            scores: 評估、推理或工具執行後產生的結果與分數資料。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 Dict[str, Any]。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         if not scores:
             return {}
 
@@ -278,14 +365,18 @@ class BFCLMetrics:
 
     @staticmethod
     def calculate_f1_score(precision: float, recall: float) -> float:
-        """計算F1分數
-
+        """
+        負責執行 BFCLMetrics 中的 calculate_f1_score 流程，依照 BFCLMetrics 的流程需求處理 calculate_f1_score 對應的資料轉換、狀態操作或結果產生。
+        
         Args:
-            precision: 精確率
-            recall: 召回率
-
+            precision: 評估、推理或工具執行後產生的結果與分數資料。
+            recall: 評估、推理或工具執行後產生的結果與分數資料。
+        
         Returns:
-            F1分數
+            執行結果；若函式標註回傳型別，預期型別為 float。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
         """
         if precision + recall == 0:
             return 0.0
@@ -296,14 +387,18 @@ class BFCLMetrics:
         predicted: List[Dict[str, Any]],
         expected: List[Dict[str, Any]]
     ) -> tuple[float, float]:
-        """計算精確率和召回率
-
+        """
+        負責執行 BFCLMetrics 中的 calculate_precision_recall 流程，依照 BFCLMetrics 的流程需求處理 calculate_precision_recall 對應的資料轉換、狀態操作或結果產生。
+        
         Args:
-            predicted: 預測的函式呼叫列表
-            expected: 期望的函式呼叫列表
-
+            predicted: 此流程需要使用的輸入資料。
+            expected: 此流程需要使用的輸入資料。
+        
         Returns:
-            (precision, recall) 元組
+            執行結果；若函式標註回傳型別，預期型別為 tuple[float, float]。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
         """
         if not expected:
             return 1.0 if not predicted else 0.0, 1.0

@@ -45,18 +45,62 @@ DEFAULT_PROMPTS = {
 
 class Memory:
     """
-    簡單的短期記憶模組，用於儲存智慧代理的行動與反思軌跡。
+    負責在 agents.reflection_agent 中封裝 Memory，管理記憶圖、任務紀錄、檢索結果或跨任務經驗的狀態與操作。
+    
+    Args:
+        無明確建構參數，可能透過 dataclass 欄位或預設值建立物件。
+    
+    Returns:
+        類別本身不直接回傳值；建立實例後可透過其方法操作狀態與流程。
+    
+    限制或副作用:
+        方法可能更新內部狀態、讀寫檔案、呼叫外部服務或產生日誌，需依使用情境確認。
     """
     def __init__(self):
+        """
+        負責執行 Memory 中的 __init__ 流程，初始化物件所需的設定、依賴與內部狀態，讓後續方法可以沿用同一份執行上下文。
+        
+        Args:
+            無。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 未標註。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         self.records: List[Dict[str, Any]] = []
 
     def add_record(self, record_type: str, content: str):
-        """向記憶中添加一條新紀錄"""
+        """
+        負責執行 Memory 中的 add_record 流程，更新記憶圖、互動狀態、節點邊關係或追蹤紀錄。
+        
+        Args:
+            record_type: 記憶系統提供的檢索結果、寫入資料或操作介面。
+            content: 記憶系統提供的檢索結果、寫入資料或操作介面。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 未標註。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         self.records.append({"type": record_type, "content": content})
         print(f"📝 記憶已更新，新增一條 '{record_type}' 紀錄。")
 
     def get_trajectory(self) -> str:
-        """將所有記憶紀錄格式化為一個連貫的字串文字"""
+        """
+        負責執行 Memory 中的 get_trajectory 流程，依照 Memory 的流程需求處理 get_trajectory 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            無。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 str。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         trajectory = ""
         for record in self.records:
             if record['type'] == 'execution':
@@ -66,7 +110,18 @@ class Memory:
         return trajectory.strip()
 
     def get_last_execution(self) -> str:
-        """取得最近一次的執行結果"""
+        """
+        負責執行 Memory 中的 get_last_execution 流程，依照 Memory 的流程需求處理 get_last_execution 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            無。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 str。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         for record in reversed(self.records):
             if record['type'] == 'execution':
                 return record['content']
@@ -74,17 +129,21 @@ class Memory:
 
 class ReflectionAgent(Agent):
     """
-    Reflection Agent - 自我反思與迭代優化的智慧代理
-
-    這個Agent能夠：
-    1. 執行初始任務
-    2. 對結果進行自我反思
-    3. 根據反思結果進行優化
-    4. 迭代改進直到滿意
-
-    特別適合代碼生成、文檔寫作、分析報告等需要迭代優化的任務。
-
-    支援多種專業領域的提示詞模板，使用者可以自定義或使用內建模板。
+    負責在 agents.reflection_agent 中封裝 ReflectionAgent，封裝代理節點的推理、工具使用、訊息傳遞或協作控制邏輯。
+    
+    Args:
+        name: 此流程需要使用的輸入資料。
+        llm: 用來呼叫模型或外部服務的模型名稱、客戶端或相關設定。
+        system_prompt: 此流程需要使用的輸入資料。
+        config: 控制此流程行為的設定資料。
+        max_iterations: 控制檢索、篩選或輸出數量的數值參數。
+        custom_prompts: 此流程需要使用的輸入資料。
+    
+    Returns:
+        類別本身不直接回傳值；建立實例後可透過其方法操作狀態與流程。
+    
+    限制或副作用:
+        方法可能更新內部狀態、讀寫檔案、呼叫外部服務或產生日誌，需依使用情境確認。
     """
 
     def __init__(
@@ -97,15 +156,21 @@ class ReflectionAgent(Agent):
         custom_prompts: Optional[Dict[str, str]] = None
     ):
         """
-        初始化ReflectionAgent
-
+        負責執行 ReflectionAgent 中的 __init__ 流程，初始化物件所需的設定、依賴與內部狀態，讓後續方法可以沿用同一份執行上下文。
+        
         Args:
-            name: Agent名稱
-            llm: LLM實例
-            system_prompt: 系統提示詞
-            config: 設定對象
-            max_iterations: 最大迭代次數
-            custom_prompts: 自定義提示詞模板 {"initial": "", "reflect": "", "refine": ""}
+            name: 此流程需要使用的輸入資料。
+            llm: 用來呼叫模型或外部服務的模型名稱、客戶端或相關設定。
+            system_prompt: 此流程需要使用的輸入資料。
+            config: 控制此流程行為的設定資料。
+            max_iterations: 控制檢索、篩選或輸出數量的數值參數。
+            custom_prompts: 此流程需要使用的輸入資料。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 未標註。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
         """
         super().__init__(name, llm, system_prompt, config)
         self.max_iterations = max_iterations
@@ -116,14 +181,17 @@ class ReflectionAgent(Agent):
     
     def run(self, input_text: str, **kwargs) -> str:
         """
-        執行Reflection Agent
-
+        負責執行 ReflectionAgent 中的 run 流程，啟動主要執行流程，串接輸入準備、核心處理與結果輸出。
+        
         Args:
-            input_text: 任務描述
-            **kwargs: 其他參數
-
+            input_text: 此流程需要使用的輸入資料。
+            **kwargs: 此流程需要使用的輸入資料。
+        
         Returns:
-            最終優化後的結果
+            執行結果；若函式標註回傳型別，預期型別為 str。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
         """
         print(f"\n🤖 {self.name} 開始處理任務: {input_text}")
 
@@ -175,6 +243,18 @@ class ReflectionAgent(Agent):
         return final_result
     
     def _get_llm_response(self, prompt: str, **kwargs) -> str:
-        """呼叫LLM並取得完整回應"""
+        """
+        負責執行 ReflectionAgent 中的 _get_llm_response 流程，依照 ReflectionAgent 的流程需求處理 _get_llm_response 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            prompt: 用來呼叫模型或外部服務的模型名稱、客戶端或相關設定。
+            **kwargs: 用來呼叫模型或外部服務的模型名稱、客戶端或相關設定。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 str。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         messages = [{"role": "user", "content": prompt}]
         return self.llm.invoke(messages, **kwargs) or ""

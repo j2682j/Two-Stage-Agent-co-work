@@ -56,7 +56,22 @@ except ImportError:
 
 
 class MCPClient:
-    """MCP 客戶端，支援多種傳輸方式"""
+    """
+    負責在 protocols.mcp.client 中封裝 MCPClient，封裝此模組的狀態資料與主要操作流程。
+    
+    Args:
+        server_source: 用來呼叫模型或外部服務的模型名稱、客戶端或相關設定。
+        server_args: 用來呼叫模型或外部服務的模型名稱、客戶端或相關設定。
+        transport_type: 用來呼叫模型或外部服務的模型名稱、客戶端或相關設定。
+        env: 用來呼叫模型或外部服務的模型名稱、客戶端或相關設定。
+        **transport_kwargs: 用來呼叫模型或外部服務的模型名稱、客戶端或相關設定。
+    
+    Returns:
+        類別本身不直接回傳值；建立實例後可透過其方法操作狀態與流程。
+    
+    限制或副作用:
+        方法可能更新內部狀態、讀寫檔案、呼叫外部服務或產生日誌，需依使用情境確認。
+    """
 
     def __init__(self,
                  server_source: Union[str, List[str], FastMCP, Dict[str, Any]],
@@ -65,22 +80,20 @@ class MCPClient:
                  env: Optional[Dict[str, str]] = None,
                  **transport_kwargs):
         """
-        初始化MCP 客戶端
-
+        負責執行 MCPClient 中的 __init__ 流程，初始化物件所需的設定、依賴與內部狀態，讓後續方法可以沿用同一份執行上下文。
+        
         Args:
-            server_source: 伺服器源，支援多種格式：
-                - FastMCP 實例: 記憶體傳輸（用於測試）
-                - 字串路徑: Python 腳本路徑（如 "server.py"）
-                - HTTP URL: 遠程伺服器（如 "https://api.example.com/mcp"）
-                - 命令列表: 完整命令（如 ["python", "server.py"]）
-                - 設定字典: 傳輸設定
-            server_args: 伺服器參數列表（可選）
-            transport_type: 強制指定傳輸類型 ("stdio", "http", "sse", "memory")
-            env: 環境變數字典（傳遞給MCP伺服器進程）
-            **transport_kwargs: 傳輸特定的額外參數
-
-        Raises:
-            ImportError: 如果 fastmcp 庫未安裝
+            server_source: 用來呼叫模型或外部服務的模型名稱、客戶端或相關設定。
+            server_args: 用來呼叫模型或外部服務的模型名稱、客戶端或相關設定。
+            transport_type: 用來呼叫模型或外部服務的模型名稱、客戶端或相關設定。
+            env: 用來呼叫模型或外部服務的模型名稱、客戶端或相關設定。
+            **transport_kwargs: 用來呼叫模型或外部服務的模型名稱、客戶端或相關設定。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 未標註。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
         """
         if not FASTMCP_AVAILABLE:
             raise ImportError(
@@ -97,7 +110,18 @@ class MCPClient:
         self._context_manager = None
 
     def _prepare_server_source(self, server_source: Union[str, List[str], FastMCP, Dict[str, Any]]):
-        """準備伺服器源，根據類型建立合適的傳輸設定"""
+        """
+        負責執行 MCPClient 中的 _prepare_server_source 流程，依照 MCPClient 的流程需求處理 _prepare_server_source 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            server_source: 用來呼叫模型或外部服務的模型名稱、客戶端或相關設定。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 未標註。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         
         # 1. FastMCP 實例 - 記憶體傳輸
         if isinstance(server_source, FastMCP):
@@ -154,7 +178,18 @@ class MCPClient:
         return server_source
 
     def _create_transport_from_config(self, config: Dict[str, Any]):
-        """從設定字典建立傳輸"""
+        """
+        負責執行 MCPClient 中的 _create_transport_from_config 流程，依照 MCPClient 的流程需求處理 _create_transport_from_config 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            config: 控制此流程行為的設定資料。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 未標註。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         transport_type = config.get("transport", "stdio")
         
         if transport_type == "stdio":
@@ -196,7 +231,18 @@ class MCPClient:
             raise ValueError(f"Unsupported transport type: {transport_type}")
 
     async def __aenter__(self):
-        """非同步上下文管理器入口"""
+        """
+        負責執行 MCPClient 中的 __aenter__ 流程，依照 MCPClient 的流程需求處理 __aenter__ 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            無。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 未標註。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         print("🔗 連線到 MCP 伺服器...")
         self.client = Client(self.server_source)
         self._context_manager = self.client
@@ -205,7 +251,20 @@ class MCPClient:
         return self
 
     async def __aexit__(self, exc_type, exc_val, exc_tb):
-        """非同步上下文管理器出口"""
+        """
+        負責執行 MCPClient 中的 __aexit__ 流程，依照 MCPClient 的流程需求處理 __aexit__ 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            exc_type: 用來呼叫模型或外部服務的模型名稱、客戶端或相關設定。
+            exc_val: 用來呼叫模型或外部服務的模型名稱、客戶端或相關設定。
+            exc_tb: 用來呼叫模型或外部服務的模型名稱、客戶端或相關設定。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 未標註。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         if self._context_manager:
             await self._context_manager.__aexit__(exc_type, exc_val, exc_tb)
             self.client = None
@@ -213,7 +272,18 @@ class MCPClient:
         print("🔌 連線已斷開")
 
     async def list_tools(self) -> List[Dict[str, Any]]:
-        """列出所有可用的工具"""
+        """
+        負責執行 MCPClient 中的 list_tools 流程，依照 MCPClient 的流程需求處理 list_tools 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            無。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 List[Dict[str, Any]]。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         if not self.client:
             raise RuntimeError("Client not connected. Use 'async with client:' context manager.")
 
@@ -237,7 +307,19 @@ class MCPClient:
         ]
 
     async def call_tool(self, tool_name: str, arguments: Dict[str, Any]) -> Any:
-        """呼叫 MCP 工具"""
+        """
+        負責執行 MCPClient 中的 call_tool 流程，呼叫模型、工具或外部服務並整理回傳結果。
+        
+        Args:
+            tool_name: 可呼叫的工具、工具名稱或工具註冊表。
+            arguments: 用來呼叫模型或外部服務的模型名稱、客戶端或相關設定。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 Any。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         if not self.client:
             raise RuntimeError("Client not connected. Use 'async with client:' context manager.")
 
@@ -258,7 +340,18 @@ class MCPClient:
         return None
 
     async def list_resources(self) -> List[Dict[str, Any]]:
-        """列出所有可用的資源"""
+        """
+        負責執行 MCPClient 中的 list_resources 流程，依照 MCPClient 的流程需求處理 list_resources 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            無。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 List[Dict[str, Any]]。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         if not self.client:
             raise RuntimeError("Client not connected. Use 'async with client:' context manager.")
 
@@ -274,7 +367,18 @@ class MCPClient:
         ]
 
     async def read_resource(self, uri: str) -> Any:
-        """讀取資源內容"""
+        """
+        負責執行 MCPClient 中的 read_resource 流程，讀取本地或外部資料來源並轉換成系統可處理的格式。
+        
+        Args:
+            uri: 用來呼叫模型或外部服務的模型名稱、客戶端或相關設定。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 Any。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         if not self.client:
             raise RuntimeError("Client not connected. Use 'async with client:' context manager.")
 
@@ -295,7 +399,18 @@ class MCPClient:
         return None
 
     async def list_prompts(self) -> List[Dict[str, Any]]:
-        """列出所有可用的提示詞模板"""
+        """
+        負責執行 MCPClient 中的 list_prompts 流程，依照 MCPClient 的流程需求處理 list_prompts 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            無。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 List[Dict[str, Any]]。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         if not self.client:
             raise RuntimeError("Client not connected. Use 'async with client:' context manager.")
 
@@ -310,7 +425,19 @@ class MCPClient:
         ]
 
     async def get_prompt(self, prompt_name: str, arguments: Optional[Dict[str, str]] = None) -> List[Dict[str, Any]]:
-        """取得提示詞內容"""
+        """
+        負責執行 MCPClient 中的 get_prompt 流程，依照 MCPClient 的流程需求處理 get_prompt 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            prompt_name: 用來呼叫模型或外部服務的模型名稱、客戶端或相關設定。
+            arguments: 用來呼叫模型或外部服務的模型名稱、客戶端或相關設定。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 List[Dict[str, Any]]。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         if not self.client:
             raise RuntimeError("Client not connected. Use 'async with client:' context manager.")
 
@@ -328,7 +455,18 @@ class MCPClient:
         return []
 
     async def ping(self) -> bool:
-        """測試伺服器連線"""
+        """
+        負責執行 MCPClient 中的 ping 流程，依照 MCPClient 的流程需求處理 ping 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            無。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 bool。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         if not self.client:
             raise RuntimeError("Client not connected. Use 'async with client:' context manager.")
         
@@ -339,7 +477,18 @@ class MCPClient:
             return False
 
     def get_transport_info(self) -> Dict[str, Any]:
-        """取得傳輸資訊"""
+        """
+        負責執行 MCPClient 中的 get_transport_info 流程，依照 MCPClient 的流程需求處理 get_transport_info 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            無。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 Dict[str, Any]。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         if not self.client:
             return {"status": "not_connected"}
         

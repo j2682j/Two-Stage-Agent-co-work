@@ -7,19 +7,53 @@ import hashlib
 
 @dataclass
 class Document:
-    """文檔類"""
+    """
+    負責在 memory.rag.document 中封裝 Document，管理記憶圖、任務紀錄、檢索結果或跨任務經驗的狀態與操作。
+    
+    Args:
+        無明確建構參數，可能透過 dataclass 欄位或預設值建立物件。
+    
+    Returns:
+        類別本身不直接回傳值；建立實例後可透過其方法操作狀態與流程。
+    
+    限制或副作用:
+        方法可能更新內部狀態、讀寫檔案、呼叫外部服務或產生日誌，需依使用情境確認。
+    """
     content: str
     metadata: Dict[str, Any]
     doc_id: Optional[str] = None
     
     def __post_init__(self):
+        """
+        負責執行 Document 中的 __post_init__ 流程，依照 Document 的流程需求處理 __post_init__ 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            無。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 未標註。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         if self.doc_id is None:
             # 基於內容生成ID
             self.doc_id = hashlib.md5(self.content.encode()).hexdigest()
 
 @dataclass 
 class DocumentChunk:
-    """文檔塊類"""
+    """
+    負責在 memory.rag.document 中封裝 DocumentChunk，管理記憶圖、任務紀錄、檢索結果或跨任務經驗的狀態與操作。
+    
+    Args:
+        無明確建構參數，可能透過 dataclass 欄位或預設值建立物件。
+    
+    Returns:
+        類別本身不直接回傳值；建立實例後可透過其方法操作狀態與流程。
+    
+    限制或副作用:
+        方法可能更新內部狀態、讀寫檔案、呼叫外部服務或產生日誌，需依使用情境確認。
+    """
     content: str
     metadata: Dict[str, Any]
     chunk_id: Optional[str] = None
@@ -27,13 +61,38 @@ class DocumentChunk:
     chunk_index: int = 0
     
     def __post_init__(self):
+        """
+        負責執行 DocumentChunk 中的 __post_init__ 流程，依照 DocumentChunk 的流程需求處理 __post_init__ 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            無。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 未標註。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         if self.chunk_id is None:
             # 基於文檔ID和塊索引生成ID
             chunk_content = f"{self.doc_id}_{self.chunk_index}_{self.content[:50]}"
             self.chunk_id = hashlib.md5(chunk_content.encode()).hexdigest()
 
 class DocumentProcessor:
-    """文檔處理器"""
+    """
+    負責在 memory.rag.document 中封裝 DocumentProcessor，管理記憶圖、任務紀錄、檢索結果或跨任務經驗的狀態與操作。
+    
+    Args:
+        chunk_size: 記憶系統提供的檢索結果、寫入資料或操作介面。
+        chunk_overlap: 記憶系統提供的檢索結果、寫入資料或操作介面。
+        separators: 記憶系統提供的檢索結果、寫入資料或操作介面。
+    
+    Returns:
+        類別本身不直接回傳值；建立實例後可透過其方法操作狀態與流程。
+    
+    限制或副作用:
+        方法可能更新內部狀態、讀寫檔案、呼叫外部服務或產生日誌，需依使用情境確認。
+    """
     
     def __init__(
         self,
@@ -41,19 +100,36 @@ class DocumentProcessor:
         chunk_overlap: int = 200,
         separators: Optional[List[str]] = None
     ):
+        """
+        負責執行 DocumentProcessor 中的 __init__ 流程，初始化物件所需的設定、依賴與內部狀態，讓後續方法可以沿用同一份執行上下文。
+        
+        Args:
+            chunk_size: 記憶系統提供的檢索結果、寫入資料或操作介面。
+            chunk_overlap: 記憶系統提供的檢索結果、寫入資料或操作介面。
+            separators: 記憶系統提供的檢索結果、寫入資料或操作介面。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 未標註。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         self.chunk_size = chunk_size
         self.chunk_overlap = chunk_overlap
         self.separators = separators or ["\n\n", "\n", "。", ".", " "]
     
     def process_document(self, document: Document) -> List[DocumentChunk]:
         """
-        處理文檔，分割成塊
+        負責執行 DocumentProcessor 中的 process_document 流程，整理呼叫端傳入的資料，清理格式並轉換為後續流程可使用的內容。
         
         Args:
-            document: 輸入文檔
-            
+            document: 記憶系統提供的檢索結果、寫入資料或操作介面。
+        
         Returns:
-            文檔塊列表
+            執行結果；若函式標註回傳型別，預期型別為 List[DocumentChunk]。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
         """
         chunks = self._split_text(document.content)
         
@@ -80,13 +156,16 @@ class DocumentProcessor:
     
     def process_documents(self, documents: List[Document]) -> List[DocumentChunk]:
         """
-        批量處理文檔
+        負責執行 DocumentProcessor 中的 process_documents 流程，整理呼叫端傳入的資料，清理格式並轉換為後續流程可使用的內容。
         
         Args:
-            documents: 文檔列表
-            
+            documents: 記憶系統提供的檢索結果、寫入資料或操作介面。
+        
         Returns:
-            所有文檔塊列表
+            執行結果；若函式標註回傳型別，預期型別為 List[DocumentChunk]。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
         """
         all_chunks = []
         for document in documents:
@@ -97,13 +176,16 @@ class DocumentProcessor:
     
     def _split_text(self, text: str) -> List[str]:
         """
-        分割文字為塊
+        負責執行 DocumentProcessor 中的 _split_text 流程，依照 DocumentProcessor 的流程需求處理 _split_text 對應的資料轉換、狀態操作或結果產生。
         
         Args:
-            text: 輸入文字
-            
+            text: 記憶系統提供的檢索結果、寫入資料或操作介面。
+        
         Returns:
-            文字塊列表
+            執行結果；若函式標註回傳型別，預期型別為 List[str]。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
         """
         if len(text) <= self.chunk_size:
             return [text]
@@ -136,15 +218,18 @@ class DocumentProcessor:
     
     def _find_split_point(self, text: str, start: int, end: int) -> int:
         """
-        在指定范圍內尋找最佳分割點
+        負責執行 DocumentProcessor 中的 _find_split_point 流程，依照 DocumentProcessor 的流程需求處理 _find_split_point 對應的資料轉換、狀態操作或結果產生。
         
         Args:
-            text: 文字
-            start: 開始位置
-            end: 結束位置
-            
+            text: 記憶系統提供的檢索結果、寫入資料或操作介面。
+            start: 記憶系統提供的檢索結果、寫入資料或操作介面。
+            end: 記憶系統提供的檢索結果、寫入資料或操作介面。
+        
         Returns:
-            分割點位置，-1表示找不到
+            執行結果；若函式標註回傳型別，預期型別為 int。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
         """
         # 從后往前尋找分隔符
         for separator in self.separators:
@@ -159,14 +244,17 @@ class DocumentProcessor:
     
     def merge_chunks(self, chunks: List[DocumentChunk], max_length: int = 2000) -> List[DocumentChunk]:
         """
-        合併小的文檔塊
+        負責執行 DocumentProcessor 中的 merge_chunks 流程，依照 DocumentProcessor 的流程需求處理 merge_chunks 對應的資料轉換、狀態操作或結果產生。
         
         Args:
-            chunks: 文檔塊列表
-            max_length: 合併後的最大長度
-            
+            chunks: 記憶系統提供的檢索結果、寫入資料或操作介面。
+            max_length: 控制檢索、篩選或輸出數量的數值參數。
+        
         Returns:
-            合併後的文檔塊列表
+            執行結果；若函式標註回傳型別，預期型別為 List[DocumentChunk]。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
         """
         if not chunks:
             return []
@@ -195,27 +283,33 @@ class DocumentProcessor:
     
     def filter_chunks(self, chunks: List[DocumentChunk], min_length: int = 50) -> List[DocumentChunk]:
         """
-        過濾太短的文檔塊
+        負責執行 DocumentProcessor 中的 filter_chunks 流程，依照 DocumentProcessor 的流程需求處理 filter_chunks 對應的資料轉換、狀態操作或結果產生。
         
         Args:
-            chunks: 文檔塊列表
-            min_length: 最小長度
-            
+            chunks: 記憶系統提供的檢索結果、寫入資料或操作介面。
+            min_length: 控制檢索、篩選或輸出數量的數值參數。
+        
         Returns:
-            過濾後的文檔塊列表
+            執行結果；若函式標註回傳型別，預期型別為 List[DocumentChunk]。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
         """
         return [chunk for chunk in chunks if len(chunk.content.strip()) >= min_length]
     
     def add_chunk_metadata(self, chunks: List[DocumentChunk], metadata: Dict[str, Any]) -> List[DocumentChunk]:
         """
-        為文檔塊添加額外元資料
+        負責執行 DocumentProcessor 中的 add_chunk_metadata 流程，更新記憶圖、互動狀態、節點邊關係或追蹤紀錄。
         
         Args:
-            chunks: 文檔塊列表
-            metadata: 要添加的元資料
-            
+            chunks: 記憶系統提供的檢索結果、寫入資料或操作介面。
+            metadata: 目前流程所需的上下文、狀態或附加資訊。
+        
         Returns:
-            更新後的文檔塊列表
+            執行結果；若函式標註回傳型別，預期型別為 List[DocumentChunk]。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
         """
         for chunk in chunks:
             chunk.metadata.update(metadata)
@@ -224,14 +318,17 @@ class DocumentProcessor:
 
 def load_text_file(file_path: str, encoding: str = "utf-8") -> Document:
     """
-    載入文字檔案為文檔
+    負責執行 memory.rag.document 中的 load_text_file 流程，讀取本地或外部資料來源並轉換成系統可處理的格式。
     
     Args:
-        file_path: 檔案路徑
-        encoding: 檔案編碼
-        
+        file_path: 要讀取或寫入的檔案或目錄路徑。
+        encoding: 記憶系統提供的檢索結果、寫入資料或操作介面。
+    
     Returns:
-        文檔對象
+        執行結果；若函式標註回傳型別，預期型別為 Document。
+    
+    限制或副作用:
+        可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
     """
     with open(file_path, 'r', encoding=encoding) as f:
         content = f.read()
@@ -246,13 +343,16 @@ def load_text_file(file_path: str, encoding: str = "utf-8") -> Document:
 
 def create_document(content: str, **metadata) -> Document:
     """
-    建立文檔的便捷函式
+    負責執行 memory.rag.document 中的 create_document 流程，建立記憶圖或任務記錄結構，供後續檢索、寫入與提示注入使用。
     
     Args:
-        content: 文檔內容
-        **metadata: 元資料
-        
+        content: 記憶系統提供的檢索結果、寫入資料或操作介面。
+        **metadata: 目前流程所需的上下文、狀態或附加資訊。
+    
     Returns:
-        文檔對象
+        執行結果；若函式標註回傳型別，預期型別為 Document。
+    
+    限制或副作用:
+        可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
     """
     return Document(content=content, metadata=metadata)

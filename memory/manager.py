@@ -17,7 +17,23 @@ logger = logging.getLogger(__name__)
 
 
 class MemoryManager:
-    """統一管理各種記憶類型，並提供讀寫、整併與分類能力。"""
+    """
+    負責在 memory.manager 中封裝 MemoryManager，管理記憶圖、任務紀錄、檢索結果或跨任務經驗的狀態與操作。
+    
+    Args:
+        config: 控制此流程行為的設定資料。
+        user_id: 記憶系統提供的檢索結果、寫入資料或操作介面。
+        enable_working: 控制是否啟用此項資料、功能或處理分支的布林開關。
+        enable_episodic: 控制是否啟用此項資料、功能或處理分支的布林開關。
+        enable_semantic: 控制是否啟用此項資料、功能或處理分支的布林開關。
+        enable_perceptual: 控制是否啟用此項資料、功能或處理分支的布林開關。
+    
+    Returns:
+        類別本身不直接回傳值；建立實例後可透過其方法操作狀態與流程。
+    
+    限制或副作用:
+        方法可能更新內部狀態、讀寫檔案、呼叫外部服務或產生日誌，需依使用情境確認。
+    """
 
     def __init__(
         self,
@@ -28,6 +44,23 @@ class MemoryManager:
         enable_semantic: bool = True,
         enable_perceptual: bool = True,
     ):
+        """
+        負責執行 MemoryManager 中的 __init__ 流程，初始化物件所需的設定、依賴與內部狀態，讓後續方法可以沿用同一份執行上下文。
+        
+        Args:
+            config: 控制此流程行為的設定資料。
+            user_id: 記憶系統提供的檢索結果、寫入資料或操作介面。
+            enable_working: 控制是否啟用此項資料、功能或處理分支的布林開關。
+            enable_episodic: 控制是否啟用此項資料、功能或處理分支的布林開關。
+            enable_semantic: 控制是否啟用此項資料、功能或處理分支的布林開關。
+            enable_perceptual: 控制是否啟用此項資料、功能或處理分支的布林開關。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 未標註。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         self.config = config or MemoryConfig()
         self.user_id = user_id
         self.memory_types: Dict[str, Any] = {}
@@ -54,7 +87,22 @@ class MemoryManager:
         metadata: Optional[Dict[str, Any]] = None,
         auto_classify: bool = True,
     ) -> str:
-        """新增記憶，可依內容自動分類到合適的記憶類型。"""
+        """
+        負責執行 MemoryManager 中的 add_memory 流程，更新記憶圖、互動狀態、節點邊關係或追蹤紀錄。
+        
+        Args:
+            content: 記憶系統提供的檢索結果、寫入資料或操作介面。
+            memory_type: 記憶系統提供的檢索結果、寫入資料或操作介面。
+            importance: 記憶系統提供的檢索結果、寫入資料或操作介面。
+            metadata: 目前流程所需的上下文、狀態或附加資訊。
+            auto_classify: 記憶系統提供的檢索結果、寫入資料或操作介面。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 str。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         if auto_classify:
             memory_type = self._classify_memory_type(content, metadata)
 
@@ -86,7 +134,22 @@ class MemoryManager:
         min_importance: float = 0.0,
         time_range: Optional[tuple] = None,
     ) -> List[MemoryItem]:
-        """從指定記憶類型中檢索與查詢相關的記憶。"""
+        """
+        負責執行 MemoryManager 中的 retrieve_memories 流程，從記憶圖、向量索引或任務關聯中取回相關案例與策略提醒。
+        
+        Args:
+            query: 目前要處理的任務、問題或查詢文字。
+            memory_types: 記憶系統提供的檢索結果、寫入資料或操作介面。
+            limit: 控制檢索、篩選或輸出數量的數值參數。
+            min_importance: 控制檢索、篩選或輸出數量的數值參數。
+            time_range: 記憶系統提供的檢索結果、寫入資料或操作介面。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 List[MemoryItem]。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         if memory_types is None:
             memory_types = list(self.memory_types.keys())
 
@@ -123,7 +186,21 @@ class MemoryManager:
         importance: Optional[float] = None,
         metadata: Optional[Dict[str, Any]] = None,
     ) -> bool:
-        """依記憶 id 更新內容、重要度或 metadata。"""
+        """
+        負責執行 MemoryManager 中的 update_memory 流程，更新記憶圖、互動狀態、節點邊關係或追蹤紀錄。
+        
+        Args:
+            memory_id: 記憶系統提供的檢索結果、寫入資料或操作介面。
+            content: 記憶系統提供的檢索結果、寫入資料或操作介面。
+            importance: 記憶系統提供的檢索結果、寫入資料或操作介面。
+            metadata: 目前流程所需的上下文、狀態或附加資訊。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 bool。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         for memory_instance in self.memory_types.values():
             if memory_instance.has_memory(memory_id):
                 return memory_instance.update(memory_id, content, importance, metadata)
@@ -132,7 +209,18 @@ class MemoryManager:
         return False
 
     def remove_memory(self, memory_id: str) -> bool:
-        """依記憶 id 刪除記憶。"""
+        """
+        負責執行 MemoryManager 中的 remove_memory 流程，清除或移除指定資源、狀態或註冊資料，維持後續流程的一致性。
+        
+        Args:
+            memory_id: 記憶系統提供的檢索結果、寫入資料或操作介面。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 bool。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         for memory_instance in self.memory_types.values():
             if memory_instance.has_memory(memory_id):
                 return memory_instance.remove(memory_id)
@@ -146,7 +234,20 @@ class MemoryManager:
         threshold: float = 0.1,
         max_age_days: int = 30,
     ) -> int:
-        """依策略清理過舊或不重要的記憶。"""
+        """
+        負責執行 MemoryManager 中的 forget_memories 流程，依照 MemoryManager 的流程需求處理 forget_memories 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            strategy: 記憶系統提供的檢索結果、寫入資料或操作介面。
+            threshold: 控制檢索、篩選或輸出數量的數值參數。
+            max_age_days: 控制檢索、篩選或輸出數量的數值參數。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 int。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         total_forgotten = 0
 
         for memory_instance in self.memory_types.values():
@@ -163,7 +264,20 @@ class MemoryManager:
         to_type: str = "episodic",
         importance_threshold: float = 0.7,
     ) -> int:
-        """將高重要度記憶從一種記憶類型整併到另一種記憶類型。"""
+        """
+        負責執行 MemoryManager 中的 consolidate_memories 流程，依照 MemoryManager 的流程需求處理 consolidate_memories 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            from_type: 記憶系統提供的檢索結果、寫入資料或操作介面。
+            to_type: 記憶系統提供的檢索結果、寫入資料或操作介面。
+            importance_threshold: 控制檢索、篩選或輸出數量的數值參數。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 int。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         if from_type not in self.memory_types or to_type not in self.memory_types:
             logger.warning("不支援的整併來源或目標類型：%s -> %s", from_type, to_type)
             return 0
@@ -190,7 +304,18 @@ class MemoryManager:
         return consolidated_count
 
     def get_memory_stats(self) -> Dict[str, Any]:
-        """回傳目前記憶系統的統計資訊。"""
+        """
+        負責執行 MemoryManager 中的 get_memory_stats 流程，依照 MemoryManager 的流程需求處理 get_memory_stats 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            無。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 Dict[str, Any]。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         stats = {
             "user_id": self.user_id,
             "enabled_types": list(self.memory_types.keys()),
@@ -211,13 +336,36 @@ class MemoryManager:
         return stats
 
     def clear_all_memories(self):
-        """清除所有記憶類型中的內容。"""
+        """
+        負責執行 MemoryManager 中的 clear_all_memories 流程，清除或移除指定資源、狀態或註冊資料，維持後續流程的一致性。
+        
+        Args:
+            無。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 未標註。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         for memory_instance in self.memory_types.values():
             memory_instance.clear()
         logger.info("已清除所有記憶")
 
     def _classify_memory_type(self, content: str, metadata: Optional[Dict[str, Any]]) -> str:
-        """根據 metadata 與內容特徵判斷記憶類型。"""
+        """
+        負責執行 MemoryManager 中的 _classify_memory_type 流程，依照 MemoryManager 的流程需求處理 _classify_memory_type 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            content: 記憶系統提供的檢索結果、寫入資料或操作介面。
+            metadata: 目前流程所需的上下文、狀態或附加資訊。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 str。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         if metadata and metadata.get("type"):
             return metadata["type"]
 
@@ -236,7 +384,18 @@ class MemoryManager:
         return "working"
 
     def _is_episodic_content(self, content: str) -> bool:
-        """判斷內容是否更像事件、過程、單次案例或經驗回顧。"""
+        """
+        負責執行 MemoryManager 中的 _is_episodic_content 流程，依照 MemoryManager 的流程需求處理 _is_episodic_content 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            content: 記憶系統提供的檢索結果、寫入資料或操作介面。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 bool。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         lowered = content.lower()
         episodic_markers = [
             "gaia failure case",
@@ -270,7 +429,18 @@ class MemoryManager:
         return has_episodic_signal and not has_semantic_signal
 
     def _is_semantic_content(self, content: str) -> bool:
-        """判斷內容是否更像可泛化的知識、規則或 lesson。"""
+        """
+        負責執行 MemoryManager 中的 _is_semantic_content 流程，依照 MemoryManager 的流程需求處理 _is_semantic_content 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            content: 記憶系統提供的檢索結果、寫入資料或操作介面。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 bool。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         lowered = content.lower()
         semantic_markers = [
             "gaia correction lesson",
@@ -288,7 +458,19 @@ class MemoryManager:
         return any(marker in lowered for marker in semantic_markers)
 
     def _calculate_importance(self, content: str, metadata: Optional[Dict[str, Any]]) -> float:
-        """依內容與 metadata 粗略估計記憶重要度。"""
+        """
+        負責執行 MemoryManager 中的 _calculate_importance 流程，依照 MemoryManager 的流程需求處理 _calculate_importance 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            content: 記憶系統提供的檢索結果、寫入資料或操作介面。
+            metadata: 目前流程所需的上下文、狀態或附加資訊。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 float。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         importance = 0.5
         lowered = content.lower()
 
@@ -308,5 +490,17 @@ class MemoryManager:
         return max(0.0, min(1.0, importance))
 
     def __str__(self) -> str:
+        """
+        負責執行 MemoryManager 中的 __str__ 流程，依照 MemoryManager 的流程需求處理 __str__ 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            無。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 str。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         stats = self.get_memory_stats()
         return f"MemoryManager(user={self.user_id}, total={stats['total_memories']})"

@@ -8,7 +8,18 @@ from pathlib import Path
 
 @dataclass
 class TrainingConfig:
-    """訓練設定類別"""
+    """
+    負責在 rl.utils 中封裝 TrainingConfig，封裝此模組的狀態資料與主要操作流程。
+    
+    Args:
+        無明確建構參數，可能透過 dataclass 欄位或預設值建立物件。
+    
+    Returns:
+        類別本身不直接回傳值；建立實例後可透過其方法操作狀態與流程。
+    
+    限制或副作用:
+        方法可能更新內部狀態、讀寫檔案、呼叫外部服務或產生日誌，需依使用情境確認。
+    """
 
     # 模型設定
     model_name: str = "Qwen/Qwen3-0.6B"
@@ -52,7 +63,18 @@ class TrainingConfig:
     max_length: int = 2048
     
     def to_dict(self) -> Dict[str, Any]:
-        """轉換為字典"""
+        """
+        負責執行 TrainingConfig 中的 to_dict 流程，將內部資料整理成日誌、提示詞、摘要或指定的輸出格式。
+        
+        Args:
+            無。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 Dict[str, Any]。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         return {
             k: v for k, v in self.__dict__.items()
             if not k.startswith('_')
@@ -61,10 +83,16 @@ class TrainingConfig:
 
 def setup_training_environment(config: TrainingConfig) -> None:
     """
-    設定訓練環境
+    負責執行 rl.utils 中的 setup_training_environment 流程，將新的輸入資料合併到目前物件狀態或流程紀錄中。
     
     Args:
-        config: 訓練設定
+        config: 控制此流程行為的設定資料。
+    
+    Returns:
+        執行結果；若函式標註回傳型別，預期型別為 None。
+    
+    限制或副作用:
+        可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
     """
     # 建立輸出目錄
     os.makedirs(config.output_dir, exist_ok=True)
@@ -100,10 +128,16 @@ def setup_training_environment(config: TrainingConfig) -> None:
 
 def check_trl_installation() -> bool:
     """
-    檢查TRL是否已安裝
+    負責執行 rl.utils 中的 check_trl_installation 流程，檢查目前輸入、狀態或條件是否符合流程繼續執行的要求。
+    
+    Args:
+        無。
     
     Returns:
-        是否已安裝TRL
+        執行結果；若函式標註回傳型別，預期型別為 bool。
+    
+    限制或副作用:
+        可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
     """
     try:
         import trl
@@ -114,10 +148,16 @@ def check_trl_installation() -> bool:
 
 def get_installation_guide() -> str:
     """
-    取得TRL安裝指南
+    負責執行 rl.utils 中的 get_installation_guide 流程，依照 rl.utils 的流程需求處理 get_installation_guide 對應的資料轉換、狀態操作或結果產生。
+    
+    Args:
+        無。
     
     Returns:
-        安裝指南文字
+        執行結果；若函式標註回傳型別，預期型別為 str。
+    
+    限制或副作用:
+        可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
     """
     return """
 TRL (Transformer Reinforcement Learning) 未安裝。
@@ -146,13 +186,16 @@ TRL (Transformer Reinforcement Learning) 未安裝。
 
 def format_training_time(seconds: float) -> str:
     """
-    格式化訓練時間
+    負責執行 rl.utils 中的 format_training_time 流程，將內部資料整理成日誌、提示詞、摘要或指定的輸出格式。
     
     Args:
-        seconds: 秒數
-        
+        seconds: 此流程需要使用的輸入資料。
+    
     Returns:
-        格式化的時間字串
+        執行結果；若函式標註回傳型別，預期型別為 str。
+    
+    限制或副作用:
+        可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
     """
     hours = int(seconds // 3600)
     minutes = int((seconds % 3600) // 60)
@@ -168,10 +211,16 @@ def format_training_time(seconds: float) -> str:
 
 def get_device_info() -> Dict[str, Any]:
     """
-    取得裝置資訊
+    負責執行 rl.utils 中的 get_device_info 流程，依照 rl.utils 的流程需求處理 get_device_info 對應的資料轉換、狀態操作或結果產生。
+    
+    Args:
+        無。
     
     Returns:
-        裝置資訊字典
+        執行結果；若函式標註回傳型別，預期型別為 Dict[str, Any]。
+    
+    限制或副作用:
+        可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
     """
     info = {
         "cuda_available": False,
@@ -199,14 +248,20 @@ def print_training_summary(
     output_dir: str
 ) -> None:
     """
-    打印訓練摘要
+    負責執行 rl.utils 中的 print_training_summary 流程，依照 rl.utils 的流程需求處理 print_training_summary 對應的資料轉換、狀態操作或結果產生。
     
     Args:
-        algorithm: 算法名稱
-        model_name: 模型名稱
-        dataset_name: 資料集名稱
-        num_epochs: 訓練輪數
-        output_dir: 輸出目錄
+        algorithm: 此流程需要使用的輸入資料。
+        model_name: 用來呼叫模型或外部服務的模型名稱、客戶端或相關設定。
+        dataset_name: 此流程需要使用的輸入資料。
+        num_epochs: 此流程需要使用的輸入資料。
+        output_dir: 此流程需要使用的輸入資料。
+    
+    Returns:
+        執行結果；若函式標註回傳型別，預期型別為 None。
+    
+    限制或副作用:
+        可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
     """
     device_info = get_device_info()
     

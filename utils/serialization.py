@@ -7,14 +7,17 @@ from pathlib import Path
 
 def serialize_object(obj: Any, format: str = "json") -> Union[str, bytes]:
     """
-    序列化對象
+    負責執行 utils.serialization 中的 serialize_object 流程，依照 utils.serialization 的流程需求處理 serialize_object 對應的資料轉換、狀態操作或結果產生。
     
     Args:
-        obj: 要序列化的對象
-        format: 序列化格式 ("json" 或 "pickle")
-        
+        obj: 此流程需要使用的輸入資料。
+        format: 此流程需要使用的輸入資料。
+    
     Returns:
-        序列化後的資料
+        執行結果；若函式標註回傳型別，預期型別為 Union[str, bytes]。
+    
+    限制或副作用:
+        可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
     """
     if format == "json":
         return json.dumps(obj, ensure_ascii=False, indent=2)
@@ -25,14 +28,17 @@ def serialize_object(obj: Any, format: str = "json") -> Union[str, bytes]:
 
 def deserialize_object(data: Union[str, bytes], format: str = "json") -> Any:
     """
-    反序列化對象
+    負責執行 utils.serialization 中的 deserialize_object 流程，依照 utils.serialization 的流程需求處理 deserialize_object 對應的資料轉換、狀態操作或結果產生。
     
     Args:
-        data: 序列化的資料
-        format: 序列化格式
-        
+        data: 此流程需要使用的輸入資料。
+        format: 此流程需要使用的輸入資料。
+    
     Returns:
-        反序列化後的對象
+        執行結果；若函式標註回傳型別，預期型別為 Any。
+    
+    限制或副作用:
+        可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
     """
     if format == "json":
         return json.loads(data)
@@ -42,7 +48,20 @@ def deserialize_object(data: Union[str, bytes], format: str = "json") -> Any:
         raise ValueError(f"不支援的反序列化格式: {format}")
 
 def save_to_file(obj: Any, filepath: Union[str, Path], format: str = "json") -> None:
-    """保存對象到檔案"""
+    """
+    負責執行 utils.serialization 中的 save_to_file 流程，將目前處理結果、設定或狀態寫入指定儲存位置。
+    
+    Args:
+        obj: 此流程需要使用的輸入資料。
+        filepath: 此流程需要使用的輸入資料。
+        format: 此流程需要使用的輸入資料。
+    
+    Returns:
+        執行結果；若函式標註回傳型別，預期型別為 None。
+    
+    限制或副作用:
+        可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+    """
     filepath = Path(filepath)
     data = serialize_object(obj, format)
     
@@ -51,7 +70,19 @@ def save_to_file(obj: Any, filepath: Union[str, Path], format: str = "json") -> 
         f.write(data)
 
 def load_from_file(filepath: Union[str, Path], format: str = "json") -> Any:
-    """從檔案載入對象"""
+    """
+    負責執行 utils.serialization 中的 load_from_file 流程，讀取本地或外部資料來源並轉換成系統可處理的格式。
+    
+    Args:
+        filepath: 此流程需要使用的輸入資料。
+        format: 此流程需要使用的輸入資料。
+    
+    Returns:
+        執行結果；若函式標註回傳型別，預期型別為 Any。
+    
+    限制或副作用:
+        可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+    """
     filepath = Path(filepath)
     mode = "r" if format == "json" else "rb"
     

@@ -14,7 +14,25 @@ from ..storage import SQLiteDocumentStore, QdrantVectorStore
 from ..embedding import get_text_embedder, get_dimension
 
 class Episode:
-    """情節記憶中的單一事件紀錄。"""
+    """
+    負責在 memory.types.episodic 中封裝 Episode，管理記憶圖、任務紀錄、檢索結果或跨任務經驗的狀態與操作。
+    
+    Args:
+        episode_id: 記憶系統提供的檢索結果、寫入資料或操作介面。
+        user_id: 記憶系統提供的檢索結果、寫入資料或操作介面。
+        session_id: 記憶系統提供的檢索結果、寫入資料或操作介面。
+        timestamp: 記憶系統提供的檢索結果、寫入資料或操作介面。
+        content: 記憶系統提供的檢索結果、寫入資料或操作介面。
+        context: 目前流程所需的上下文、狀態或附加資訊。
+        outcome: 記憶系統提供的檢索結果、寫入資料或操作介面。
+        importance: 記憶系統提供的檢索結果、寫入資料或操作介面。
+    
+    Returns:
+        類別本身不直接回傳值；建立實例後可透過其方法操作狀態與流程。
+    
+    限制或副作用:
+        方法可能更新內部狀態、讀寫檔案、呼叫外部服務或產生日誌，需依使用情境確認。
+    """
     
     def __init__(
         self,
@@ -27,6 +45,25 @@ class Episode:
         outcome: Optional[str] = None,
         importance: float = 0.5
     ):
+        """
+        負責執行 Episode 中的 __init__ 流程，初始化物件所需的設定、依賴與內部狀態，讓後續方法可以沿用同一份執行上下文。
+        
+        Args:
+            episode_id: 記憶系統提供的檢索結果、寫入資料或操作介面。
+            user_id: 記憶系統提供的檢索結果、寫入資料或操作介面。
+            session_id: 記憶系統提供的檢索結果、寫入資料或操作介面。
+            timestamp: 記憶系統提供的檢索結果、寫入資料或操作介面。
+            content: 記憶系統提供的檢索結果、寫入資料或操作介面。
+            context: 目前流程所需的上下文、狀態或附加資訊。
+            outcome: 記憶系統提供的檢索結果、寫入資料或操作介面。
+            importance: 記憶系統提供的檢索結果、寫入資料或操作介面。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 未標註。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         self.episode_id = episode_id
         self.user_id = user_id
         self.session_id = session_id
@@ -37,9 +74,34 @@ class Episode:
         self.importance = importance
 
 class EpisodicMemory(BaseMemory):
-    """用來保存事件序列、會話上下文與經驗摘要的記憶庫。"""
+    """
+    負責在 memory.types.episodic 中封裝 EpisodicMemory，管理記憶圖、任務紀錄、檢索結果或跨任務經驗的狀態與操作。
+    
+    Args:
+        config: 控制此流程行為的設定資料。
+        storage_backend: 記憶系統提供的檢索結果、寫入資料或操作介面。
+    
+    Returns:
+        類別本身不直接回傳值；建立實例後可透過其方法操作狀態與流程。
+    
+    限制或副作用:
+        方法可能更新內部狀態、讀寫檔案、呼叫外部服務或產生日誌，需依使用情境確認。
+    """
     
     def __init__(self, config: MemoryConfig, storage_backend=None):
+        """
+        負責執行 EpisodicMemory 中的 __init__ 流程，初始化物件所需的設定、依賴與內部狀態，讓後續方法可以沿用同一份執行上下文。
+        
+        Args:
+            config: 控制此流程行為的設定資料。
+            storage_backend: 記憶系統提供的檢索結果、寫入資料或操作介面。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 未標註。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         super().__init__(config, storage_backend)
         
         # 本地快取（記憶體）
@@ -72,7 +134,18 @@ class EpisodicMemory(BaseMemory):
         )
     
     def add(self, memory_item: MemoryItem) -> str:
-        """添加情景記憶"""
+        """
+        負責執行 EpisodicMemory 中的 add 流程，更新記憶圖、互動狀態、節點邊關係或追蹤紀錄。
+        
+        Args:
+            memory_item: 記憶系統提供的檢索結果、寫入資料或操作介面。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 str。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         # 從元資料中提取情景資訊
         session_id = memory_item.metadata.get("session_id", "default_session")
         context = memory_item.metadata.get("context", {})
@@ -138,7 +211,20 @@ class EpisodicMemory(BaseMemory):
         return memory_item.id
     
     def retrieve(self, query: str, limit: int = 5, **kwargs) -> List[MemoryItem]:
-        """搜尋情景記憶（結構化過濾 + 語義向量搜尋）"""
+        """
+        負責執行 EpisodicMemory 中的 retrieve 流程，從記憶圖、向量索引或任務關聯中取回相關案例與策略提醒。
+        
+        Args:
+            query: 目前要處理的任務、問題或查詢文字。
+            limit: 控制檢索、篩選或輸出數量的數值參數。
+            **kwargs: 記憶系統提供的檢索結果、寫入資料或操作介面。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 List[MemoryItem]。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         user_id = kwargs.get("user_id")
         session_id = kwargs.get("session_id")
         time_range: Optional[Tuple[datetime, datetime]] = kwargs.get("time_range")
@@ -271,7 +357,21 @@ class EpisodicMemory(BaseMemory):
         importance: float = None,
         metadata: Dict[str, Any] = None
     ) -> bool:
-        """更新情景記憶（SQLite為權威，Qdrant按需重嵌入）"""
+        """
+        負責執行 EpisodicMemory 中的 update 流程，更新記憶圖、互動狀態、節點邊關係或追蹤紀錄。
+        
+        Args:
+            memory_id: 記憶系統提供的檢索結果、寫入資料或操作介面。
+            content: 記憶系統提供的檢索結果、寫入資料或操作介面。
+            importance: 記憶系統提供的檢索結果、寫入資料或操作介面。
+            metadata: 目前流程所需的上下文、狀態或附加資訊。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 bool。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         updated = False
         for episode in self.episodes:
             if episode.episode_id == memory_id:
@@ -321,7 +421,18 @@ class EpisodicMemory(BaseMemory):
         return updated or doc_updated
     
     def remove(self, memory_id: str) -> bool:
-        """刪除情景記憶（SQLite + Qdrant）"""
+        """
+        負責執行 EpisodicMemory 中的 remove 流程，清除或移除指定資源、狀態或註冊資料，維持後續流程的一致性。
+        
+        Args:
+            memory_id: 記憶系統提供的檢索結果、寫入資料或操作介面。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 bool。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         removed = False
         for i, episode in enumerate(self.episodes):
             if episode.episode_id == memory_id:
@@ -346,11 +457,33 @@ class EpisodicMemory(BaseMemory):
         return removed or doc_deleted
     
     def has_memory(self, memory_id: str) -> bool:
-        """檢查記憶是否存在"""
+        """
+        負責執行 EpisodicMemory 中的 has_memory 流程，檢查目前輸入、狀態或條件是否符合流程繼續執行的要求。
+        
+        Args:
+            memory_id: 記憶系統提供的檢索結果、寫入資料或操作介面。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 bool。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         return any(episode.episode_id == memory_id for episode in self.episodes)
     
     def clear(self):
-        """清空所有情景記憶（僅清理episodic，不影響其他類型）"""
+        """
+        負責執行 EpisodicMemory 中的 clear 流程，清除或移除指定資源、狀態或註冊資料，維持後續流程的一致性。
+        
+        Args:
+            無。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 未標註。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         # 記憶體快取
         self.episodes.clear()
         self.sessions.clear()
@@ -370,7 +503,20 @@ class EpisodicMemory(BaseMemory):
             pass
 
     def forget(self, strategy: str = "importance_based", threshold: float = 0.1, max_age_days: int = 30) -> int:
-        """情景記憶遺忘機制（硬刪除）"""
+        """
+        負責執行 EpisodicMemory 中的 forget 流程，依照 EpisodicMemory 的流程需求處理 forget 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            strategy: 記憶系統提供的檢索結果、寫入資料或操作介面。
+            threshold: 控制檢索、篩選或輸出數量的數值參數。
+            max_age_days: 控制檢索、篩選或輸出數量的數值參數。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 int。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         forgotten_count = 0
         current_time = datetime.now()
         
@@ -408,7 +554,18 @@ class EpisodicMemory(BaseMemory):
         return forgotten_count
 
     def get_all(self) -> List[MemoryItem]:
-        """取得所有情景記憶（轉換為MemoryItem格式）"""
+        """
+        負責執行 EpisodicMemory 中的 get_all 流程，依照 EpisodicMemory 的流程需求處理 get_all 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            無。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 List[MemoryItem]。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         memory_items = []
         for episode in self.episodes:
             memory_item = MemoryItem(
@@ -424,7 +581,18 @@ class EpisodicMemory(BaseMemory):
         return memory_items
     
     def get_stats(self) -> Dict[str, Any]:
-        """取得情景記憶統計資訊（合併SQLite與Qdrant）"""
+        """
+        負責執行 EpisodicMemory 中的 get_stats 流程，依照 EpisodicMemory 的流程需求處理 get_stats 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            無。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 Dict[str, Any]。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         # 硬刪除模式：所有episodes都是活躍的
         active_episodes = self.episodes
         
@@ -446,7 +614,18 @@ class EpisodicMemory(BaseMemory):
         }
     
     def get_session_episodes(self, session_id: str) -> List[Episode]:
-        """取得指定會話的所有情景"""
+        """
+        負責執行 EpisodicMemory 中的 get_session_episodes 流程，依照 EpisodicMemory 的流程需求處理 get_session_episodes 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            session_id: 記憶系統提供的檢索結果、寫入資料或操作介面。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 List[Episode]。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         if session_id not in self.sessions:
             return []
         
@@ -454,7 +633,19 @@ class EpisodicMemory(BaseMemory):
         return [e for e in self.episodes if e.episode_id in episode_ids]
     
     def find_patterns(self, user_id: str = None, min_frequency: int = 2) -> List[Dict[str, Any]]:
-        """發現使用者行為模式"""
+        """
+        負責執行 EpisodicMemory 中的 find_patterns 流程，從記憶圖、向量索引或任務關聯中取回相關案例與策略提醒。
+        
+        Args:
+            user_id: 記憶系統提供的檢索結果、寫入資料或操作介面。
+            min_frequency: 控制檢索、篩選或輸出數量的數值參數。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 List[Dict[str, Any]]。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         # 檢查快取
         cache_key = f"{user_id}_{min_frequency}"
         if (cache_key in self.patterns_cache and 
@@ -512,7 +703,19 @@ class EpisodicMemory(BaseMemory):
         return patterns
     
     def get_timeline(self, user_id: str = None, limit: int = 50) -> List[Dict[str, Any]]:
-        """取得時間線視圖"""
+        """
+        負責執行 EpisodicMemory 中的 get_timeline 流程，依照 EpisodicMemory 的流程需求處理 get_timeline 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            user_id: 記憶系統提供的檢索結果、寫入資料或操作介面。
+            limit: 控制檢索、篩選或輸出數量的數值參數。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 List[Dict[str, Any]]。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         episodes = [e for e in self.episodes if user_id is None or e.user_id == user_id]
         episodes.sort(key=lambda x: x.timestamp, reverse=True)
         
@@ -535,7 +738,20 @@ class EpisodicMemory(BaseMemory):
         session_id: str = None,
         time_range: Tuple[datetime, datetime] = None
     ) -> List[Episode]:
-        """過濾情景"""
+        """
+        負責執行 EpisodicMemory 中的 _filter_episodes 流程，依照 EpisodicMemory 的流程需求處理 _filter_episodes 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            user_id: 記憶系統提供的檢索結果、寫入資料或操作介面。
+            session_id: 記憶系統提供的檢索結果、寫入資料或操作介面。
+            time_range: 記憶系統提供的檢索結果、寫入資料或操作介面。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 List[Episode]。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         filtered = self.episodes
         
         if user_id:
@@ -551,7 +767,18 @@ class EpisodicMemory(BaseMemory):
         return filtered
     
     def _calculate_time_span(self) -> float:
-        """計算記憶時間跨度（天）"""
+        """
+        負責執行 EpisodicMemory 中的 _calculate_time_span 流程，依照 EpisodicMemory 的流程需求處理 _calculate_time_span 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            無。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 float。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         if not self.episodes:
             return 0.0
         
@@ -562,7 +789,18 @@ class EpisodicMemory(BaseMemory):
         return (max_time - min_time).days
     
     def _persist_episode(self, episode: Episode):
-        """持久化情景到儲存後端"""
+        """
+        負責執行 EpisodicMemory 中的 _persist_episode 流程，依照 EpisodicMemory 的流程需求處理 _persist_episode 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            episode: 記憶系統提供的檢索結果、寫入資料或操作介面。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 未標註。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         if self.storage and hasattr(self.storage, 'add_memory'):
             self.storage.add_memory(
                 memory_id=episode.episode_id,
@@ -579,6 +817,17 @@ class EpisodicMemory(BaseMemory):
             )
     
     def _remove_from_storage(self, memory_id: str):
-        """從儲存後端刪除"""
+        """
+        負責執行 EpisodicMemory 中的 _remove_from_storage 流程，依照 EpisodicMemory 的流程需求處理 _remove_from_storage 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            memory_id: 記憶系統提供的檢索結果、寫入資料或操作介面。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 未標註。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         if self.storage and hasattr(self.storage, 'delete_memory'):
             self.storage.delete_memory(memory_id)

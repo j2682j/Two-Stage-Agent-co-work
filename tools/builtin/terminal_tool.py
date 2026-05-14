@@ -31,37 +31,21 @@ from ..base import Tool, ToolParameter
 
 
 class TerminalTool(Tool):
-    """命令行工具
+    """
+    負責在 tools.builtin.terminal_tool 中封裝 TerminalTool，封裝工具呼叫、參數處理與工具結果回傳流程。
     
-    提供安全的命令行執行能力，支援常用的檔案系統和文字處理命令。
+    Args:
+        workspace: 此流程需要使用的輸入資料。
+        timeout: 此流程需要使用的輸入資料。
+        max_output_size: 控制檢索、篩選或輸出數量的數值參數。
+        allow_cd: 此流程需要使用的輸入資料。
+        os_type: 此流程需要使用的輸入資料。
     
-    安全限制：
-    - 只允許白名單中的命令
-    - 限制在指定工作目錄內
-    - 逾時控制（預設30秒）
-    - 輸出大小限制（預設10MB）
+    Returns:
+        類別本身不直接回傳值；建立實例後可透過其方法操作狀態與流程。
     
-    使用範例：
-    ```python
-    # 自動檢測操作系統
-    terminal = TerminalTool(workspace="./project", os_type="auto")
-
-    # 手動指定Windows
-    terminal = TerminalTool(workspace="./project", os_type="windows")
-
-    # 列出檔案
-    result = terminal.run({"command": "ls -la"})  # Linux/Mac
-    result = terminal.run({"command": "dir"})     # Windows
-
-    # 查看檔案內容
-    result = terminal.run({"command": "cat README.md"})
-
-    # 搜尋檔案
-    result = terminal.run({"command": "grep -r 'TODO' src/"})
-
-    # 查看檔案前10行
-    result = terminal.run({"command": "head -n 10 data.csv"})
-    ```
+    限制或副作用:
+        方法可能更新內部狀態、讀寫檔案、呼叫外部服務或產生日誌，需依使用情境確認。
     """
 
     # 允許的命令白名單（跨平臺）
@@ -92,6 +76,22 @@ class TerminalTool(Tool):
         allow_cd: bool = True,
         os_type: str = "auto"  # "auto", "windows", "linux", "mac"
     ):
+        """
+        負責執行 TerminalTool 中的 __init__ 流程，初始化物件所需的設定、依賴與內部狀態，讓後續方法可以沿用同一份執行上下文。
+        
+        Args:
+            workspace: 此流程需要使用的輸入資料。
+            timeout: 此流程需要使用的輸入資料。
+            max_output_size: 控制檢索、篩選或輸出數量的數值參數。
+            allow_cd: 此流程需要使用的輸入資料。
+            os_type: 此流程需要使用的輸入資料。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 未標註。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         super().__init__(
             name="terminal",
             description="跨平臺命令行工具 - 執行安全的檔案系統、文字處理和代碼執行命令（支援Windows/Linux/Mac）"
@@ -115,7 +115,18 @@ class TerminalTool(Tool):
         self.workspace.mkdir(parents=True, exist_ok=True)
 
     def _detect_os(self) -> str:
-        """檢測操作系統類型"""
+        """
+        負責執行 TerminalTool 中的 _detect_os 流程，依照 TerminalTool 的流程需求處理 _detect_os 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            無。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 str。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         system = platform.system().lower()
         if system == "windows":
             return "windows"
@@ -125,7 +136,18 @@ class TerminalTool(Tool):
             return "linux"
     
     def run(self, parameters: Dict[str, Any]) -> str:
-        """執行工具"""
+        """
+        負責執行 TerminalTool 中的 run 流程，啟動主要執行流程，串接輸入準備、核心處理與結果輸出。
+        
+        Args:
+            parameters: 此流程需要使用的輸入資料。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 str。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         if not self.validate_parameters(parameters):
             return "[ERROR] 參數驗證失敗"
         
@@ -157,7 +179,18 @@ class TerminalTool(Tool):
         return self._execute_command(command)
     
     def get_parameters(self) -> List[ToolParameter]:
-        """取得工具參數定義"""
+        """
+        負責執行 TerminalTool 中的 get_parameters 流程，依照 TerminalTool 的流程需求處理 get_parameters 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            無。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 List[ToolParameter]。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         return [
             ToolParameter(
                 name="command",
@@ -171,7 +204,18 @@ class TerminalTool(Tool):
         ]
     
     def _handle_cd(self, parts: List[str]) -> str:
-        """處理 cd 命令"""
+        """
+        負責執行 TerminalTool 中的 _handle_cd 流程，依照 TerminalTool 的流程需求處理 _handle_cd 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            parts: 此流程需要使用的輸入資料。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 str。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         if not self.allow_cd:
             return "[ERROR] cd 命令已禁用"
         
@@ -209,7 +253,18 @@ class TerminalTool(Tool):
         return f"[OK] 切換到目錄: {self.current_dir}"
     
     def _execute_command(self, command: str) -> str:
-        """執行命令"""
+        """
+        負責執行 TerminalTool 中的 _execute_command 流程，依照 TerminalTool 的流程需求處理 _execute_command 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            command: 此流程需要使用的輸入資料。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 str。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         try:
             # 根據操作系統類型調整命令執行方式
             if self.os_type == "windows":
@@ -257,14 +312,47 @@ class TerminalTool(Tool):
             return f"[ERROR] 命令執行失敗: {e}"
 
     def get_current_dir(self) -> str:
-        """取得目前工作目錄"""
+        """
+        負責執行 TerminalTool 中的 get_current_dir 流程，依照 TerminalTool 的流程需求處理 get_current_dir 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            無。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 str。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         return str(self.current_dir)
 
     def reset_dir(self):
-        """重置到工作目錄根"""
+        """
+        負責執行 TerminalTool 中的 reset_dir 流程，清除或移除指定資源、狀態或註冊資料，維持後續流程的一致性。
+        
+        Args:
+            無。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 未標註。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         self.current_dir = self.workspace
 
     def get_os_type(self) -> str:
-        """取得目前操作系統類型"""
+        """
+        負責執行 TerminalTool 中的 get_os_type 流程，依照 TerminalTool 的流程需求處理 get_os_type 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            無。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 str。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         return self.os_type
 

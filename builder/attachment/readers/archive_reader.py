@@ -12,15 +12,55 @@ if TYPE_CHECKING:
 
 
 class ArchiveAttachmentReader:
+    """
+    負責在 builder.attachment.readers.archive_reader 中封裝 ArchiveAttachmentReader，封裝附件讀取與內容萃取流程，將檔案轉成可推理的證據。
+    
+    Args:
+        config: 控制此流程行為的設定資料。
+        dispatcher: 此流程需要使用的輸入資料。
+    
+    Returns:
+        類別本身不直接回傳值；建立實例後可透過其方法操作狀態與流程。
+    
+    限制或副作用:
+        方法可能更新內部狀態、讀寫檔案、呼叫外部服務或產生日誌，需依使用情境確認。
+    """
     def __init__(
         self,
         config: AttachmentReaderConfig,
         dispatcher: AttachmentEvidenceBuilder,
     ) -> None:
+        """
+        負責執行 ArchiveAttachmentReader 中的 __init__ 流程，初始化物件所需的設定、依賴與內部狀態，讓後續方法可以沿用同一份執行上下文。
+        
+        Args:
+            config: 控制此流程行為的設定資料。
+            dispatcher: 此流程需要使用的輸入資料。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 None。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         self.config = config
         self.dispatcher = dispatcher
 
     def read_zip(self, question: str, file_path: Path, depth: int = 0) -> str:
+        """
+        負責執行 ArchiveAttachmentReader 中的 read_zip 流程，讀取本地或外部資料來源並轉換成系統可處理的格式。
+        
+        Args:
+            question: 目前要處理的任務、問題或查詢文字。
+            file_path: 要讀取或寫入的檔案或目錄路徑。
+            depth: 此流程需要使用的輸入資料。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 str。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         if depth > self.config.max_zip_depth:
             return f"ZIP archive skipped because nested zip depth exceeded {self.config.max_zip_depth}."
 
@@ -78,6 +118,18 @@ class ArchiveAttachmentReader:
     def _select_safe_zip_members(
         self, infos: list[zipfile.ZipInfo]
     ) -> tuple[list[zipfile.ZipInfo], list[str]]:
+        """
+        負責執行 ArchiveAttachmentReader 中的 _select_safe_zip_members 流程，依照 ArchiveAttachmentReader 的流程需求處理 _select_safe_zip_members 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            infos: 此流程需要使用的輸入資料。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 tuple[list[zipfile.ZipInfo], list[str]]。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         selected: list[zipfile.ZipInfo] = []
         warnings: list[str] = []
         total_size = 0
@@ -112,6 +164,18 @@ class ArchiveAttachmentReader:
         return selected, warnings
 
     def _is_unsafe_zip_name(self, name: str) -> bool:
+        """
+        負責執行 ArchiveAttachmentReader 中的 _is_unsafe_zip_name 流程，依照 ArchiveAttachmentReader 的流程需求處理 _is_unsafe_zip_name 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            name: 此流程需要使用的輸入資料。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 bool。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         normalized = name.replace("\\", "/")
         return (
             not normalized
@@ -127,6 +191,20 @@ class ArchiveAttachmentReader:
         info: zipfile.ZipInfo,
         tmp_root: Path,
     ) -> Path:
+        """
+        負責執行 ArchiveAttachmentReader 中的 _extract_zip_member_safely 流程，依照 ArchiveAttachmentReader 的流程需求處理 _extract_zip_member_safely 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            archive: 此流程需要使用的輸入資料。
+            info: 此流程需要使用的輸入資料。
+            tmp_root: 此流程需要使用的輸入資料。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 Path。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         normalized_name = str(info.filename or "").replace("\\", "/")
         if self._is_unsafe_zip_name(normalized_name):
             raise ValueError(f"unsafe zip path: {info.filename}")

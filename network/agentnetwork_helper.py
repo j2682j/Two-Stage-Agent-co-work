@@ -1,34 +1,71 @@
-from __future__ import annotations
+﻿from __future__ import annotations
 
 import re
 from typing import Any, Optional
 
-from memory import MemoryConfig
-from memory.policy import (
-    build_memory_records,
-    should_write_final_memory,
-    should_write_stage2_memory,
-)
+from memory.base import MemoryConfig
 from utils.network_utils import answer_equivalence
 
 
 class AgentNetworkHelper:
     """
-    AgentNetworkHelper 提供了 AgentNetwork 相關的工具方法，包括記憶體配置複製、運行時初始化、神經網絡構建、答案聚類與選擇，以及共享記憶體寫入等功能。
-    1. init_nn: 根據抽取的模型名稱構建神經網絡，設置節點和邊，並定義激活函數和成本。
-    2. init_runtime: 初始化 NetworkRuntime，設置工具管理器、記憶體工具和相關配置。
+    鞎痊??network.agentnetwork_helper 銝剖?鋆?AgentNetworkHelper嚗恣???嗅??遙???炎蝝Ｙ???頝其遙??撽????????
     
+    Args:
+        ?⊥?蝣箏遣瑽??賂??航?? dataclass 甈???閮剖澆遣蝡隞嗚?
+    
+    Returns:
+        憿?祈澈銝?亙??喳潘?撱箇?撖虫?敺???嗆瘜?雿???瘚???
+    
+    ??雿:
+        ?寞??航?湔?折???撖急?獢?怠??冽????Ｙ??亥?嚗?靘蝙?冽?憓Ⅱ隤?
     """
     def zero_grad(self, network) -> None:
+        """
+        鞎痊?瑁? AgentNetworkHelper 銝剔? zero_grad 瘚?嚗???AgentNetworkHelper ??蝔?瘙???zero_grad 撠?????????雿?蝯??Ｙ???
+        
+        Args:
+            network: 甇斗?蝔?閬蝙?函?頛詨鞈???
+        
+        Returns:
+            ?瑁?蝯?嚗?賢?璅酉??嚗????亦 None??
+        
+        ??雿:
+            ?航霈???湔?拐辣???獢??冽????亥?嚗?靘?怠?舐Ⅱ隤雿??
+        """
         for edge in network.edges:
             edge.zero_weight()
 
     def set_allnodes_deactivated(self, network) -> None:
+        """
+        鞎痊?瑁? AgentNetworkHelper 銝剔? set_allnodes_deactivated 瘚?嚗??啁?頛詨鞈??蔥?啁?隞嗥???瘚?蝝?葉??
+        
+        Args:
+            network: 甇斗?蝔?閬蝙?函?頛詨鞈???
+        
+        Returns:
+            ?瑁?蝯?嚗?賢?璅酉??嚗????亦 None??
+        
+        ??雿:
+            ?航霈???湔?拐辣???獢??冽????亥?嚗?靘?怠?舐Ⅱ隤雿??
+        """
         for node in network.nodes:
             node.deactivate()
         
     
     def clone_memory_config(self, memory_config: Optional[MemoryConfig]) -> MemoryConfig:
+        """
+        鞎痊?瑁? AgentNetworkHelper 銝剔? clone_memory_config 瘚?嚗???AgentNetworkHelper ??蝔?瘙???clone_memory_config 撠?????????雿?蝯??Ｙ???
+        
+        Args:
+            memory_config: 閮蝟餌絞???炎蝝Ｙ??神?亥?????隞??
+        
+        Returns:
+            ?瑁?蝯?嚗?賢?璅酉??嚗????亦 MemoryConfig??
+        
+        ??雿:
+            ?航霈???湔?拐辣???獢??冽????亥?嚗?靘?怠?舐Ⅱ隤雿??
+        """
         if memory_config is None:
             return MemoryConfig()
 
@@ -43,9 +80,34 @@ class AgentNetworkHelper:
 
 
     def ensure_tool_manager(self, network):
+        """
+        鞎痊?瑁? AgentNetworkHelper 銝剔? ensure_tool_manager 瘚?嚗???AgentNetworkHelper ??蝔?瘙???ensure_tool_manager 撠?????????雿?蝯??Ｙ???
+        
+        Args:
+            network: 甇斗?蝔?閬蝙?函?頛詨鞈???
+        
+        Returns:
+            ?瑁?蝯?嚗?賢?璅酉??嚗????亦 ?芣?閮颯?
+        
+        ??雿:
+            ?航霈???湔?拐辣???獢??冽????亥?嚗?靘?怠?舐Ⅱ隤雿??
+        """
         return network.tool_manager
 
     def sample_model_name_for_round(self, network, n: int) -> list[str]:
+        """
+        鞎痊?瑁? AgentNetworkHelper 銝剔? sample_model_name_for_round 瘚?嚗???AgentNetworkHelper ??蝔?瘙???sample_model_name_for_round 撠?????????雿?蝯??Ｙ???
+        
+        Args:
+            network: ?其??澆璅∪????冽???璅∪??迂?恥?嗥垢??身摰?
+            n: ?其??澆璅∪????冽???璅∪??迂?恥?嗥垢??身摰?
+        
+        Returns:
+            ?瑁?蝯?嚗?賢?璅酉??嚗????亦 list[str]??
+        
+        ??雿:
+            ?航霈???湔?拐辣???獢??冽????亥?嚗?靘?怠?舐Ⅱ隤雿??
+        """
         if n > len(network.model_pool):
             raise ValueError("Not enough models for one round")
 
@@ -55,6 +117,18 @@ class AgentNetworkHelper:
 
 
     def cluster_answers(self, answers: list[str]) -> list[dict]:
+        """
+        鞎痊?瑁? AgentNetworkHelper 銝剔? cluster_answers 瘚?嚗???AgentNetworkHelper ??蝔?瘙???cluster_answers 撠?????????雿?蝯??Ｙ???
+        
+        Args:
+            answers: 甇斗?蝔?閬蝙?函?頛詨鞈???
+        
+        Returns:
+            ?瑁?蝯?嚗?賢?璅酉??嚗????亦 list[dict]??
+        
+        ??雿:
+            ?航霈???湔?拐辣???獢??冽????亥?嚗?靘?怠?舐Ⅱ隤雿??
+        """
         clusters = []
 
         for idx, ans in enumerate(answers):
@@ -77,6 +151,18 @@ class AgentNetworkHelper:
         return clusters
 
     def select_cluster_representative(self, clusters: list[dict]) -> str | None:
+        """
+        鞎痊?瑁? AgentNetworkHelper 銝剔? select_cluster_representative 瘚?嚗?遙?敺萸蝑????????蝥?暺極?瑟?瘚????
+        
+        Args:
+            clusters: 甇斗?蝔?閬蝙?函?頛詨鞈???
+        
+        Returns:
+            ?瑁?蝯?嚗?賢?璅酉??嚗????亦 str | None??
+        
+        ??雿:
+            ?航霈???湔?拐辣???獢??冽????亥?嚗?靘?怠?舐Ⅱ隤雿??
+        """
         if not clusters:
             return None
 
@@ -94,6 +180,21 @@ class AgentNetworkHelper:
         importance: list[float],
         top_k: int,
     ) -> list[int]:
+        """
+        鞎痊?瑁? AgentNetworkHelper 銝剔? select_diverse_top_k 瘚?嚗?遙?敺萸蝑????????蝥?暺極?瑟?瘚????
+        
+        Args:
+            nodes: ?批瑼Ｙ揣?祟?豢?頛詨?賊???澆??詻?
+            active_indices: ?批瑼Ｙ揣?祟?豢?頛詨?賊???澆??詻?
+            importance: ?批瑼Ｙ揣?祟?豢?頛詨?賊???澆??詻?
+            top_k: ?批瑼Ｙ揣?祟?豢?頛詨?賊???澆??詻?
+        
+        Returns:
+            ?瑁?蝯?嚗?賢?璅酉??嚗????亦 list[int]??
+        
+        ??雿:
+            ?航霈???湔?拐辣???獢??冽????亥?嚗?靘?怠?舐Ⅱ隤雿??
+        """
         ranked = sorted(
             active_indices,
             key=lambda idx: importance[idx],
@@ -134,11 +235,37 @@ class AgentNetworkHelper:
         return selected
 
     def _normalize_text(self, text) -> str:
+        """
+        鞎痊?瑁? AgentNetworkHelper 銝剔? _normalize_text 瘚?嚗???AgentNetworkHelper ??蝔?瘙???_normalize_text 撠?????????雿?蝯??Ｙ???
+        
+        Args:
+            text: 甇斗?蝔?閬蝙?函?頛詨鞈???
+        
+        Returns:
+            ?瑁?蝯?嚗?賢?璅酉??嚗????亦 str??
+        
+        ??雿:
+            ?航霈???湔?拐辣???獢??冽????亥?嚗?靘?怠?舐Ⅱ隤雿??
+        """
         if text is None:
             return ""
         return re.sub(r"\s+", " ", str(text)).strip()
 
     def select_top_k_agents(self, network, top_k: int, importance: list[float]) -> list[int]:
+        """
+        鞎痊?瑁? AgentNetworkHelper 銝剔? select_top_k_agents 瘚?嚗?遙?敺萸蝑????????蝥?暺極?瑟?瘚????
+        
+        Args:
+            network: ?批瑼Ｙ揣?祟?豢?頛詨?賊???澆??詻?
+            top_k: ?批瑼Ｙ揣?祟?豢?頛詨?賊???澆??詻?
+            importance: ?批瑼Ｙ揣?祟?豢?頛詨?賊???澆??詻?
+        
+        Returns:
+            ?瑁?蝯?嚗?賢?璅酉??嚗????亦 list[int]??
+        
+        ??雿:
+            ?航霈???湔?拐辣???獢??冽????亥?嚗?靘?怠?舐Ⅱ隤雿??
+        """
         active_indices = [
             idx for idx, node in enumerate(network.nodes)
             if getattr(node, "active", False)
@@ -152,8 +279,21 @@ class AgentNetworkHelper:
         )
 
     def finalize_stage2_results(self, network, stage2_traces):
-        memory_context = ""
+        """
+        鞎痊?瑁? AgentNetworkHelper 銝剔? finalize_stage2_results 瘚?嚗???AgentNetworkHelper ??蝔?瘙???finalize_stage2_results 撠?????????雿?蝯??Ｙ???
+        
+        Args:
+            network: 甇斗?蝔?閬蝙?函?頛詨鞈???
+            stage2_traces: 甇斗?蝔?閬蝙?函?頛詨鞈???
+        
+        Returns:
+            ?瑁?蝯?嚗?賢?璅酉??嚗????亦 ?芣?閮颯?
+        
+        ??雿:
+            ?航霈???湔?拐辣???獢??冽????亥?嚗?靘?怠?舐Ⅱ隤雿??
+        """
         runtime = getattr(network, "runtime", None)
+        memory_context = self._build_final_decision_memory_context(network)
         decision = network.final_decision_maker.decide(
             question=network.current_question or "",
             stage1_result=network.last_stage1_result,
@@ -164,6 +304,17 @@ class AgentNetworkHelper:
         )
 
         network.last_final_decision = decision
+        if runtime is not None:
+            runtime.record_token_usage(
+                {
+                    "stage": "final_decision",
+                    "agent_id": "final_decision_maker",
+                    "model_name": getattr(network.final_decision_maker, "fallback_model_name", "unknown"),
+                    "prompt_tokens": decision.get("prompt_tokens", 0),
+                    "completion_tokens": decision.get("completion_tokens", 0),
+                    "mode": decision.get("mode", ""),
+                }
+            )
         self._write_shared_memory_records(
             network,
             stage2_traces=stage2_traces,
@@ -175,6 +326,61 @@ class AgentNetworkHelper:
 
         return decision.get("final_result")
 
+    def _build_final_decision_memory_context(self, network) -> str:
+        """
+        鞎痊?瑁? AgentNetworkHelper 銝剔? _build_final_decision_memory_context 瘚?嚗???AgentNetworkHelper ??蝔?瘙???_build_final_decision_memory_context 撠?????????雿?蝯??Ｙ???
+        
+        Args:
+            network: 閮蝟餌絞???炎蝝Ｙ??神?亥?????隞??
+        
+        Returns:
+            ?瑁?蝯?嚗?賢?璅酉??嚗????亦 str??
+        
+        ??雿:
+            ?航霈???湔?拐辣???獢??冽????亥?嚗?靘?怠?舐Ⅱ隤雿??
+        """
+        runtime = getattr(network, "runtime", None)
+        graph_memory = getattr(runtime, "graph_memory", None)
+        question = self._normalize_text(getattr(network, "current_question", "") or "")
+        if runtime is None or graph_memory is None or not question:
+            return ""
+
+        try:
+            context = getattr(runtime, "current_context", {}) or {}
+            source = str(context.get("benchmark") or context.get("source") or "system").strip().lower() or "system"
+            task_id = str(context.get("task_id") or context.get("id") or context.get("sample_id") or "").strip() or None
+            attachment = context.get("attachment") or {}
+            attachment_type = str(attachment.get("extension", "") or "").strip().lower().lstrip(".") or None
+            result = graph_memory.retrieve_context(
+                task_id=task_id,
+                input_text=question,
+                source=f"{source}_final_decision",
+                attachment_type=attachment_type,
+                limit=3,
+                injection_target="final_decision",
+            )
+            guidance = str(result.get("guidance", "") or "")
+            runtime.record_memory_read(
+                {
+                    "stage": "final_decision",
+                    "source": "graph_memory",
+                    "task_id": result.get("task_id") or task_id,
+                    "task_type": (result.get("retrieval") or {}).get("task_type"),
+                    "related_task_ids": result.get("related_task_ids", []),
+                    "insight_ids": [
+                        item.get("insight_id")
+                        for item in result.get("insights", [])
+                        if isinstance(item, dict) and item.get("insight_id")
+                    ],
+                    "seed_task_hits": result.get("seed_task_hits", []),
+                    "expanded_task_hits": result.get("expanded_task_hits", []),
+                }
+            )
+            return guidance
+        except Exception as exc:
+            print(f"[WARN] final decision graph memory guidance failed: {exc}")
+            return ""
+
     def _write_shared_memory_records(
         self,
         network,
@@ -182,62 +388,39 @@ class AgentNetworkHelper:
         stage2_traces: list[dict[str, Any]],
         decision: dict[str, Any],
     ) -> None:
-        memory_tool = getattr(network.runtime, "memory_tool", None) or getattr(network, "memory_tool", None)
-        memory_manager = getattr(memory_tool, "memory_manager", None)
-        if memory_manager is None:
-            return
-
-        records: list[dict[str, Any]] = []
-        for candidate in self._extract_judged_stage2_candidates(stage2_traces, decision):
-            if should_write_stage2_memory(candidate):
-                records.extend(
-                    build_memory_records(
-                        question=network.current_question or "",
-                        source_stage="stage2",
-                        payload=candidate,
-                    )
-                )
-
-        if should_write_final_memory(decision):
-            records.extend(
-                build_memory_records(
-                    question=network.current_question or "",
-                    source_stage="final",
-                    payload=decision,
-                )
-            )
-
-        for record in network.runtime.dedupe_memory_records(records):
-            memory_type = str(record.get("memory_type", "") or "").strip()
-            if memory_type not in getattr(memory_manager, "memory_types", {}):
-                continue
-            try:
-                memory_id = memory_manager.add_memory(
-                    content=record["content"],
-                    memory_type=memory_type,
-                    importance=record.get("importance"),
-                    metadata=record.get("metadata"),
-                    auto_classify=bool(record.get("auto_classify", False)),
-                )
-            except Exception as e:
-                print(f"[WARN] shared memory 寫入失敗: {e}")
-                continue
-
-            if network.runtime is not None:
-                network.runtime.record_memory_write(
-                    {
-                        "memory_id": memory_id,
-                        "memory_type": memory_type,
-                        "source_stage": record.get("metadata", {}).get("source_stage"),
-                        "answer": record.get("metadata", {}).get("answer"),
-                    }
-                )
-
+        """
+        鞎痊?瑁? AgentNetworkHelper 銝剔? _write_shared_memory_records 瘚?嚗???AgentNetworkHelper ??蝔?瘙???_write_shared_memory_records 撠?????????雿?蝯??Ｙ???
+        
+        Args:
+            network: 閮蝟餌絞???炎蝝Ｙ??神?亥?????隞??
+            stage2_traces: 閮蝟餌絞???炎蝝Ｙ??神?亥?????隞??
+            decision: 閮蝟餌絞???炎蝝Ｙ??神?亥?????隞??
+        
+        Returns:
+            ?瑁?蝯?嚗?賢?璅酉??嚗????亦 None??
+        
+        ??雿:
+            ?航霈???湔?拐辣???獢??冽????亥?嚗?靘?怠?舐Ⅱ隤雿??
+        """
+        return
     def _extract_judged_stage2_candidates(
         self,
         stage2_traces: list[dict[str, Any]],
         decision: dict[str, Any],
     ) -> list[dict[str, Any]]:
+        """
+        鞎痊?瑁? AgentNetworkHelper 銝剔? _extract_judged_stage2_candidates 瘚?嚗???AgentNetworkHelper ??蝔?瘙???_extract_judged_stage2_candidates 撠?????????雿?蝯??Ｙ???
+        
+        Args:
+            stage2_traces: 甇斗?蝔?閬蝙?函?頛詨鞈???
+            decision: 甇斗?蝔?閬蝙?函?頛詨鞈???
+        
+        Returns:
+            ?瑁?蝯?嚗?賢?璅酉??嚗????亦 list[dict[str, Any]]??
+        
+        ??雿:
+            ?航霈???湔?拐辣???獢??冽????亥?嚗?靘?怠?舐Ⅱ隤雿??
+        """
         judged_by_idx: dict[int, dict[str, Any]] = {}
         for step in decision.get("intermediate_steps", []) or []:
             if step.get("step") != "stage2_judge_rerank":

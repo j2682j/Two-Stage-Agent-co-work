@@ -16,31 +16,19 @@ logger = logging.getLogger(__name__)
 
 
 class ToolAwareSimpleAgent(SimpleAgent):
-    """SimpleAgent 子類，紀錄工具呼叫情況。
-
-    ToolAwareSimpleAgent 擴展了 SimpleAgent，增加了工具呼叫監聽功能。
-    這使得外部系統可以追蹤和紀錄智慧代理的工具呼叫行為，用於日誌紀錄、
-    調試、性能分析等場景。
-
-    主要特性：
-    - 工具呼叫監聽：通過回調函式紀錄每次工具呼叫的詳細資訊
-    - 增強的工具呼叫解析：支援複雜的嵌套參數和字串處理
-    - 流式工具呼叫：在流式輸出中支援工具呼叫
-    - 參數清理：自動清理和規範化工具參數
-
-    範例：
-        >>> def tool_listener(call_info):
-        ...     print(f"工具呼叫: {call_info['tool_name']}")
-        ...     print(f"參數: {call_info['parsed_parameters']}")
-        ...     print(f"結果: {call_info['result']}")
-        >>>
-        >>> agent = ToolAwareSimpleAgent(
-        ...     name="研究助手",
-        ...     system_prompt="你是一個研究助手",
-        ...     llm=llm,
-        ...     tool_call_listener=tool_listener
-        ... )
-        >>> agent.run("搜尋最新的AI研究")
+    """
+    負責在 agents.tool_aware_agent 中封裝 ToolAwareSimpleAgent，封裝代理節點的推理、工具使用、訊息傳遞或協作控制邏輯。
+    
+    Args:
+        tool_call_listener: 此流程需要使用的輸入資料。
+        *args: 此流程需要使用的輸入資料。
+        **kwargs: 此流程需要使用的輸入資料。
+    
+    Returns:
+        類別本身不直接回傳值；建立實例後可透過其方法操作狀態與流程。
+    
+    限制或副作用:
+        方法可能更新內部狀態、讀寫檔案、呼叫外部服務或產生日誌，需依使用情境確認。
     """
 
     def __init__(
@@ -49,25 +37,36 @@ class ToolAwareSimpleAgent(SimpleAgent):
         tool_call_listener: Optional[Callable[[dict[str, Any]], None]] = None,
         **kwargs: Any,
     ) -> None:
-        """初始化 ToolAwareSimpleAgent。
-
+        """
+        負責執行 ToolAwareSimpleAgent 中的 __init__ 流程，初始化物件所需的設定、依賴與內部狀態，讓後續方法可以沿用同一份執行上下文。
+        
         Args:
-            *args: 傳遞給 SimpleAgent 的位置參數
-            tool_call_listener: 工具呼叫監聽器回調函式，接收包含工具呼叫資訊的字典
-            **kwargs: 傳遞給 SimpleAgent 的關鍵字參數
+            tool_call_listener: 此流程需要使用的輸入資料。
+            *args: 此流程需要使用的輸入資料。
+            **kwargs: 此流程需要使用的輸入資料。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 None。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
         """
         super().__init__(*args, **kwargs)
         self._tool_call_listener = tool_call_listener
 
     def _execute_tool_call(self, tool_name: str, parameters: str) -> str:  # type: ignore[override]
-        """執行工具呼叫並通知監聽器。
-
+        """
+        負責執行 ToolAwareSimpleAgent 中的 _execute_tool_call 流程，依照 ToolAwareSimpleAgent 的流程需求處理 _execute_tool_call 對應的資料轉換、狀態操作或結果產生。
+        
         Args:
-            tool_name: 工具名稱
-            parameters: 工具參數（字串格式）
-
+            tool_name: 可呼叫的工具、工具名稱或工具註冊表。
+            parameters: 此流程需要使用的輸入資料。
+        
         Returns:
-            工具執行結果的格式化字串
+            執行結果；若函式標註回傳型別，預期型別為 str。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
         """
         if not self.tool_registry:
             return "❌ 錯誤：未設定工具註冊表"
@@ -104,15 +103,17 @@ class ToolAwareSimpleAgent(SimpleAgent):
         return formatted_result
 
     def _parse_tool_calls(self, text: str) -> list:  # type: ignore[override]
-        """解析文字中的工具呼叫。
-
-        支援格式：[TOOL_CALL:tool_name:parameters]
-
+        """
+        負責執行 ToolAwareSimpleAgent 中的 _parse_tool_calls 流程，依照 ToolAwareSimpleAgent 的流程需求處理 _parse_tool_calls 對應的資料轉換、狀態操作或結果產生。
+        
         Args:
-            text: 包含工具呼叫的文字
-
+            text: 此流程需要使用的輸入資料。
+        
         Returns:
-            工具呼叫列表，每個元素包含 tool_name、parameters 和 original
+            執行結果；若函式標註回傳型別，預期型別為 list。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
         """
         marker = "[TOOL_CALL:"
         calls: list = []
@@ -172,14 +173,18 @@ class ToolAwareSimpleAgent(SimpleAgent):
 
     @staticmethod
     def _find_tool_call_end(text: str, start_index: int) -> int:
-        """查找工具呼叫的結束位置。
-
+        """
+        負責執行 ToolAwareSimpleAgent 中的 _find_tool_call_end 流程，依照 ToolAwareSimpleAgent 的流程需求處理 _find_tool_call_end 對應的資料轉換、狀態操作或結果產生。
+        
         Args:
-            text: 文字內容
-            start_index: 工具呼叫的起始位置
-
+            text: 此流程需要使用的輸入資料。
+            start_index: 此流程需要使用的輸入資料。
+        
         Returns:
-            工具呼叫結束位置的索引，如果找不到回傳 -1
+            執行結果；若函式標註回傳型別，預期型別為 int。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
         """
         marker = "[TOOL_CALL:"
         tool_start = start_index + len(marker)
@@ -217,11 +222,18 @@ class ToolAwareSimpleAgent(SimpleAgent):
 
     @staticmethod
     def attach_registry(agent: "ToolAwareSimpleAgent", registry: ToolRegistry | None) -> None:
-        """Helper to attach a tool registry if provided.
-
+        """
+        負責執行 ToolAwareSimpleAgent 中的 attach_registry 流程，依照 ToolAwareSimpleAgent 的流程需求處理 attach_registry 對應的資料轉換、狀態操作或結果產生。
+        
         Args:
-            agent: ToolAwareSimpleAgent 實例
-            registry: 工具註冊表
+            agent: 此流程需要使用的輸入資料。
+            registry: 可呼叫的工具、工具名稱或工具註冊表。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 None。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
         """
         if registry:
             agent.tool_registry = registry
@@ -229,13 +241,17 @@ class ToolAwareSimpleAgent(SimpleAgent):
 
     @staticmethod
     def _sanitize_parameters(parameters: dict[str, Any]) -> dict[str, Any]:
-        """清理和規範化工具參數。
-
+        """
+        負責執行 ToolAwareSimpleAgent 中的 _sanitize_parameters 流程，依照 ToolAwareSimpleAgent 的流程需求處理 _sanitize_parameters 對應的資料轉換、狀態操作或結果產生。
+        
         Args:
-            parameters: 原始參數字典
-
+            parameters: 此流程需要使用的輸入資料。
+        
         Returns:
-            清理後的參數字典
+            執行結果；若函式標註回傳型別，預期型別為 dict[str, Any]。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
         """
         sanitized: dict[str, Any] = {}
         for key, value in parameters.items():
@@ -275,13 +291,17 @@ class ToolAwareSimpleAgent(SimpleAgent):
 
     @staticmethod
     def _normalize_string(value: str) -> str:
-        """規範化字串值，移除多余的引號和括號。
-
+        """
+        負責執行 ToolAwareSimpleAgent 中的 _normalize_string 流程，依照 ToolAwareSimpleAgent 的流程需求處理 _normalize_string 對應的資料轉換、狀態操作或結果產生。
+        
         Args:
-            value: 原始字串
-
+            value: 此流程需要使用的輸入資料。
+        
         Returns:
-            規範化後的字串
+            執行結果；若函式標註回傳型別，預期型別為 str。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
         """
         trimmed = value.strip()
 
@@ -300,17 +320,19 @@ class ToolAwareSimpleAgent(SimpleAgent):
         return trimmed.strip()
 
     def stream_run(self, input_text: str, max_tool_iterations: int = 3, **kwargs: Any) -> Iterator[str]:  # type: ignore[override]
-        """Stream assistant output while supporting tool calls mid-generation.
-
-        流式執行智慧代理，支援在生成過程中呼叫工具。
-
+        """
+        負責執行 ToolAwareSimpleAgent 中的 stream_run 流程，依照 ToolAwareSimpleAgent 的流程需求處理 stream_run 對應的資料轉換、狀態操作或結果產生。
+        
         Args:
-            input_text: 使用者輸入文字
-            max_tool_iterations: 最大工具呼叫迭代次數
-            **kwargs: 傳遞給 LLM 的額外參數
-
-        Yields:
-            生成的文字片段
+            input_text: 此流程需要使用的輸入資料。
+            max_tool_iterations: 控制檢索、篩選或輸出數量的數值參數。
+            **kwargs: 此流程需要使用的輸入資料。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 Iterator[str]。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
         """
         messages: list[dict[str, Any]] = []
         enhanced_system_prompt = self._get_enhanced_system_prompt()
@@ -333,6 +355,18 @@ class ToolAwareSimpleAgent(SimpleAgent):
             tool_call_texts: list[str] = []
 
             def process_residual(final_pass: bool = False) -> Iterator[str]:
+                """
+                負責執行 ToolAwareSimpleAgent 中的 process_residual 流程，整理呼叫端傳入的資料，清理格式並轉換為後續流程可使用的內容。
+                
+                Args:
+                    final_pass: 此流程需要使用的輸入資料。
+                
+                Returns:
+                    執行結果；若函式標註回傳型別，預期型別為 Iterator[str]。
+                
+                限制或副作用:
+                    可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+                """
                 nonlocal residual
                 while True:
                     start = residual.find(marker)
@@ -423,13 +457,17 @@ class ToolAwareSimpleAgent(SimpleAgent):
 
     @staticmethod
     def _coerce_sequence(value: str) -> Any:
-        """嘗試將字串轉換為列表。
-
+        """
+        負責執行 ToolAwareSimpleAgent 中的 _coerce_sequence 流程，依照 ToolAwareSimpleAgent 的流程需求處理 _coerce_sequence 對應的資料轉換、狀態操作或結果產生。
+        
         Args:
-            value: 字串值
-
+            value: 此流程需要使用的輸入資料。
+        
         Returns:
-            解析後的列表，如果解析失敗回傳 None
+            執行結果；若函式標註回傳型別，預期型別為 Any。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
         """
         if not value:
             return None

@@ -9,25 +9,32 @@ import numpy as np
 
 
 class GAIAMetrics:
-    """GAIA 評估指標計算器
-
-    計算通用AI 助理相關的評估指標:
-    - 精確匹配率 (Exact Match Rate): 答案完全正確的比例
-    - 部分匹配率 (Partial Match Rate): 答案部分正確的比例
-    - 按難度等級的成功率: Level 1/2/3 的表現
-    - 平均推理步數: 解決問題所需的平均步數
-    - 執行時間統計: 回應時間分析
+    """
+    負責在 evaluation.benchmarks.gaia.metrics 中封裝 GAIAMetrics，封裝 benchmark 評估、答案判定、分數計算或報告資料整理流程。
+    
+    Args:
+        無明確建構參數，可能透過 dataclass 欄位或預設值建立物件。
+    
+    Returns:
+        類別本身不直接回傳值；建立實例後可透過其方法操作狀態與流程。
+    
+    限制或副作用:
+        方法可能更新內部狀態、讀寫檔案、呼叫外部服務或產生日誌，需依使用情境確認。
     """
 
     @staticmethod
     def calculate_exact_match_rate(results: List[Dict[str, Any]]) -> float:
-        """計算精確匹配率
-
+        """
+        負責執行 GAIAMetrics 中的 calculate_exact_match_rate 流程，依照 GAIAMetrics 的流程需求處理 calculate_exact_match_rate 對應的資料轉換、狀態操作或結果產生。
+        
         Args:
-            results: 評估結果列表
-
+            results: 此流程需要使用的輸入資料。
+        
         Returns:
-            精確匹配率 (0-1)
+            執行結果；若函式標註回傳型別，預期型別為 float。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
         """
         if not results:
             return 0.0
@@ -37,13 +44,17 @@ class GAIAMetrics:
 
     @staticmethod
     def calculate_partial_match_rate(results: List[Dict[str, Any]]) -> float:
-        """計算部分匹配率
-
+        """
+        負責執行 GAIAMetrics 中的 calculate_partial_match_rate 流程，依照 GAIAMetrics 的流程需求處理 calculate_partial_match_rate 對應的資料轉換、狀態操作或結果產生。
+        
         Args:
-            results: 評估結果列表
-
+            results: 此流程需要使用的輸入資料。
+        
         Returns:
-            部分匹配率 (0-1)
+            執行結果；若函式標註回傳型別，預期型別為 float。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
         """
         if not results:
             return 0.0
@@ -56,14 +67,18 @@ class GAIAMetrics:
         results: List[Dict[str, Any]],
         level: int
     ) -> Dict[str, float]:
-        """計算特定難度等級的指標
-
+        """
+        負責執行 GAIAMetrics 中的 calculate_level_metrics 流程，依照 GAIAMetrics 的流程需求處理 calculate_level_metrics 對應的資料轉換、狀態操作或結果產生。
+        
         Args:
-            results: 評估結果列表
-            level: 難度等級 (1-3)
-
+            results: 此流程需要使用的輸入資料。
+            level: 此流程需要使用的輸入資料。
+        
         Returns:
-            該等級的指標字典
+            執行結果；若函式標註回傳型別，預期型別為 Dict[str, float]。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
         """
         level_results = [r for r in results if r.get("level") == level]
 
@@ -88,25 +103,33 @@ class GAIAMetrics:
 
     @staticmethod
     def calculate_average_execution_time(results: List[Dict[str, Any]]) -> float:
-        """計算平均執行時間
-
+        """
+        負責執行 GAIAMetrics 中的 calculate_average_execution_time 流程，依照 GAIAMetrics 的流程需求處理 calculate_average_execution_time 對應的資料轉換、狀態操作或結果產生。
+        
         Args:
-            results: 評估結果列表
-
+            results: 此流程需要使用的輸入資料。
+        
         Returns:
-            平均執行時間(秒)
+            執行結果；若函式標註回傳型別，預期型別為 float。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
         """
         execution_times = [r.get("execution_time", 0.0) for r in results if "execution_time" in r]
         return sum(execution_times) / len(execution_times) if execution_times else 0.0
 
     def compute_metrics(self, results: List[Dict[str, Any]]) -> Dict[str, Any]:
-        """計算綜合指標
-
+        """
+        負責執行 GAIAMetrics 中的 compute_metrics 流程，依照 GAIAMetrics 的流程需求處理 compute_metrics 對應的資料轉換、狀態操作或結果產生。
+        
         Args:
-            results: 評估結果列表
-
+            results: 此流程需要使用的輸入資料。
+        
         Returns:
-            完整的指標字典
+            執行結果；若函式標註回傳型別，預期型別為 Dict[str, Any]。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
         """
         if not results:
             return self._empty_metrics()
@@ -142,7 +165,18 @@ class GAIAMetrics:
         }
 
     def _empty_metrics(self) -> Dict[str, Any]:
-        """回傳空指標"""
+        """
+        負責執行 GAIAMetrics 中的 _empty_metrics 流程，依照 GAIAMetrics 的流程需求處理 _empty_metrics 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            無。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 Dict[str, Any]。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         return {
             "total_samples": 0,
             "exact_match_rate": 0.0,
@@ -158,7 +192,18 @@ class GAIAMetrics:
         }
 
     def _compute_score_statistics(self, scores: List[float]) -> Dict[str, float]:
-        """計算分數統計資訊"""
+        """
+        負責執行 GAIAMetrics 中的 _compute_score_statistics 流程，依照 GAIAMetrics 的流程需求處理 _compute_score_statistics 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            scores: 評估、推理或工具執行後產生的結果與分數資料。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 Dict[str, float]。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         if not scores:
             return {}
 
@@ -173,7 +218,18 @@ class GAIAMetrics:
         }
 
     def _analyze_performance(self, results: List[Dict[str, Any]]) -> Dict[str, Any]:
-        """分析性能表現"""
+        """
+        負責執行 GAIAMetrics 中的 _analyze_performance 流程，依照 GAIAMetrics 的流程需求處理 _analyze_performance 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            results: 此流程需要使用的輸入資料。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 Dict[str, Any]。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         if not results:
             return {}
 
@@ -202,7 +258,18 @@ class GAIAMetrics:
         }
 
     def _analyze_difficulty_progression(self, level_performance: Dict[str, Any]) -> Dict[str, Any]:
-        """分析難度遞進表現"""
+        """
+        負責執行 GAIAMetrics 中的 _analyze_difficulty_progression 流程，依照 GAIAMetrics 的流程需求處理 _analyze_difficulty_progression 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            level_performance: 此流程需要使用的輸入資料。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 Dict[str, Any]。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         progression = {}
 
         levels = ["Level_1", "Level_2", "Level_3"]
@@ -222,7 +289,18 @@ class GAIAMetrics:
         return progression
 
     def _analyze_errors(self, results: List[Dict[str, Any]]) -> Dict[str, Any]:
-        """分析錯誤情況"""
+        """
+        負責執行 GAIAMetrics 中的 _analyze_errors 流程，依照 GAIAMetrics 的流程需求處理 _analyze_errors 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            results: 此流程需要使用的輸入資料。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 Dict[str, Any]。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         total_errors = sum(1 for r in results if not r.get("exact_match", False))
         partial_correct = sum(1 for r in results if r.get("partial_match", False) and not r.get("exact_match", False))
         complete_wrong = sum(1 for r in results if not r.get("partial_match", False) and not r.get("exact_match", False))
@@ -237,14 +315,18 @@ class GAIAMetrics:
 
     @staticmethod
     def compare_results(results1: Dict[str, Any], results2: Dict[str, Any]) -> Dict[str, Any]:
-        """比較兩個評估結果
-
+        """
+        負責執行 GAIAMetrics 中的 compare_results 流程，依照 GAIAMetrics 的流程需求處理 compare_results 對應的資料轉換、狀態操作或結果產生。
+        
         Args:
-            results1: 第一個評估結果
-            results2: 第二個評估結果
-
+            results1: 此流程需要使用的輸入資料。
+            results2: 此流程需要使用的輸入資料。
+        
         Returns:
-            比較結果字典
+            執行結果；若函式標註回傳型別，預期型別為 Dict[str, Any]。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
         """
         comparison = {
             "exact_match_rate_diff": results1.get("exact_match_rate", 0) - results2.get("exact_match_rate", 0),

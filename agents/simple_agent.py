@@ -13,7 +13,23 @@ if TYPE_CHECKING:
     from ..tools.registry import ToolRegistry
 
 class SimpleAgent(Agent):
-    """簡單的對話Agent，支援可選的工具呼叫"""
+    """
+    負責在 agents.simple_agent 中封裝 SimpleAgent，封裝代理節點的推理、工具使用、訊息傳遞或協作控制邏輯。
+    
+    Args:
+        name: 此流程需要使用的輸入資料。
+        llm: 用來呼叫模型或外部服務的模型名稱、客戶端或相關設定。
+        system_prompt: 此流程需要使用的輸入資料。
+        config: 控制此流程行為的設定資料。
+        tool_registry: 此流程需要使用的輸入資料。
+        enable_tool_calling: 控制是否啟用此項資料、功能或處理分支的布林開關。
+    
+    Returns:
+        類別本身不直接回傳值；建立實例後可透過其方法操作狀態與流程。
+    
+    限制或副作用:
+        方法可能更新內部狀態、讀寫檔案、呼叫外部服務或產生日誌，需依使用情境確認。
+    """
     
     def __init__(
         self,
@@ -25,22 +41,39 @@ class SimpleAgent(Agent):
         enable_tool_calling: bool = True
     ):
         """
-        初始化SimpleAgent
+        負責執行 SimpleAgent 中的 __init__ 流程，初始化物件所需的設定、依賴與內部狀態，讓後續方法可以沿用同一份執行上下文。
         
         Args:
-            name: Agent名稱
-            llm: LLM實例
-            system_prompt: 系統提示詞
-            config: 設定對象
-            tool_registry: 工具註冊表（可選，如果提供則啟用工具呼叫）
-            enable_tool_calling: 是否啟用工具呼叫（只有在提供tool_registry時生效）
+            name: 此流程需要使用的輸入資料。
+            llm: 用來呼叫模型或外部服務的模型名稱、客戶端或相關設定。
+            system_prompt: 此流程需要使用的輸入資料。
+            config: 控制此流程行為的設定資料。
+            tool_registry: 此流程需要使用的輸入資料。
+            enable_tool_calling: 控制是否啟用此項資料、功能或處理分支的布林開關。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 未標註。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
         """
         super().__init__(name, llm, system_prompt, config)
         self.tool_registry = tool_registry
         self.enable_tool_calling = enable_tool_calling and tool_registry is not None
     
     def _get_enhanced_system_prompt(self) -> str:
-        """建構增強的系統提示詞，包含工具資訊"""
+        """
+        負責執行 SimpleAgent 中的 _get_enhanced_system_prompt 流程，依照 SimpleAgent 的流程需求處理 _get_enhanced_system_prompt 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            無。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 str。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         base_prompt = self.system_prompt or "你是一個有用的AI 助理。"
         
         if not self.enable_tool_calling or not self.tool_registry:
@@ -77,7 +110,18 @@ class SimpleAgent(Agent):
         return base_prompt + tools_section
     
     def _parse_tool_calls(self, text: str) -> list:
-        """解析文字中的工具呼叫"""
+        """
+        負責執行 SimpleAgent 中的 _parse_tool_calls 流程，依照 SimpleAgent 的流程需求處理 _parse_tool_calls 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            text: 此流程需要使用的輸入資料。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 list。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         pattern = r'\[TOOL_CALL:([^:]+):([^\]]+)\]'
         matches = re.findall(pattern, text)
         
@@ -92,7 +136,19 @@ class SimpleAgent(Agent):
         return tool_calls
     
     def _execute_tool_call(self, tool_name: str, parameters: str) -> str:
-        """執行工具呼叫"""
+        """
+        負責執行 SimpleAgent 中的 _execute_tool_call 流程，依照 SimpleAgent 的流程需求處理 _execute_tool_call 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            tool_name: 可呼叫的工具、工具名稱或工具註冊表。
+            parameters: 此流程需要使用的輸入資料。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 str。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         if not self.tool_registry:
             return f"❌ 錯誤：未設定工具註冊表"
 
@@ -113,7 +169,19 @@ class SimpleAgent(Agent):
             return f"❌ 工具呼叫失敗：{str(e)}"
 
     def _parse_tool_parameters(self, tool_name: str, parameters: str) -> dict:
-        """智慧解析工具參數"""
+        """
+        負責執行 SimpleAgent 中的 _parse_tool_parameters 流程，依照 SimpleAgent 的流程需求處理 _parse_tool_parameters 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            tool_name: 可呼叫的工具、工具名稱或工具註冊表。
+            parameters: 此流程需要使用的輸入資料。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 dict。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         import json
         param_dict = {}
 
@@ -156,14 +224,17 @@ class SimpleAgent(Agent):
 
     def _convert_parameter_types(self, tool_name: str, param_dict: dict) -> dict:
         """
-        根據工具的參數定義轉換參數類型
-
+        負責執行 SimpleAgent 中的 _convert_parameter_types 流程，依照 SimpleAgent 的流程需求處理 _convert_parameter_types 對應的資料轉換、狀態操作或結果產生。
+        
         Args:
-            tool_name: 工具名稱
-            param_dict: 參數字典
-
+            tool_name: 可呼叫的工具、工具名稱或工具註冊表。
+            param_dict: 此流程需要使用的輸入資料。
+        
         Returns:
-            類型轉換後的參數字典
+            執行結果；若函式標註回傳型別，預期型別為 dict。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
         """
         if not self.tool_registry:
             return param_dict
@@ -212,7 +283,19 @@ class SimpleAgent(Agent):
         return converted_dict
 
     def _infer_action(self, tool_name: str, param_dict: dict) -> dict:
-        """根據工具類型和參數推斷action"""
+        """
+        負責執行 SimpleAgent 中的 _infer_action 流程，依照 SimpleAgent 的流程需求處理 _infer_action 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            tool_name: 可呼叫的工具、工具名稱或工具註冊表。
+            param_dict: 此流程需要使用的輸入資料。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 dict。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         if tool_name == 'memory':
             if 'recall' in param_dict:
                 param_dict['action'] = 'search'
@@ -236,7 +319,19 @@ class SimpleAgent(Agent):
         return param_dict
 
     def _infer_simple_parameters(self, tool_name: str, parameters: str) -> dict:
-        """為簡單參數推斷完整的參數字典"""
+        """
+        負責執行 SimpleAgent 中的 _infer_simple_parameters 流程，依照 SimpleAgent 的流程需求處理 _infer_simple_parameters 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            tool_name: 可呼叫的工具、工具名稱或工具註冊表。
+            parameters: 此流程需要使用的輸入資料。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 dict。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         if tool_name == 'rag':
             return {'action': 'search', 'query': parameters}
         elif tool_name == 'memory':
@@ -246,15 +341,18 @@ class SimpleAgent(Agent):
 
     def run(self, input_text: str, max_tool_iterations: int = 3, **kwargs) -> str:
         """
-        執行SimpleAgent，支援可選的工具呼叫
+        負責執行 SimpleAgent 中的 run 流程，啟動主要執行流程，串接輸入準備、核心處理與結果輸出。
         
         Args:
-            input_text: 使用者輸入
-            max_tool_iterations: 最大工具呼叫迭代次數（僅在啟用工具時有效）
-            **kwargs: 其他參數
-            
+            input_text: 此流程需要使用的輸入資料。
+            max_tool_iterations: 控制檢索、篩選或輸出數量的數值參數。
+            **kwargs: 此流程需要使用的輸入資料。
+        
         Returns:
-            Agent回應
+            執行結果；若函式標註回傳型別，預期型別為 str。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
         """
         # 建構消息列表
         messages = []
@@ -325,13 +423,17 @@ class SimpleAgent(Agent):
 
     def add_tool(self, tool, auto_expand: bool = True) -> None:
         """
-        添加工具到Agent（便利方法）
-
+        負責執行 SimpleAgent 中的 add_tool 流程，將新的輸入資料合併到目前物件狀態或流程紀錄中。
+        
         Args:
-            tool: Tool對象
-            auto_expand: 是否自動展開可展開的工具（預設True）
-
-        如果工具是可展開的（expandable=True），會自動展開為多個獨立工具
+            tool: 可呼叫的工具、工具名稱或工具註冊表。
+            auto_expand: 此流程需要使用的輸入資料。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 None。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
         """
         if not self.tool_registry:
             from ..tools.registry import ToolRegistry
@@ -343,31 +445,67 @@ class SimpleAgent(Agent):
         self.tool_registry.register_tool(tool, auto_expand=auto_expand)
 
     def remove_tool(self, tool_name: str) -> bool:
-        """移除工具（便利方法）"""
+        """
+        負責執行 SimpleAgent 中的 remove_tool 流程，清除或移除指定資源、狀態或註冊資料，維持後續流程的一致性。
+        
+        Args:
+            tool_name: 可呼叫的工具、工具名稱或工具註冊表。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 bool。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         if self.tool_registry:
             return self.tool_registry.unregister_tool(tool_name)
         return False
 
     def list_tools(self) -> list:
-        """列出所有可用工具"""
+        """
+        負責執行 SimpleAgent 中的 list_tools 流程，依照 SimpleAgent 的流程需求處理 list_tools 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            無。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 list。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         if self.tool_registry:
             return self.tool_registry.list_tools()
         return []
 
     def has_tools(self) -> bool:
-        """檢查是否有可用工具"""
+        """
+        負責執行 SimpleAgent 中的 has_tools 流程，檢查目前輸入、狀態或條件是否符合流程繼續執行的要求。
+        
+        Args:
+            無。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 bool。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         return self.enable_tool_calling and self.tool_registry is not None
 
     def stream_run(self, input_text: str, **kwargs) -> Iterator[str]:
         """
-        流式執行Agent
+        負責執行 SimpleAgent 中的 stream_run 流程，依照 SimpleAgent 的流程需求處理 stream_run 對應的資料轉換、狀態操作或結果產生。
         
         Args:
-            input_text: 使用者輸入
-            **kwargs: 其他參數
-            
-        Yields:
-            Agent回應片段
+            input_text: 此流程需要使用的輸入資料。
+            **kwargs: 此流程需要使用的輸入資料。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 Iterator[str]。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
         """
         # 建構消息列表
         messages = []

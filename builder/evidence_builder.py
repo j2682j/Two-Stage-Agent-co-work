@@ -15,6 +15,23 @@ if TYPE_CHECKING:
 
 
 class EvidenceBuilder:
+    """
+    負責在 builder.evidence_builder 中封裝 EvidenceBuilder，封裝此模組的狀態資料與主要操作流程。
+    
+    Args:
+        tool_manager: 此流程需要使用的輸入資料。
+        memory_tool: 記憶系統提供的檢索結果、寫入資料或操作介面。
+        runtime: 目前流程所需的上下文、狀態或附加資訊。
+        search_query_planner: 已整理好的搜尋結果、共享資料包或可重用證據內容。
+        search_evidence_builder: 已整理好的搜尋結果、共享資料包或可重用證據內容。
+        initialize_search_helpers: 已整理好的搜尋結果、共享資料包或可重用證據內容。
+    
+    Returns:
+        類別本身不直接回傳值；建立實例後可透過其方法操作狀態與流程。
+    
+    限制或副作用:
+        方法可能更新內部狀態、讀寫檔案、呼叫外部服務或產生日誌，需依使用情境確認。
+    """
     def __init__(
         self,
         tool_manager,
@@ -25,6 +42,23 @@ class EvidenceBuilder:
         search_evidence_builder: SearchEvidenceBuilder | None = None,
         initialize_search_helpers: bool = True,
     ):
+        """
+        負責執行 EvidenceBuilder 中的 __init__ 流程，初始化物件所需的設定、依賴與內部狀態，讓後續方法可以沿用同一份執行上下文。
+        
+        Args:
+            tool_manager: 此流程需要使用的輸入資料。
+            memory_tool: 記憶系統提供的檢索結果、寫入資料或操作介面。
+            runtime: 目前流程所需的上下文、狀態或附加資訊。
+            search_query_planner: 已整理好的搜尋結果、共享資料包或可重用證據內容。
+            search_evidence_builder: 已整理好的搜尋結果、共享資料包或可重用證據內容。
+            initialize_search_helpers: 已整理好的搜尋結果、共享資料包或可重用證據內容。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 未標註。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         self.tool_manager = tool_manager
         self.memory_tool = memory_tool
         self.runtime = runtime
@@ -59,6 +93,24 @@ class EvidenceBuilder:
         include_routed_tools: bool = True,
         include_attachment: bool = True,
     ) -> dict[str, Any]:
+        """
+        負責執行 EvidenceBuilder 中的 build 流程，建立任務需要的證據區塊，整理搜尋、附件或工具輸出的可引用內容。
+        
+        Args:
+            question: 目前要處理的任務、問題或查詢文字。
+            agent_id: 目前執行或需要記錄的代理節點識別資訊。
+            stage: 目前執行的階段、輪次或流程位置。
+            router_model_name: 用來呼叫模型或外部服務的模型名稱、客戶端或相關設定。
+            shared_search_bundle: 已整理好的搜尋結果、共享資料包或可重用證據內容。
+            include_routed_tools: 控制是否啟用此項資料、功能或處理分支的布林開關。
+            include_attachment: 控制是否啟用此項資料、功能或處理分支的布林開關。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 dict[str, Any]。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         if shared_search_bundle is None and stage == "stage2" and self.runtime is not None:
             runtime_bundle = getattr(self.runtime, "shared_stage2_search_bundle", None)
             if isinstance(runtime_bundle, dict):
@@ -95,7 +147,11 @@ class EvidenceBuilder:
                 search = self._build_search_evidence(question, agent_id, stage)
         else:
             search = self._empty_tool_result()
-        memory = self._build_memory_evidence(question) if routing["use_memory"] else self._empty_context_result()
+        memory = (
+            self._build_memory_evidence(question, agent_id=agent_id, stage=stage)
+            if stage.startswith("stage2") or routing["use_memory"]
+            else self._empty_context_result()
+        )
         rag = self._build_rag_evidence(question) if routing["use_rag"] else self._empty_context_result()
         solver = (
             self._build_python_solver_guidance(question, routing)
@@ -107,10 +163,10 @@ class EvidenceBuilder:
         tool_usage.extend(solver.get("tool_usage", []))
         tool_usage.extend(search["tool_usage"])
 
-        # Memory is retrieved separately but is not injected into prompt tool evidence.
         tool_context = self._join_contexts(
             [
                 attachment["context"],
+                memory["context"],
                 calc["context"],
                 solver["context"],
                 search["context"],
@@ -145,6 +201,21 @@ class EvidenceBuilder:
         stage: str = "stage2_shared_search",
         router_model_name: str | None = None,
     ) -> dict[str, Any]:
+        """
+        負責執行 EvidenceBuilder 中的 build_shared_stage2_search_bundle 流程，建立任務需要的證據區塊，整理搜尋、附件或工具輸出的可引用內容。
+        
+        Args:
+            question: 目前要處理的任務、問題或查詢文字。
+            agent_id: 目前執行或需要記錄的代理節點識別資訊。
+            stage: 目前執行的階段、輪次或流程位置。
+            router_model_name: 已整理好的搜尋結果、共享資料包或可重用證據內容。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 dict[str, Any]。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         routing = self._route_tools(question, router_model_name, stage=stage)
         bundle = {
             "enabled": False,
@@ -178,9 +249,33 @@ class EvidenceBuilder:
         return bundle
 
     def _empty_tool_result(self) -> dict[str, Any]:
+        """
+        負責執行 EvidenceBuilder 中的 _empty_tool_result 流程，依照 EvidenceBuilder 的流程需求處理 _empty_tool_result 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            無。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 dict[str, Any]。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         return {"tool_usage": [], "context": "", "used": False}
 
     def _empty_context_result(self) -> dict[str, Any]:
+        """
+        負責執行 EvidenceBuilder 中的 _empty_context_result 流程，依照 EvidenceBuilder 的流程需求處理 _empty_context_result 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            無。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 dict[str, Any]。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         return {"context": "", "used": False}
 
     def _route_tools(
@@ -190,6 +285,20 @@ class EvidenceBuilder:
         *,
         stage: str = "stage2",
     ) -> dict[str, Any]:
+        """
+        負責執行 EvidenceBuilder 中的 _route_tools 流程，依照 EvidenceBuilder 的流程需求處理 _route_tools 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            question: 目前要處理的任務、問題或查詢文字。
+            router_model_name: 用來呼叫模型或外部服務的模型名稱、客戶端或相關設定。
+            stage: 目前執行的階段、輪次或流程位置。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 dict[str, Any]。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         if stage.startswith("stage2"):
             graph_decision = self._route_stage2_with_graph(question)
             if graph_decision is not None:
@@ -219,7 +328,7 @@ class EvidenceBuilder:
                     "Decide which tools are worth calling for the given question. "
                     "Return JSON only with keys: "
                     '{"use_calculator": true/false, "use_search": true/false, '
-                    '"use_memory": true/false, "use_rag": true/false}.'
+                    '"use_python_solver": true/false, "use_rag": true/false}.'
                 ),
             },
             {
@@ -230,7 +339,6 @@ class EvidenceBuilder:
                     "Tool descriptions:\n"
                     "- calculator: for explicit arithmetic or unit conversion.\n"
                     "- search: for facts that may require web lookup.\n"
-                    "- memory: for prior conversation/task memory.\n"
                     "- rag: for local knowledge base retrieval.\n\n"
                     "Only enable a tool if it is likely useful."
                 ),
@@ -246,7 +354,7 @@ class EvidenceBuilder:
                 "use_calculator": bool(parsed.get("use_calculator", fallback["use_calculator"])),
                 "use_search": bool(parsed.get("use_search", fallback["use_search"])),
                 "use_python_solver": bool(parsed.get("use_python_solver", fallback["use_python_solver"])),
-                "use_memory": bool(parsed.get("use_memory", fallback["use_memory"])),
+                "use_memory": False,
                 "use_rag": bool(parsed.get("use_rag", fallback["use_rag"])),
                 "calculator_expression": parsed.get("calculator_expression"),
                 "task_type": parsed.get("task_type", fallback["task_type"]),
@@ -258,25 +366,52 @@ class EvidenceBuilder:
             return fallback
 
     def _route_stage2_with_graph(self, question: str) -> dict[str, Any] | None:
+        """
+        負責執行 EvidenceBuilder 中的 _route_stage2_with_graph 流程，依照 EvidenceBuilder 的流程需求處理 _route_stage2_with_graph 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            question: 目前要處理的任務、問題或查詢文字。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 dict[str, Any] | None。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         runtime = getattr(self, "runtime", None)
-        query_graph = getattr(runtime, "query_task_graph", None)
-        if query_graph is None:
+        graph_memory = getattr(runtime, "graph_memory", None)
+        if graph_memory is None:
             return None
 
         try:
             task_id = self._resolve_task_id(question)
             attachment_type = self._resolve_attachment_type()
-            query_graph.register_task(
-                task_id,
-                question,
-                metadata={
-                    "source": "stage2_tool_router",
-                    "attachment_type": attachment_type,
-                },
+            result = graph_memory.retrieve_context(
+                task_id=task_id,
+                input_text=question,
+                source="stage2_tool_router",
+                attachment_type=attachment_type,
+                limit=3,
+                injection_target="stage2_tool_router",
             )
-            classification = query_graph.classify_task(question, attachment_type=attachment_type)
-            query_graph.link_task_signals(task_id, classification)
-            retrieval = query_graph.retrieve_for_stage1_round0(task_id, question, limit=3)
+            retrieval = result.get("retrieval", {}) or {}
+            runtime.record_memory_read(
+                {
+                    "stage": "stage2_tool_router",
+                    "source": "graph_memory",
+                    "task_id": result.get("task_id") or task_id,
+                    "task_type": retrieval.get("task_type"),
+                    "trigger_terms": retrieval.get("trigger_terms", []),
+                    "related_task_ids": result.get("related_task_ids", []),
+                    "insight_ids": [
+                        item.get("insight_id")
+                        for item in result.get("insights", [])
+                        if isinstance(item, dict) and item.get("insight_id")
+                    ],
+                    "seed_task_hits": result.get("seed_task_hits", []),
+                    "expanded_task_hits": result.get("expanded_task_hits", []),
+                }
+            )
             routing_input = Stage2ToolRoutingInput(
                 question=question,
                 task_type=str(retrieval.get("task_type") or "general_reasoning"),
@@ -298,6 +433,18 @@ class EvidenceBuilder:
             return None
 
     def _resolve_task_id(self, question: str) -> str:
+        """
+        負責執行 EvidenceBuilder 中的 _resolve_task_id 流程，依照 EvidenceBuilder 的流程需求處理 _resolve_task_id 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            question: 目前要處理的任務、問題或查詢文字。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 str。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         runtime = getattr(self, "runtime", None)
         context = getattr(runtime, "current_context", {}) or {}
         for key in ("task_id", "id", "sample_id"):
@@ -309,6 +456,18 @@ class EvidenceBuilder:
         return f"gaia_task_{digest}"
 
     def _resolve_attachment_type(self) -> str | None:
+        """
+        負責執行 EvidenceBuilder 中的 _resolve_attachment_type 流程，依照 EvidenceBuilder 的流程需求處理 _resolve_attachment_type 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            無。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 str | None。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         runtime = getattr(self, "runtime", None)
         attachment = getattr(runtime, "current_attachment", None) or {}
         for key in ("extension", "file_extension", "type"):
@@ -327,6 +486,21 @@ class EvidenceBuilder:
         stage: str,
         expression: str | None = None,
     ) -> dict[str, Any]:
+        """
+        負責執行 EvidenceBuilder 中的 _build_calculator_evidence 流程，依照 EvidenceBuilder 的流程需求處理 _build_calculator_evidence 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            question: 目前要處理的任務、問題或查詢文字。
+            agent_id: 目前執行或需要記錄的代理節點識別資訊。
+            stage: 目前執行的階段、輪次或流程位置。
+            expression: 此流程需要使用的輸入資料。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 dict[str, Any]。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         if self.tool_manager is None:
             return self._empty_tool_result()
 
@@ -379,6 +553,19 @@ class EvidenceBuilder:
         }
 
     def _build_python_solver_guidance(self, question: str, routing: dict[str, Any]) -> dict[str, Any]:
+        """
+        負責執行 EvidenceBuilder 中的 _build_python_solver_guidance 流程，依照 EvidenceBuilder 的流程需求處理 _build_python_solver_guidance 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            question: 目前要處理的任務、問題或查詢文字。
+            routing: 此流程需要使用的輸入資料。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 dict[str, Any]。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         task_type = str(routing.get("task_type", "general_reasoning") or "general_reasoning")
         reasons = routing.get("routing_reasons") or routing.get("reasons") or []
         reason_text = "; ".join(str(item) for item in reasons[:4] if str(item).strip())
@@ -404,6 +591,20 @@ class EvidenceBuilder:
         return {"context": guidance, "used": True, "tool_usage": [usage]}
 
     def _build_search_evidence(self, question: str, agent_id: str, stage: str) -> dict[str, Any]:
+        """
+        負責執行 EvidenceBuilder 中的 _build_search_evidence 流程，依照 EvidenceBuilder 的流程需求處理 _build_search_evidence 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            question: 目前要處理的任務、問題或查詢文字。
+            agent_id: 目前執行或需要記錄的代理節點識別資訊。
+            stage: 目前執行的階段、輪次或流程位置。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 dict[str, Any]。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         if self.tool_manager is None:
             return self._empty_tool_result()
 
@@ -474,6 +675,18 @@ class EvidenceBuilder:
         }
 
     def _reuse_shared_search_evidence(self, shared_search_bundle: dict[str, Any]) -> dict[str, Any]:
+        """
+        負責執行 EvidenceBuilder 中的 _reuse_shared_search_evidence 流程，依照 EvidenceBuilder 的流程需求處理 _reuse_shared_search_evidence 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            shared_search_bundle: 已整理好的搜尋結果、共享資料包或可重用證據內容。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 dict[str, Any]。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         context = str(shared_search_bundle.get("search_context", "") or "")
         if not context.strip():
             return self._empty_tool_result()
@@ -488,6 +701,18 @@ class EvidenceBuilder:
         }
 
     def _build_shared_search_reference(self, shared_search_bundle: dict[str, Any]) -> dict[str, Any]:
+        """
+        負責執行 EvidenceBuilder 中的 _build_shared_search_reference 流程，依照 EvidenceBuilder 的流程需求處理 _build_shared_search_reference 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            shared_search_bundle: 已整理好的搜尋結果、共享資料包或可重用證據內容。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 dict[str, Any]。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         queries = [str(query).strip() for query in (shared_search_bundle.get("queries") or []) if str(query).strip()]
         shared_search_id = str(shared_search_bundle.get("shared_search_id", "") or "")
         query_plan = shared_search_bundle.get("query_plan")
@@ -522,6 +747,20 @@ class EvidenceBuilder:
         agent_id: str = "shared_attachment_reader",
         stage: str = "attachment_shared",
     ) -> dict[str, Any]:
+        """
+        負責執行 EvidenceBuilder 中的 build_shared_attachment_bundle 流程，建立任務需要的證據區塊，整理搜尋、附件或工具輸出的可引用內容。
+        
+        Args:
+            question: 目前要處理的任務、問題或查詢文字。
+            agent_id: 目前執行或需要記錄的代理節點識別資訊。
+            stage: 目前執行的階段、輪次或流程位置。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 dict[str, Any]。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         attachment = getattr(self.runtime, "current_attachment", None)
         bundle = {
             "enabled": False,
@@ -548,6 +787,18 @@ class EvidenceBuilder:
         return bundle
 
     def _build_attachment_evidence(self, question: str) -> dict[str, Any]:
+        """
+        負責執行 EvidenceBuilder 中的 _build_attachment_evidence 流程，依照 EvidenceBuilder 的流程需求處理 _build_attachment_evidence 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            question: 目前要處理的任務、問題或查詢文字。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 dict[str, Any]。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         runtime_bundle = getattr(self.runtime, "shared_attachment_bundle", None)
         if isinstance(runtime_bundle, dict) and runtime_bundle.get("used"):
             return {
@@ -568,6 +819,18 @@ class EvidenceBuilder:
         }
 
     def _build_shared_attachment_reference(self, shared_attachment_bundle: dict[str, Any]) -> dict[str, Any]:
+        """
+        負責執行 EvidenceBuilder 中的 _build_shared_attachment_reference 流程，依照 EvidenceBuilder 的流程需求處理 _build_shared_attachment_reference 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            shared_attachment_bundle: 已整理好的搜尋結果、共享資料包或可重用證據內容。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 dict[str, Any]。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         metadata = shared_attachment_bundle.get("metadata") or {}
         file_path = str(metadata.get("file_path", "") or "")
         file_type = str(metadata.get("file_type", "") or "")
@@ -594,11 +857,35 @@ class EvidenceBuilder:
         }
 
     def _make_shared_search_id(self, question: str) -> str:
+        """
+        負責執行 EvidenceBuilder 中的 _make_shared_search_id 流程，依照 EvidenceBuilder 的流程需求處理 _make_shared_search_id 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            question: 目前要處理的任務、問題或查詢文字。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 str。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         normalized = str(question or "").strip().encode("utf-8", errors="ignore")
         digest = hashlib.md5(normalized).hexdigest()[:12]
         return f"stage2-search-{digest}"
 
     def _question_requires_web(self, question: str) -> bool:
+        """
+        負責執行 EvidenceBuilder 中的 _question_requires_web 流程，依照 EvidenceBuilder 的流程需求處理 _question_requires_web 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            question: 目前要處理的任務、問題或查詢文字。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 bool。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         normalized = str(question or "").lower()
         web_markers = [
             "website",
@@ -618,41 +905,113 @@ class EvidenceBuilder:
         ]
         return any(marker in normalized for marker in web_markers)
 
-    def _build_memory_evidence(self, question: str) -> dict[str, Any]:
-        memory_tool = (
-            self.memory_tool
-            or getattr(self.runtime, "memory_tool", None)
-            or getattr(self.tool_manager, "memory_tool", None)
+    def _build_memory_evidence(
+        self,
+        question: str,
+        *,
+        agent_id: str = "unknown_agent",
+        stage: str = "stage2",
+    ) -> dict[str, Any]:
+        """
+        負責執行 EvidenceBuilder 中的 _build_memory_evidence 流程，依照 EvidenceBuilder 的流程需求處理 _build_memory_evidence 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            question: 目前要處理的任務、問題或查詢文字。
+            agent_id: 目前執行或需要記錄的代理節點識別資訊。
+            stage: 目前執行的階段、輪次或流程位置。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 dict[str, Any]。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
+        graph_result = self._build_graph_memory_evidence(question, agent_id=agent_id, stage=stage)
+        if graph_result["used"]:
+            return graph_result
+
+        return {"context": "Memory evidence:\nNone", "used": False}
+
+    def _build_graph_memory_evidence(
+        self,
+        question: str,
+        *,
+        agent_id: str,
+        stage: str,
+    ) -> dict[str, Any]:
+        """
+        負責執行 EvidenceBuilder 中的 _build_graph_memory_evidence 流程，依照 EvidenceBuilder 的流程需求處理 _build_graph_memory_evidence 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            question: 目前要處理的任務、問題或查詢文字。
+            agent_id: 目前執行或需要記錄的代理節點識別資訊。
+            stage: 目前執行的階段、輪次或流程位置。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 dict[str, Any]。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
+        runtime = getattr(self, "runtime", None)
+        graph_memory = getattr(runtime, "graph_memory", None)
+        if runtime is None or graph_memory is None:
+            return self._empty_context_result()
+
+        try:
+            task_id = self._resolve_task_id(question)
+            attachment_type = self._resolve_attachment_type()
+            result = graph_memory.retrieve_context(
+                task_id=task_id,
+                input_text=question,
+                source=f"{stage}_top_k_agent",
+                attachment_type=attachment_type,
+                limit=3,
+                injection_target="stage2_top_k",
+            )
+        except Exception as exc:
+            print(f"[WARN] {stage} graph memory evidence failed: {exc}")
+            return self._empty_context_result()
+
+        guidance = str(result.get("guidance", "") or "").strip()
+        if not guidance:
+            return self._empty_context_result()
+
+        retrieval = result.get("retrieval", {}) or {}
+        insights = result.get("insights", []) or []
+        runtime.record_memory_read(
+            {
+                "stage": stage,
+                "agent_id": agent_id,
+                "source": "graph_memory",
+                "task_id": result.get("task_id") or task_id,
+                "task_type": retrieval.get("task_type"),
+                "trigger_terms": retrieval.get("trigger_terms", []),
+                "related_task_ids": result.get("related_task_ids", []),
+                "insight_ids": [
+                    item.get("insight_id")
+                    for item in insights
+                    if isinstance(item, dict) and item.get("insight_id")
+                ],
+                "seed_task_hits": result.get("seed_task_hits", []),
+                "expanded_task_hits": result.get("expanded_task_hits", []),
+            }
         )
-        memory_manager = getattr(memory_tool, "memory_manager", None)
-        if memory_manager is not None:
-            try:
-                memories = memory_manager.retrieve_memories(
-                    query=question,
-                    memory_types=["working", "semantic", "episodic"],
-                    limit=3,
-                    min_importance=0.0,
-                )
-            except Exception:
-                memories = []
-        else:
-            memories = []
-
-        context = self._format_memory_items(memories)
-        if context.strip():
-            if self.runtime is not None:
-                self.runtime.record_memory_read(
-                    {
-                        "question": question,
-                        "memory_types": ["working", "semantic", "episodic"],
-                        "count": len(memories),
-                    }
-                )
-            return {"context": f"Memory evidence:\n{context}", "used": True}
-
-        return self._empty_context_result()
+        return {"context": f"Memory evidence:\n{guidance}", "used": True}
 
     def _build_rag_evidence(self, question: str) -> dict[str, Any]:
+        """
+        負責執行 EvidenceBuilder 中的 _build_rag_evidence 流程，依照 EvidenceBuilder 的流程需求處理 _build_rag_evidence 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            question: 目前要處理的任務、問題或查詢文字。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 dict[str, Any]。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         rag_tool = getattr(self.tool_manager, "rag_tool", None)
         if rag_tool is None:
             return self._empty_context_result()
@@ -668,10 +1027,34 @@ class EvidenceBuilder:
         return {"context": context, "used": bool(context.strip())}
 
     def _join_contexts(self, contexts: list[str]) -> str:
+        """
+        負責執行 EvidenceBuilder 中的 _join_contexts 流程，依照 EvidenceBuilder 的流程需求處理 _join_contexts 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            contexts: 此流程需要使用的輸入資料。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 str。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         valid = [ctx for ctx in contexts if ctx and ctx.strip()]
         return "\n\n".join(valid).strip()
 
     def _format_memory_items(self, memories: list[Any]) -> str:
+        """
+        負責執行 EvidenceBuilder 中的 _format_memory_items 流程，依照 EvidenceBuilder 的流程需求處理 _format_memory_items 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            memories: 記憶系統提供的檢索結果、寫入資料或操作介面。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 str。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         lines: list[str] = []
         for idx, memory in enumerate(memories, start=1):
             content = str(getattr(memory, "content", "") or "").strip()

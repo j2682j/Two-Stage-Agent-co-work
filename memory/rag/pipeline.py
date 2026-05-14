@@ -10,7 +10,16 @@ from ..storage.qdrant_store import QdrantVectorStore
 
 def _get_markitdown_instance():
     """
-    Get a configured MarkItDown instance for document conversion.
+    負責執行 memory.rag.pipeline 中的 _get_markitdown_instance 流程，依照 memory.rag.pipeline 的流程需求處理 _get_markitdown_instance 對應的資料轉換、狀態操作或結果產生。
+    
+    Args:
+        無。
+    
+    Returns:
+        執行結果；若函式標註回傳型別，預期型別為 未標註。
+    
+    限制或副作用:
+        可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
     """
     try:
         from markitdown import MarkItDown
@@ -22,9 +31,16 @@ def _get_markitdown_instance():
 
 def _is_markitdown_supported_format(path: str) -> bool:
     """
-    Check if the file format is supported by MarkItDown.
-    Supports: PDF, Office docs (docx, xlsx, pptx), images (jpg, png, gif, bmp, tiff), 
-    audio (mp3, wav, m4a), HTML, text formats (txt, md, csv, json, xml), ZIP files, etc.
+    負責執行 memory.rag.pipeline 中的 _is_markitdown_supported_format 流程，依照 memory.rag.pipeline 的流程需求處理 _is_markitdown_supported_format 對應的資料轉換、狀態操作或結果產生。
+    
+    Args:
+        path: 要讀取或寫入的檔案或目錄路徑。
+    
+    Returns:
+        執行結果；若函式標註回傳型別，預期型別為 bool。
+    
+    限制或副作用:
+        可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
     """
     ext = (os.path.splitext(path)[1] or '').lower()
     supported_formats = {
@@ -48,8 +64,16 @@ def _is_markitdown_supported_format(path: str) -> bool:
 
 def _convert_to_markdown(path: str) -> str:
     """
-    Universal document reader using MarkItDown with enhanced PDF processing.
-    Converts any supported file format to markdown text.
+    負責執行 memory.rag.pipeline 中的 _convert_to_markdown 流程，依照 memory.rag.pipeline 的流程需求處理 _convert_to_markdown 對應的資料轉換、狀態操作或結果產生。
+    
+    Args:
+        path: 要讀取或寫入的檔案或目錄路徑。
+    
+    Returns:
+        執行結果；若函式標註回傳型別，預期型別為 str。
+    
+    限制或副作用:
+        可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
     """
     if not os.path.exists(path):
         return ""
@@ -76,7 +100,16 @@ def _convert_to_markdown(path: str) -> str:
 
 def _enhanced_pdf_processing(path: str) -> str:
     """
-    Enhanced PDF processing with post-processing cleanup.
+    負責執行 memory.rag.pipeline 中的 _enhanced_pdf_processing 流程，依照 memory.rag.pipeline 的流程需求處理 _enhanced_pdf_processing 對應的資料轉換、狀態操作或結果產生。
+    
+    Args:
+        path: 要讀取或寫入的檔案或目錄路徑。
+    
+    Returns:
+        執行結果；若函式標註回傳型別，預期型別為 str。
+    
+    限制或副作用:
+        可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
     """
     print(f"[RAG] Using enhanced PDF processing for: {path}")
     
@@ -102,7 +135,16 @@ def _enhanced_pdf_processing(path: str) -> str:
 
 def _post_process_pdf_text(text: str) -> str:
     """
-    Post-process PDF text to improve quality.
+    負責執行 memory.rag.pipeline 中的 _post_process_pdf_text 流程，依照 memory.rag.pipeline 的流程需求處理 _post_process_pdf_text 對應的資料轉換、狀態操作或結果產生。
+    
+    Args:
+        text: 記憶系統提供的檢索結果、寫入資料或操作介面。
+    
+    Returns:
+        執行結果；若函式標註回傳型別，預期型別為 str。
+    
+    限制或副作用:
+        可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
     """
     import re
     
@@ -183,7 +225,16 @@ def _post_process_pdf_text(text: str) -> str:
 
 def _fallback_text_reader(path: str) -> str:
     """
-    Simple fallback reader for basic text files when MarkItDown is unavailable.
+    負責執行 memory.rag.pipeline 中的 _fallback_text_reader 流程，依照 memory.rag.pipeline 的流程需求處理 _fallback_text_reader 對應的資料轉換、狀態操作或結果產生。
+    
+    Args:
+        path: 要讀取或寫入的檔案或目錄路徑。
+    
+    Returns:
+        執行結果；若函式標註回傳型別，預期型別為 str。
+    
+    限制或副作用:
+        可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
     """
     try:
         with open(path, 'r', encoding='utf-8', errors='ignore') as f:
@@ -197,6 +248,18 @@ def _fallback_text_reader(path: str) -> str:
 
 
 def _detect_lang(sample: str) -> str:
+    """
+    負責執行 memory.rag.pipeline 中的 _detect_lang 流程，依照 memory.rag.pipeline 的流程需求處理 _detect_lang 對應的資料轉換、狀態操作或結果產生。
+    
+    Args:
+        sample: 記憶系統提供的檢索結果、寫入資料或操作介面。
+    
+    Returns:
+        執行結果；若函式標註回傳型別，預期型別為 str。
+    
+    限制或副作用:
+        可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+    """
     try:
         from langdetect import detect
         return detect(sample[:1000]) if sample else "unknown"
@@ -205,6 +268,18 @@ def _detect_lang(sample: str) -> str:
 
 
 def _is_cjk(ch: str) -> bool:
+    """
+    負責執行 memory.rag.pipeline 中的 _is_cjk 流程，依照 memory.rag.pipeline 的流程需求處理 _is_cjk 對應的資料轉換、狀態操作或結果產生。
+    
+    Args:
+        ch: 記憶系統提供的檢索結果、寫入資料或操作介面。
+    
+    Returns:
+        執行結果；若函式標註回傳型別，預期型別為 bool。
+    
+    限制或副作用:
+        可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+    """
     code = ord(ch)
     return (
         0x4E00 <= code <= 0x9FFF or
@@ -219,18 +294,54 @@ def _is_cjk(ch: str) -> bool:
 
 def _approx_token_len(text: str) -> int:
     # 近似估計：CJK字符按1 token，其他按空白分詞
+    """
+    負責執行 memory.rag.pipeline 中的 _approx_token_len 流程，依照 memory.rag.pipeline 的流程需求處理 _approx_token_len 對應的資料轉換、狀態操作或結果產生。
+    
+    Args:
+        text: 記憶系統提供的檢索結果、寫入資料或操作介面。
+    
+    Returns:
+        執行結果；若函式標註回傳型別，預期型別為 int。
+    
+    限制或副作用:
+        可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+    """
     cjk = sum(1 for ch in text if _is_cjk(ch))
     non_cjk_tokens = len([t for t in text.split() if t])
     return cjk + non_cjk_tokens
 
 
 def _split_paragraphs_with_headings(text: str) -> List[Dict]:
+    """
+    負責執行 memory.rag.pipeline 中的 _split_paragraphs_with_headings 流程，依照 memory.rag.pipeline 的流程需求處理 _split_paragraphs_with_headings 對應的資料轉換、狀態操作或結果產生。
+    
+    Args:
+        text: 記憶系統提供的檢索結果、寫入資料或操作介面。
+    
+    Returns:
+        執行結果；若函式標註回傳型別，預期型別為 List[Dict]。
+    
+    限制或副作用:
+        可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+    """
     lines = text.splitlines()
     heading_stack: List[str] = []
     paragraphs: List[Dict] = []
     buf: List[str] = []
     char_pos = 0
     def flush_buf(end_pos: int):
+        """
+        負責執行 memory.rag.pipeline 中的 flush_buf 流程，依照 memory.rag.pipeline 的流程需求處理 flush_buf 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            end_pos: 記憶系統提供的檢索結果、寫入資料或操作介面。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 未標註。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         if not buf:
             return
         content = "\n".join(buf).strip()
@@ -270,6 +381,20 @@ def _split_paragraphs_with_headings(text: str) -> List[Dict]:
 
 
 def _chunk_paragraphs(paragraphs: List[Dict], chunk_tokens: int, overlap_tokens: int) -> List[Dict]:
+    """
+    負責執行 memory.rag.pipeline 中的 _chunk_paragraphs 流程，依照 memory.rag.pipeline 的流程需求處理 _chunk_paragraphs 對應的資料轉換、狀態操作或結果產生。
+    
+    Args:
+        paragraphs: 記憶系統提供的檢索結果、寫入資料或操作介面。
+        chunk_tokens: 記憶系統提供的檢索結果、寫入資料或操作介面。
+        overlap_tokens: 記憶系統提供的檢索結果、寫入資料或操作介面。
+    
+    Returns:
+        執行結果；若函式標註回傳型別，預期型別為 List[Dict]。
+    
+    限制或副作用:
+        可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+    """
     chunks: List[Dict] = []
     cur: List[Dict] = []
     cur_tokens = 0
@@ -324,8 +449,20 @@ def _chunk_paragraphs(paragraphs: List[Dict], chunk_tokens: int, overlap_tokens:
 
 def load_and_chunk_texts(paths: List[str], chunk_size: int = 800, chunk_overlap: int = 100, namespace: Optional[str] = None, source_label: str = "rag") -> List[Dict]:
     """
-    Universal document loader and chunker using MarkItDown.
-    Converts all supported formats to markdown, then chunks intelligently.
+    負責執行 memory.rag.pipeline 中的 load_and_chunk_texts 流程，讀取本地或外部資料來源並轉換成系統可處理的格式。
+    
+    Args:
+        paths: 記憶系統提供的檢索結果、寫入資料或操作介面。
+        chunk_size: 記憶系統提供的檢索結果、寫入資料或操作介面。
+        chunk_overlap: 記憶系統提供的檢索結果、寫入資料或操作介面。
+        namespace: 記憶系統提供的檢索結果、寫入資料或操作介面。
+        source_label: 記憶系統提供的檢索結果、寫入資料或操作介面。
+    
+    Returns:
+        執行結果；若函式標註回傳型別，預期型別為 List[Dict]。
+    
+    限制或副作用:
+        可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
     """
     print(f"[RAG] Universal loader start: files={len(paths)} chunk_size={chunk_size} overlap={chunk_overlap} ns={namespace or 'default'}")
     chunks: List[Dict] = []
@@ -390,6 +527,19 @@ def load_and_chunk_texts(paths: List[str], chunk_size: int = 800, chunk_overlap:
 
 
 def build_graph_from_chunks(neo4j, chunks: List[Dict]) -> None:
+    """
+    負責執行 memory.rag.pipeline 中的 build_graph_from_chunks 流程，建立記憶圖或任務記錄結構，供後續檢索、寫入與提示注入使用。
+    
+    Args:
+        neo4j: 記憶系統提供的檢索結果、寫入資料或操作介面。
+        chunks: 記憶系統提供的檢索結果、寫入資料或操作介面。
+    
+    Returns:
+        執行結果；若函式標註回傳型別，預期型別為 None。
+    
+    限制或副作用:
+        可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+    """
     created_docs = set()
     for ch in chunks:
         mem_id = ch["id"]
@@ -425,8 +575,16 @@ def build_graph_from_chunks(neo4j, chunks: List[Dict]) -> None:
 
 def _preprocess_markdown_for_embedding(text: str) -> str:
     """
-    Preprocess markdown text for better embedding quality.
-    Removes excessive markup while preserving semantic content.
+    負責執行 memory.rag.pipeline 中的 _preprocess_markdown_for_embedding 流程，依照 memory.rag.pipeline 的流程需求處理 _preprocess_markdown_for_embedding 對應的資料轉換、狀態操作或結果產生。
+    
+    Args:
+        text: 記憶系統提供的檢索結果、寫入資料或操作介面。
+    
+    Returns:
+        執行結果；若函式標註回傳型別，預期型別為 str。
+    
+    限制或副作用:
+        可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
     """
     import re
     
@@ -453,8 +611,16 @@ def _preprocess_markdown_for_embedding(text: str) -> str:
 
 def _create_default_vector_store(dimension: int = None) -> QdrantVectorStore:
     """
-    Create default Qdrant vector store with RAG-optimized settings.
-    使用連線管理器避免重復連線。
+    負責執行 memory.rag.pipeline 中的 _create_default_vector_store 流程，依照 memory.rag.pipeline 的流程需求處理 _create_default_vector_store 對應的資料轉換、狀態操作或結果產生。
+    
+    Args:
+        dimension: 記憶系統提供的檢索結果、寫入資料或操作介面。
+    
+    Returns:
+        執行結果；若函式標註回傳型別，預期型別為 QdrantVectorStore。
+    
+    限制或副作用:
+        可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
     """
     if dimension is None:
         dimension = get_dimension(384)
@@ -485,8 +651,20 @@ def index_chunks(
     rag_namespace: str = "default"
 ) -> None:
     """
-    Index markdown chunks with unified embedding and Qdrant storage.
-    Uses百煉 API with fallback to sentence-transformers.
+    負責執行 memory.rag.pipeline 中的 index_chunks 流程，依照 memory.rag.pipeline 的流程需求處理 index_chunks 對應的資料轉換、狀態操作或結果產生。
+    
+    Args:
+        store: 記憶系統提供的檢索結果、寫入資料或操作介面。
+        chunks: 記憶系統提供的檢索結果、寫入資料或操作介面。
+        cache_db: 記憶系統提供的檢索結果、寫入資料或操作介面。
+        batch_size: 記憶系統提供的檢索結果、寫入資料或操作介面。
+        rag_namespace: 記憶系統提供的檢索結果、寫入資料或操作介面。
+    
+    Returns:
+        執行結果；若函式標註回傳型別，預期型別為 None。
+    
+    限制或副作用:
+        可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
     """
     if not chunks:
         print("[RAG] No chunks to index")
@@ -634,7 +812,16 @@ def index_chunks(
 
 def embed_query(query: str) -> List[float]:
     """
-    Embed query using unified embedding (百煉 with fallback).
+    負責執行 memory.rag.pipeline 中的 embed_query 流程，依照 memory.rag.pipeline 的流程需求處理 embed_query 對應的資料轉換、狀態操作或結果產生。
+    
+    Args:
+        query: 目前要處理的任務、問題或查詢文字。
+    
+    Returns:
+        執行結果；若函式標註回傳型別，預期型別為 List[float]。
+    
+    限制或副作用:
+        可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
     """
     embedder = get_text_embedder()
     dimension = get_dimension(384)
@@ -677,7 +864,21 @@ def search_vectors(
     score_threshold: Optional[float] = None
 ) -> List[Dict]:
     """
-    Search RAG vectors using unified embedding and Qdrant.
+    負責執行 memory.rag.pipeline 中的 search_vectors 流程，從記憶圖、向量索引或任務關聯中取回相關案例與策略提醒。
+    
+    Args:
+        store: 已整理好的搜尋結果、共享資料包或可重用證據內容。
+        query: 目前要處理的任務、問題或查詢文字。
+        top_k: 控制檢索、篩選或輸出數量的數值參數。
+        rag_namespace: 已整理好的搜尋結果、共享資料包或可重用證據內容。
+        only_rag_data: 已整理好的搜尋結果、共享資料包或可重用證據內容。
+        score_threshold: 控制檢索、篩選或輸出數量的數值參數。
+    
+    Returns:
+        執行結果；若函式標註回傳型別，預期型別為 List[Dict]。
+    
+    限制或副作用:
+        可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
     """
     if not query:
         return []
@@ -710,6 +911,19 @@ def search_vectors(
 
 
 def _prompt_mqe(query: str, n: int) -> List[str]:
+    """
+    負責執行 memory.rag.pipeline 中的 _prompt_mqe 流程，依照 memory.rag.pipeline 的流程需求處理 _prompt_mqe 對應的資料轉換、狀態操作或結果產生。
+    
+    Args:
+        query: 目前要處理的任務、問題或查詢文字。
+        n: 記憶系統提供的檢索結果、寫入資料或操作介面。
+    
+    Returns:
+        執行結果；若函式標註回傳型別，預期型別為 List[str]。
+    
+    限制或副作用:
+        可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+    """
     try:
         from core.llm import HelloAgentsLLM
         llm = HelloAgentsLLM()
@@ -726,6 +940,18 @@ def _prompt_mqe(query: str, n: int) -> List[str]:
 
 
 def _prompt_hyde(query: str) -> Optional[str]:
+    """
+    負責執行 memory.rag.pipeline 中的 _prompt_hyde 流程，依照 memory.rag.pipeline 的流程需求處理 _prompt_hyde 對應的資料轉換、狀態操作或結果產生。
+    
+    Args:
+        query: 目前要處理的任務、問題或查詢文字。
+    
+    Returns:
+        執行結果；若函式標註回傳型別，預期型別為 Optional[str]。
+    
+    限制或副作用:
+        可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+    """
     try:
         from core.llm import HelloAgentsLLM
         llm = HelloAgentsLLM()
@@ -751,7 +977,25 @@ def search_vectors_expanded(
     candidate_pool_multiplier: int = 4,
 ) -> List[Dict]:
     """
-    Search with query expansion using unified embedding and Qdrant.
+    負責執行 memory.rag.pipeline 中的 search_vectors_expanded 流程，從記憶圖、向量索引或任務關聯中取回相關案例與策略提醒。
+    
+    Args:
+        store: 已整理好的搜尋結果、共享資料包或可重用證據內容。
+        query: 目前要處理的任務、問題或查詢文字。
+        top_k: 控制檢索、篩選或輸出數量的數值參數。
+        rag_namespace: 已整理好的搜尋結果、共享資料包或可重用證據內容。
+        only_rag_data: 已整理好的搜尋結果、共享資料包或可重用證據內容。
+        score_threshold: 控制檢索、篩選或輸出數量的數值參數。
+        enable_mqe: 控制是否啟用此項資料、功能或處理分支的布林開關。
+        mqe_expansions: 已整理好的搜尋結果、共享資料包或可重用證據內容。
+        enable_hyde: 控制是否啟用此項資料、功能或處理分支的布林開關。
+        candidate_pool_multiplier: 已整理好的搜尋結果、共享資料包或可重用證據內容。
+    
+    Returns:
+        執行結果；若函式標註回傳型別，預期型別為 List[Dict]。
+    
+    限制或副作用:
+        可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
     """
     if not query:
         return []
@@ -806,6 +1050,18 @@ def search_vectors_expanded(
 
 
 def _try_load_cross_encoder(model_name: str = "cross-encoder/ms-marco-MiniLM-L-6-v2"):
+    """
+    負責執行 memory.rag.pipeline 中的 _try_load_cross_encoder 流程，依照 memory.rag.pipeline 的流程需求處理 _try_load_cross_encoder 對應的資料轉換、狀態操作或結果產生。
+    
+    Args:
+        model_name: 記憶系統提供的檢索結果、寫入資料或操作介面。
+    
+    Returns:
+        執行結果；若函式標註回傳型別，預期型別為 未標註。
+    
+    限制或副作用:
+        可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+    """
     try:
         from sentence_transformers import CrossEncoder
         return CrossEncoder(model_name)
@@ -814,6 +1070,21 @@ def _try_load_cross_encoder(model_name: str = "cross-encoder/ms-marco-MiniLM-L-6
 
 
 def rerank_with_cross_encoder(query: str, items: List[Dict], model_name: str = "cross-encoder/ms-marco-MiniLM-L-6-v2", top_k: int = 10) -> List[Dict]:
+    """
+    負責執行 memory.rag.pipeline 中的 rerank_with_cross_encoder 流程，依照 memory.rag.pipeline 的流程需求處理 rerank_with_cross_encoder 對應的資料轉換、狀態操作或結果產生。
+    
+    Args:
+        query: 目前要處理的任務、問題或查詢文字。
+        items: 記憶系統提供的檢索結果、寫入資料或操作介面。
+        model_name: 記憶系統提供的檢索結果、寫入資料或操作介面。
+        top_k: 控制檢索、篩選或輸出數量的數值參數。
+    
+    Returns:
+        執行結果；若函式標註回傳型別，預期型別為 List[Dict]。
+    
+    限制或副作用:
+        可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+    """
     ce = _try_load_cross_encoder(model_name)
     if ce is None or not items:
         return items[:top_k]
@@ -830,7 +1101,19 @@ def rerank_with_cross_encoder(query: str, items: List[Dict], model_name: str = "
 
 def compute_graph_signals_from_pool(vector_hits: List[Dict], same_doc_weight: float = 1.0, proximity_weight: float = 1.0, proximity_window_chars: int = 1600) -> Dict[str, float]:
     """
-    Compute graph signals with direct parameters instead of environment variables.
+    負責執行 memory.rag.pipeline 中的 compute_graph_signals_from_pool 流程，依照 memory.rag.pipeline 的流程需求處理 compute_graph_signals_from_pool 對應的資料轉換、狀態操作或結果產生。
+    
+    Args:
+        vector_hits: 記憶系統提供的檢索結果、寫入資料或操作介面。
+        same_doc_weight: 記憶系統提供的檢索結果、寫入資料或操作介面。
+        proximity_weight: 記憶系統提供的檢索結果、寫入資料或操作介面。
+        proximity_window_chars: 記憶系統提供的檢索結果、寫入資料或操作介面。
+    
+    Returns:
+        執行結果；若函式標註回傳型別，預期型別為 Dict[str, float]。
+    
+    限制或副作用:
+        可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
     """
 
     # group by doc
@@ -893,7 +1176,19 @@ def compute_graph_signals_from_pool(vector_hits: List[Dict], same_doc_weight: fl
 
 def rank(vector_hits: List[Dict], graph_signals: Optional[Dict[str, float]] = None, w_vector: float = 0.7, w_graph: float = 0.3) -> List[Dict]:
     """
-    Rank results with direct weight parameters instead of environment variables.
+    負責執行 memory.rag.pipeline 中的 rank 流程，根據任務特徵、候選答案或評分結果選擇後續節點、工具或流程分支。
+    
+    Args:
+        vector_hits: 記憶系統提供的檢索結果、寫入資料或操作介面。
+        graph_signals: 記憶系統提供的檢索結果、寫入資料或操作介面。
+        w_vector: 記憶系統提供的檢索結果、寫入資料或操作介面。
+        w_graph: 記憶系統提供的檢索結果、寫入資料或操作介面。
+    
+    Returns:
+        執行結果；若函式標註回傳型別，預期型別為 List[Dict]。
+    
+    限制或副作用:
+        可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
     """
     items: List[Dict] = []
     graph_signals = graph_signals or {}
@@ -915,6 +1210,19 @@ def rank(vector_hits: List[Dict], graph_signals: Optional[Dict[str, float]] = No
 
 
 def merge_snippets(ranked_items: List[Dict], max_chars: int = 1200) -> str:
+    """
+    負責執行 memory.rag.pipeline 中的 merge_snippets 流程，依照 memory.rag.pipeline 的流程需求處理 merge_snippets 對應的資料轉換、狀態操作或結果產生。
+    
+    Args:
+        ranked_items: 記憶系統提供的檢索結果、寫入資料或操作介面。
+        max_chars: 控制檢索、篩選或輸出數量的數值參數。
+    
+    Returns:
+        執行結果；若函式標註回傳型別，預期型別為 str。
+    
+    限制或副作用:
+        可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+    """
     out: List[str] = []
     total = 0
     for it in ranked_items:
@@ -934,6 +1242,21 @@ def merge_snippets(ranked_items: List[Dict], max_chars: int = 1200) -> str:
 
 
 def expand_neighbors_from_pool(selected: List[Dict], pool: List[Dict], neighbors: int = 1, max_additions: int = 5) -> List[Dict]:
+    """
+    負責執行 memory.rag.pipeline 中的 expand_neighbors_from_pool 流程，依照 memory.rag.pipeline 的流程需求處理 expand_neighbors_from_pool 對應的資料轉換、狀態操作或結果產生。
+    
+    Args:
+        selected: 記憶系統提供的檢索結果、寫入資料或操作介面。
+        pool: 記憶系統提供的檢索結果、寫入資料或操作介面。
+        neighbors: 記憶系統提供的檢索結果、寫入資料或操作介面。
+        max_additions: 控制檢索、篩選或輸出數量的數值參數。
+    
+    Returns:
+        執行結果；若函式標註回傳型別，預期型別為 List[Dict]。
+    
+    限制或副作用:
+        可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+    """
     if not selected or not pool or neighbors <= 0:
         return selected
     # index pool by doc_id and sort by start
@@ -981,6 +1304,20 @@ def expand_neighbors_from_pool(selected: List[Dict], pool: List[Dict], neighbors
 
 def merge_snippets_grouped(ranked_items: List[Dict], max_chars: int = 1200, include_citations: bool = True) -> str:
     # Group by doc_id and aggregate doc score
+    """
+    負責執行 memory.rag.pipeline 中的 merge_snippets_grouped 流程，依照 memory.rag.pipeline 的流程需求處理 merge_snippets_grouped 對應的資料轉換、狀態操作或結果產生。
+    
+    Args:
+        ranked_items: 記憶系統提供的檢索結果、寫入資料或操作介面。
+        max_chars: 控制檢索、篩選或輸出數量的數值參數。
+        include_citations: 控制是否啟用此項資料、功能或處理分支的布林開關。
+    
+    Returns:
+        執行結果；若函式標註回傳型別，預期型別為 str。
+    
+    限制或副作用:
+        可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+    """
     by_doc: Dict[str, List[Dict]] = {}
     doc_score: Dict[str, float] = {}
     for it in ranked_items:
@@ -1059,7 +1396,19 @@ def merge_snippets_grouped(ranked_items: List[Dict], max_chars: int = 1200, incl
 
 def compress_ranked_items(ranked_items: List[Dict], enable_compression: bool = True, max_per_doc: int = 2, join_gap: int = 200) -> List[Dict]:
     """
-    Compress ranked items with direct parameters instead of environment variables.
+    負責執行 memory.rag.pipeline 中的 compress_ranked_items 流程，依照 memory.rag.pipeline 的流程需求處理 compress_ranked_items 對應的資料轉換、狀態操作或結果產生。
+    
+    Args:
+        ranked_items: 記憶系統提供的檢索結果、寫入資料或操作介面。
+        enable_compression: 控制是否啟用此項資料、功能或處理分支的布林開關。
+        max_per_doc: 控制檢索、篩選或輸出數量的數值參數。
+        join_gap: 記憶系統提供的檢索結果、寫入資料或操作介面。
+    
+    Returns:
+        執行結果；若函式標註回傳型別，預期型別為 List[Dict]。
+    
+    限制或副作用:
+        可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
     """
     if not enable_compression:
         return ranked_items
@@ -1108,6 +1457,19 @@ def compress_ranked_items(ranked_items: List[Dict], enable_compression: bool = T
 
 
 def tldr_summarize(text: str, bullets: int = 3) -> Optional[str]:
+    """
+    負責執行 memory.rag.pipeline 中的 tldr_summarize 流程，依照 memory.rag.pipeline 的流程需求處理 tldr_summarize 對應的資料轉換、狀態操作或結果產生。
+    
+    Args:
+        text: 記憶系統提供的檢索結果、寫入資料或操作介面。
+        bullets: 記憶系統提供的檢索結果、寫入資料或操作介面。
+    
+    Returns:
+        執行結果；若函式標註回傳型別，預期型別為 Optional[str]。
+    
+    限制或副作用:
+        可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+    """
     try:
         if not text or len(text.strip()) == 0:
             return None
@@ -1134,10 +1496,19 @@ def create_rag_pipeline(
     rag_namespace: str = "default"
 ) -> Dict[str, Any]:
     """
-    Create a complete RAG pipeline with Qdrant and unified embedding.
+    負責執行 memory.rag.pipeline 中的 create_rag_pipeline 流程，建立記憶圖或任務記錄結構，供後續檢索、寫入與提示注入使用。
+    
+    Args:
+        qdrant_url: 記憶系統提供的檢索結果、寫入資料或操作介面。
+        qdrant_api_key: 記憶系統提供的檢索結果、寫入資料或操作介面。
+        collection_name: 記憶系統提供的檢索結果、寫入資料或操作介面。
+        rag_namespace: 記憶系統提供的檢索結果、寫入資料或操作介面。
     
     Returns:
-        Dict containing store, namespace, and helper functions
+        執行結果；若函式標註回傳型別，預期型別為 Dict[str, Any]。
+    
+    限制或副作用:
+        可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
     """
     dimension = get_dimension(384)
     
@@ -1150,7 +1521,20 @@ def create_rag_pipeline(
     )
     
     def add_documents(file_paths: List[str], chunk_size: int = 800, chunk_overlap: int = 100):
-        """Add documents to RAG pipeline"""
+        """
+        負責執行 memory.rag.pipeline 中的 add_documents 流程，更新記憶圖、互動狀態、節點邊關係或追蹤紀錄。
+        
+        Args:
+            file_paths: 記憶系統提供的檢索結果、寫入資料或操作介面。
+            chunk_size: 記憶系統提供的檢索結果、寫入資料或操作介面。
+            chunk_overlap: 記憶系統提供的檢索結果、寫入資料或操作介面。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 未標註。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         chunks = load_and_chunk_texts(
             paths=file_paths,
             chunk_size=chunk_size,
@@ -1166,7 +1550,20 @@ def create_rag_pipeline(
         return len(chunks)
     
     def search(query: str, top_k: int = 8, score_threshold: Optional[float] = None):
-        """Search RAG knowledge base"""
+        """
+        負責執行 memory.rag.pipeline 中的 search 流程，從記憶圖、向量索引或任務關聯中取回相關案例與策略提醒。
+        
+        Args:
+            query: 目前要處理的任務、問題或查詢文字。
+            top_k: 控制檢索、篩選或輸出數量的數值參數。
+            score_threshold: 控制檢索、篩選或輸出數量的數值參數。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 未標註。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         return search_vectors(
             store=store,
             query=query,
@@ -1182,7 +1579,22 @@ def create_rag_pipeline(
         enable_hyde: bool = False,
         score_threshold: Optional[float] = None
     ):
-        """Advanced search with query expansion"""
+        """
+        負責執行 memory.rag.pipeline 中的 search_advanced 流程，從記憶圖、向量索引或任務關聯中取回相關案例與策略提醒。
+        
+        Args:
+            query: 目前要處理的任務、問題或查詢文字。
+            top_k: 控制檢索、篩選或輸出數量的數值參數。
+            enable_mqe: 控制是否啟用此項資料、功能或處理分支的布林開關。
+            enable_hyde: 控制是否啟用此項資料、功能或處理分支的布林開關。
+            score_threshold: 控制檢索、篩選或輸出數量的數值參數。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 未標註。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         return search_vectors_expanded(
             store=store,
             query=query,
@@ -1194,7 +1606,18 @@ def create_rag_pipeline(
         )
     
     def get_stats():
-        """Get pipeline statistics"""
+        """
+        負責執行 memory.rag.pipeline 中的 get_stats 流程，依照 memory.rag.pipeline 的流程需求處理 get_stats 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            無。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 未標註。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         return store.get_collection_stats()
     
     return {

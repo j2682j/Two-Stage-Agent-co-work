@@ -38,15 +38,22 @@ Action: 選擇合適的工具取得資訊，格式為：
 
 class ReActAgent(Agent):
     """
-    ReAct (Reasoning and Acting) Agent
+    負責在 agents.react_agent 中封裝 ReActAgent，封裝代理節點的推理、工具使用、訊息傳遞或協作控制邏輯。
     
-    結合推理和行動的智慧代理，能夠：
-    1. 分析問題並制定行動計劃
-    2. 呼叫外部工具取得資訊
-    3. 基於觀察結果進行推理
-    4. 迭代執行直到得出最終答案
+    Args:
+        name: 此流程需要使用的輸入資料。
+        llm: 用來呼叫模型或外部服務的模型名稱、客戶端或相關設定。
+        tool_registry: 此流程需要使用的輸入資料。
+        system_prompt: 此流程需要使用的輸入資料。
+        config: 控制此流程行為的設定資料。
+        max_steps: 控制檢索、篩選或輸出數量的數值參數。
+        custom_prompt: 此流程需要使用的輸入資料。
     
-    這是一個經典的Agent范式，特別適合需要外部資訊的任務。
+    Returns:
+        類別本身不直接回傳值；建立實例後可透過其方法操作狀態與流程。
+    
+    限制或副作用:
+        方法可能更新內部狀態、讀寫檔案、呼叫外部服務或產生日誌，需依使用情境確認。
     """
     
     def __init__(
@@ -60,16 +67,22 @@ class ReActAgent(Agent):
         custom_prompt: Optional[str] = None
     ):
         """
-        初始化ReActAgent
-
+        負責執行 ReActAgent 中的 __init__ 流程，初始化物件所需的設定、依賴與內部狀態，讓後續方法可以沿用同一份執行上下文。
+        
         Args:
-            name: Agent名稱
-            llm: LLM實例
-            tool_registry: 工具註冊表（可選，如果不提供則建立空的工具註冊表）
-            system_prompt: 系統提示詞
-            config: 設定對象
-            max_steps: 最大執行步數
-            custom_prompt: 自定義提示詞模板
+            name: 此流程需要使用的輸入資料。
+            llm: 用來呼叫模型或外部服務的模型名稱、客戶端或相關設定。
+            tool_registry: 此流程需要使用的輸入資料。
+            system_prompt: 此流程需要使用的輸入資料。
+            config: 控制此流程行為的設定資料。
+            max_steps: 控制檢索、篩選或輸出數量的數值參數。
+            custom_prompt: 此流程需要使用的輸入資料。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 未標註。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
         """
         super().__init__(name, llm, system_prompt, config)
 
@@ -87,11 +100,16 @@ class ReActAgent(Agent):
 
     def add_tool(self, tool):
         """
-        添加工具到工具註冊表
-        支援MCP工具的自動展開
-
+        負責執行 ReActAgent 中的 add_tool 流程，將新的輸入資料合併到目前物件狀態或流程紀錄中。
+        
         Args:
-            tool: 工具實例(可以是普通Tool或MCPTool)
+            tool: 可呼叫的工具、工具名稱或工具註冊表。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 未標註。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
         """
         # 檢查是否是MCP工具
         if hasattr(tool, 'auto_expand') and tool.auto_expand:
@@ -118,14 +136,17 @@ class ReActAgent(Agent):
 
     def run(self, input_text: str, **kwargs) -> str:
         """
-        執行ReAct Agent
+        負責執行 ReActAgent 中的 run 流程，啟動主要執行流程，串接輸入準備、核心處理與結果輸出。
         
         Args:
-            input_text: 使用者問題
-            **kwargs: 其他參數
-            
+            input_text: 此流程需要使用的輸入資料。
+            **kwargs: 此流程需要使用的輸入資料。
+        
         Returns:
-            最終答案
+            執行結果；若函式標註回傳型別，預期型別為 str。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
         """
         self.current_history = []
         current_step = 0
@@ -200,7 +221,18 @@ class ReActAgent(Agent):
         return final_answer
     
     def _parse_output(self, text: str) -> Tuple[Optional[str], Optional[str]]:
-        """解析LLM輸出，提取思考和行動"""
+        """
+        負責執行 ReActAgent 中的 _parse_output 流程，依照 ReActAgent 的流程需求處理 _parse_output 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            text: 此流程需要使用的輸入資料。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 Tuple[Optional[str], Optional[str]]。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         thought_match = re.search(r"Thought: (.*)", text)
         action_match = re.search(r"Action: (.*)", text)
         
@@ -210,13 +242,35 @@ class ReActAgent(Agent):
         return thought, action
     
     def _parse_action(self, action_text: str) -> Tuple[Optional[str], Optional[str]]:
-        """解析行動文字，提取工具名稱和輸入"""
+        """
+        負責執行 ReActAgent 中的 _parse_action 流程，依照 ReActAgent 的流程需求處理 _parse_action 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            action_text: 此流程需要使用的輸入資料。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 Tuple[Optional[str], Optional[str]]。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         match = re.match(r"(\w+)\[(.*)\]", action_text)
         if match:
             return match.group(1), match.group(2)
         return None, None
     
     def _parse_action_input(self, action_text: str) -> str:
-        """解析行動輸入"""
+        """
+        負責執行 ReActAgent 中的 _parse_action_input 流程，依照 ReActAgent 的流程需求處理 _parse_action_input 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            action_text: 此流程需要使用的輸入資料。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 str。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         match = re.match(r"\w+\[(.*)\]", action_text)
         return match.group(1) if match else ""

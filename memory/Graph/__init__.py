@@ -1,11 +1,14 @@
-"""GAIA graph memory helpers inspired by G-Memory.
-
-These graph helpers are intentionally separate from ``memory.types.semantic``.
-The existing semantic memory keeps its entity/relation knowledge graph; this
-package models GAIA task routing and reusable strategy insights.
-"""
+"""System-level graph memory inspired by G-Memory."""
 
 from .insight_graph import InsightGraph
+from .interaction_graph import InteractionGraph
+from .network_memory import NetworkMemory, QdrantTaskVectorIndex
 from .query_task_graph import QueryTaskGraph
 
-__all__ = ["InsightGraph", "QueryTaskGraph"]
+__all__ = [
+    "InsightGraph",
+    "InteractionGraph",
+    "NetworkMemory",
+    "QdrantTaskVectorIndex",
+    "QueryTaskGraph",
+]

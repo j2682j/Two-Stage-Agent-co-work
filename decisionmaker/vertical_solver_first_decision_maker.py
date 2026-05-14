@@ -12,6 +12,19 @@ from .base_decision_maker import BaseDecisionMaker
 
 
 class VerticalSolverFirstDecisionMaker(BaseDecisionMaker):
+    """
+    負責在 decisionmaker.vertical_solver_first_decision_maker 中封裝 VerticalSolverFirstDecisionMaker，封裝此模組的狀態資料與主要操作流程。
+    
+    Args:
+        fallback_model_name: 用來呼叫模型或外部服務的模型名稱、客戶端或相關設定。
+        max_inner_turns: 控制檢索、篩選或輸出數量的數值參數。
+    
+    Returns:
+        類別本身不直接回傳值；建立實例後可透過其方法操作狀態與流程。
+    
+    限制或副作用:
+        方法可能更新內部狀態、讀寫檔案、呼叫外部服務或產生日誌，需依使用情境確認。
+    """
     name = "vertical_solver_first"
 
     def __init__(
@@ -19,6 +32,19 @@ class VerticalSolverFirstDecisionMaker(BaseDecisionMaker):
         fallback_model_name: str = "gpt-oss:20b",
         max_inner_turns: int = 1,
     ):
+        """
+        負責執行 VerticalSolverFirstDecisionMaker 中的 __init__ 流程，初始化物件所需的設定、依賴與內部狀態，讓後續方法可以沿用同一份執行上下文。
+        
+        Args:
+            fallback_model_name: 用來呼叫模型或外部服務的模型名稱、客戶端或相關設定。
+            max_inner_turns: 控制檢索、篩選或輸出數量的數值參數。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 未標註。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         super().__init__(max_inner_turns=max_inner_turns)
         self.fallback_model_name = fallback_model_name
         self.decision_parser = DecisionParser()
@@ -34,6 +60,23 @@ class VerticalSolverFirstDecisionMaker(BaseDecisionMaker):
         importance_scores: list[float] | None = None,
         memory_context: str = "",
     ) -> dict[str, Any]:
+        """
+        負責執行 VerticalSolverFirstDecisionMaker 中的 decide 流程，依照 VerticalSolverFirstDecisionMaker 的流程需求處理 decide 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            question: 目前要處理的任務、問題或查詢文字。
+            stage1_result: 評估、推理或工具執行後產生的結果與分數資料。
+            top_k_outputs: 控制檢索、篩選或輸出數量的數值參數。
+            top_k_indices: 控制檢索、篩選或輸出數量的數值參數。
+            importance_scores: 此流程需要使用的輸入資料。
+            memory_context: 記憶系統提供的檢索結果、寫入資料或操作介面。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 dict[str, Any]。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         successful = self._successful_outputs(top_k_outputs)
         if not successful:
             return self._build_result(
@@ -161,16 +204,53 @@ class VerticalSolverFirstDecisionMaker(BaseDecisionMaker):
         successful_outputs: list[dict[str, Any]],
         importance_scores: list[float] | None,
     ) -> dict[str, Any] | None:
+        """
+        負責執行 VerticalSolverFirstDecisionMaker 中的 _select_solver_output 流程，依照 VerticalSolverFirstDecisionMaker 的流程需求處理 _select_solver_output 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            successful_outputs: 此流程需要使用的輸入資料。
+            importance_scores: 此流程需要使用的輸入資料。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 dict[str, Any] | None。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         if not successful_outputs:
             return None
 
         def importance_score(item: dict[str, Any]) -> float:
+            """
+            負責執行 VerticalSolverFirstDecisionMaker 中的 importance_score 流程，依照 VerticalSolverFirstDecisionMaker 的流程需求處理 importance_score 對應的資料轉換、狀態操作或結果產生。
+            
+            Args:
+                item: 評估、推理或工具執行後產生的結果與分數資料。
+            
+            Returns:
+                執行結果；若函式標註回傳型別，預期型別為 float。
+            
+            限制或副作用:
+                可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+            """
             agent_idx = item.get("agent_idx")
             if isinstance(agent_idx, int) and 0 <= agent_idx < len(importance_scores):
                 return importance_scores[agent_idx]
             return float("-inf")
 
         def score(item: dict[str, Any]) -> tuple[float, float, float]:
+            """
+            負責執行 VerticalSolverFirstDecisionMaker 中的 score 流程，評估候選結果是否符合任務需求並回傳判定資訊。
+            
+            Args:
+                item: 評估、推理或工具執行後產生的結果與分數資料。
+            
+            Returns:
+                執行結果；若函式標註回傳型別，預期型別為 tuple[float, float, float]。
+            
+            限制或副作用:
+                可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+            """
             judge_score = float(item.get("stage2_judge_score", float("-inf")))
             acceptable_bonus = 1.0 if item.get("stage2_judge_is_acceptable") else 0.0
             importance = importance_score(item) if importance_scores else 0.0
@@ -185,6 +265,21 @@ class VerticalSolverFirstDecisionMaker(BaseDecisionMaker):
         successful_outputs: list[dict[str, Any]],
         memory_context: str = "",
     ) -> tuple[list[dict[str, Any]], dict[str, Any], int, int]:
+        """
+        負責執行 VerticalSolverFirstDecisionMaker 中的 _judge_stage2_outputs 流程，依照 VerticalSolverFirstDecisionMaker 的流程需求處理 _judge_stage2_outputs 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            question: 目前要處理的任務、問題或查詢文字。
+            stage1_result: 評估、推理或工具執行後產生的結果與分數資料。
+            successful_outputs: 此流程需要使用的輸入資料。
+            memory_context: 記憶系統提供的檢索結果、寫入資料或操作介面。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 tuple[list[dict[str, Any]], dict[str, Any], int, int]。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         judged_outputs: list[dict[str, Any]] = []
         prompt_tokens = 0
         completion_tokens = 0
@@ -227,6 +322,20 @@ class VerticalSolverFirstDecisionMaker(BaseDecisionMaker):
         critiques: list[dict[str, Any]],
         critics_by_idx: dict[int, dict[str, Any]],
     ) -> list[dict[str, Any]]:
+        """
+        負責執行 VerticalSolverFirstDecisionMaker 中的 _filter_actionable_critiques 流程，依照 VerticalSolverFirstDecisionMaker 的流程需求處理 _filter_actionable_critiques 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            solver_output: 此流程需要使用的輸入資料。
+            critiques: 此流程需要使用的輸入資料。
+            critics_by_idx: 此流程需要使用的輸入資料。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 list[dict[str, Any]]。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         if not critiques:
             return []
 
@@ -258,6 +367,22 @@ class VerticalSolverFirstDecisionMaker(BaseDecisionMaker):
         candidate_reply: str,
         memory_context: str = "",
     ) -> tuple[dict[str, Any], int, int]:
+        """
+        負責執行 VerticalSolverFirstDecisionMaker 中的 _evaluate_stage2_candidate 流程，依照 VerticalSolverFirstDecisionMaker 的流程需求處理 _evaluate_stage2_candidate 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            question: 目前要處理的任務、問題或查詢文字。
+            stage1_result: 評估、推理或工具執行後產生的結果與分數資料。
+            candidate_answer: 此流程需要使用的輸入資料。
+            candidate_reply: 此流程需要使用的輸入資料。
+            memory_context: 記憶系統提供的檢索結果、寫入資料或操作介面。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 tuple[dict[str, Any], int, int]。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         if not candidate_answer:
             return {
                 "is_acceptable": False,
@@ -337,6 +462,18 @@ Rules:
         }, 0, 0
 
     def _coerce_judge_score(self, value: Any) -> float:
+        """
+        負責執行 VerticalSolverFirstDecisionMaker 中的 _coerce_judge_score 流程，依照 VerticalSolverFirstDecisionMaker 的流程需求處理 _coerce_judge_score 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            value: 評估、推理或工具執行後產生的結果與分數資料。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 float。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         try:
             score = float(value)
         except (TypeError, ValueError):
@@ -344,6 +481,18 @@ Rules:
         return max(0.0, min(10.0, score))
 
     def _resolve_model_name(self, output: dict[str, Any]) -> str:
+        """
+        負責執行 VerticalSolverFirstDecisionMaker 中的 _resolve_model_name 流程，依照 VerticalSolverFirstDecisionMaker 的流程需求處理 _resolve_model_name 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            output: 用來呼叫模型或外部服務的模型名稱、客戶端或相關設定。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 str。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         model_name = str(output.get("model_name", "")).strip()
         if model_name:
             return model_name
@@ -357,6 +506,22 @@ Rules:
         critics: list[dict[str, Any]],
         memory_context: str = "",
     ) -> tuple[list[dict[str, Any]], int, int]:
+        """
+        負責執行 VerticalSolverFirstDecisionMaker 中的 _collect_critiques 流程，依照 VerticalSolverFirstDecisionMaker 的流程需求處理 _collect_critiques 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            question: 目前要處理的任務、問題或查詢文字。
+            stage1_result: 評估、推理或工具執行後產生的結果與分數資料。
+            solver_answer: 此流程需要使用的輸入資料。
+            critics: 此流程需要使用的輸入資料。
+            memory_context: 記憶系統提供的檢索結果、寫入資料或操作介面。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 tuple[list[dict[str, Any]], int, int]。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         critiques: list[dict[str, Any]] = []
         prompt_tokens = 0
         completion_tokens = 0
@@ -422,6 +587,23 @@ Rules:
         solver_model_name: str,
         memory_context: str = "",
     ) -> tuple[str | None, str, int, int]:
+        """
+        負責執行 VerticalSolverFirstDecisionMaker 中的 _revise_with_solver 流程，依照 VerticalSolverFirstDecisionMaker 的流程需求處理 _revise_with_solver 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            question: 目前要處理的任務、問題或查詢文字。
+            stage1_result: 評估、推理或工具執行後產生的結果與分數資料。
+            solver_answer: 此流程需要使用的輸入資料。
+            critiques: 此流程需要使用的輸入資料。
+            solver_model_name: 用來呼叫模型或外部服務的模型名稱、客戶端或相關設定。
+            memory_context: 記憶系統提供的檢索結果、寫入資料或操作介面。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 tuple[str | None, str, int, int]。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         solver_agent = SLM_4b_Agent(model_name=solver_model_name)
         messages = self.message_builder.build_solver_revision_messages(
             question=question,
@@ -447,6 +629,19 @@ Rules:
         agent: SLM_4b_Agent,
         messages: list[dict[str, str]],
     ) -> tuple[str, int, int]:
+        """
+        負責執行 VerticalSolverFirstDecisionMaker 中的 _invoke_with_usage 流程，依照 VerticalSolverFirstDecisionMaker 的流程需求處理 _invoke_with_usage 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            agent: 此流程需要使用的輸入資料。
+            messages: 此流程需要使用的輸入資料。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 tuple[str, int, int]。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         if hasattr(agent, "invoke_with_usage"):
             return agent.invoke_with_usage(messages)
         return agent.invoke(messages), 0, 0

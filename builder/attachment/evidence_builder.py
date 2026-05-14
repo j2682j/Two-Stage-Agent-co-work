@@ -15,7 +15,30 @@ from .readers.text_reader import TEXT_EXTENSIONS, TextAttachmentReader
 
 
 class AttachmentEvidenceBuilder:
-    """Convert a local GAIA attachment into compact prompt evidence."""
+    """
+    負責在 builder.attachment.evidence_builder 中封裝 AttachmentEvidenceBuilder，封裝附件讀取與內容萃取流程，將檔案轉成可推理的證據。
+    
+    Args:
+        max_text_chars: 控制檢索、篩選或輸出數量的數值參數。
+        max_table_rows: 控制檢索、篩選或輸出數量的數值參數。
+        max_pdf_pages: 控制檢索、篩選或輸出數量的數值參數。
+        python_timeout: 此流程需要使用的輸入資料。
+        vision_model: 用來呼叫模型或外部服務的模型名稱、客戶端或相關設定。
+        vision_timeout: 此流程需要使用的輸入資料。
+        audio_model_size: 用來呼叫模型或外部服務的模型名稱、客戶端或相關設定。
+        audio_device: 此流程需要使用的輸入資料。
+        audio_compute_type: 此流程需要使用的輸入資料。
+        max_zip_members: 控制檢索、篩選或輸出數量的數值參數。
+        max_zip_file_bytes: 控制檢索、篩選或輸出數量的數值參數。
+        max_zip_total_bytes: 控制檢索、篩選或輸出數量的數值參數。
+        max_zip_depth: 控制檢索、篩選或輸出數量的數值參數。
+    
+    Returns:
+        類別本身不直接回傳值；建立實例後可透過其方法操作狀態與流程。
+    
+    限制或副作用:
+        方法可能更新內部狀態、讀寫檔案、呼叫外部服務或產生日誌，需依使用情境確認。
+    """
 
     TEXT_EXTENSIONS = TEXT_EXTENSIONS
     IMAGE_EXTENSIONS = IMAGE_EXTENSIONS
@@ -38,6 +61,30 @@ class AttachmentEvidenceBuilder:
         max_zip_total_bytes: int = 40 * 1024 * 1024,
         max_zip_depth: int = 1,
     ) -> None:
+        """
+        負責執行 AttachmentEvidenceBuilder 中的 __init__ 流程，初始化物件所需的設定、依賴與內部狀態，讓後續方法可以沿用同一份執行上下文。
+        
+        Args:
+            max_text_chars: 控制檢索、篩選或輸出數量的數值參數。
+            max_table_rows: 控制檢索、篩選或輸出數量的數值參數。
+            max_pdf_pages: 控制檢索、篩選或輸出數量的數值參數。
+            python_timeout: 此流程需要使用的輸入資料。
+            vision_model: 用來呼叫模型或外部服務的模型名稱、客戶端或相關設定。
+            vision_timeout: 此流程需要使用的輸入資料。
+            audio_model_size: 用來呼叫模型或外部服務的模型名稱、客戶端或相關設定。
+            audio_device: 此流程需要使用的輸入資料。
+            audio_compute_type: 此流程需要使用的輸入資料。
+            max_zip_members: 控制檢索、篩選或輸出數量的數值參數。
+            max_zip_file_bytes: 控制檢索、篩選或輸出數量的數值參數。
+            max_zip_total_bytes: 控制檢索、篩選或輸出數量的數值參數。
+            max_zip_depth: 控制檢索、篩選或輸出數量的數值參數。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 None。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         self.config = AttachmentReaderConfig(
             max_text_chars=max_text_chars,
             max_table_rows=max_table_rows,
@@ -63,6 +110,19 @@ class AttachmentEvidenceBuilder:
         self.archive_reader = ArchiveAttachmentReader(self.config, self)
 
     def build(self, question: str, attachment: dict[str, Any] | None) -> dict[str, Any]:
+        """
+        負責執行 AttachmentEvidenceBuilder 中的 build 流程，建立任務需要的證據區塊，整理搜尋、附件或工具輸出的可引用內容。
+        
+        Args:
+            question: 目前要處理的任務、問題或查詢文字。
+            attachment: 此流程需要使用的輸入資料。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 dict[str, Any]。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         if not attachment:
             return self._empty()
 
@@ -113,6 +173,21 @@ class AttachmentEvidenceBuilder:
         extension: str | None = None,
         depth: int = 0,
     ) -> AttachmentReadResult:
+        """
+        負責執行 AttachmentEvidenceBuilder 中的 read_file 流程，讀取本地或外部資料來源並轉換成系統可處理的格式。
+        
+        Args:
+            question: 目前要處理的任務、問題或查詢文字。
+            file_path: 要讀取或寫入的檔案或目錄路徑。
+            extension: 此流程需要使用的輸入資料。
+            depth: 此流程需要使用的輸入資料。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 AttachmentReadResult。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         extension = (extension or file_path.suffix).lower()
         try:
             if extension in TEXT_EXTENSIONS:
@@ -170,6 +245,21 @@ class AttachmentEvidenceBuilder:
         display_name: str,
         depth: int,
     ) -> str:
+        """
+        負責執行 AttachmentEvidenceBuilder 中的 format_nested_file_result 流程，將內部資料整理成日誌、提示詞、摘要或指定的輸出格式。
+        
+        Args:
+            question: 目前要處理的任務、問題或查詢文字。
+            file_path: 要讀取或寫入的檔案或目錄路徑。
+            display_name: 評估、推理或工具執行後產生的結果與分數資料。
+            depth: 評估、推理或工具執行後產生的結果與分數資料。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 str。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         extension = file_path.suffix.lower()
         result = self.read_file(
             question=question,
@@ -184,6 +274,18 @@ class AttachmentEvidenceBuilder:
         return f"{header}\n{truncate_text(content, self.config.max_text_chars)}"
 
     def _empty(self) -> dict[str, Any]:
+        """
+        負責執行 AttachmentEvidenceBuilder 中的 _empty 流程，依照 AttachmentEvidenceBuilder 的流程需求處理 _empty 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            無。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 dict[str, Any]。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         return {"context": "", "used": False, "tool_usage": [], "metadata": {}}
 
     def _result(
@@ -196,6 +298,23 @@ class AttachmentEvidenceBuilder:
         warnings: list[str],
         reader: str = "attachment_reader",
     ) -> dict[str, Any]:
+        """
+        負責執行 AttachmentEvidenceBuilder 中的 _result 流程，依照 AttachmentEvidenceBuilder 的流程需求處理 _result 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            context: 目前流程所需的上下文、狀態或附加資訊。
+            used: 評估、推理或工具執行後產生的結果與分數資料。
+            file_path: 要讀取或寫入的檔案或目錄路徑。
+            extension: 評估、推理或工具執行後產生的結果與分數資料。
+            warnings: 評估、推理或工具執行後產生的結果與分數資料。
+            reader: 評估、推理或工具執行後產生的結果與分數資料。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 dict[str, Any]。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         failed = any("failed" in warning for warning in warnings)
         output_text = context if used else "\n".join(warnings)
         return {

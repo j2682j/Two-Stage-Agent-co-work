@@ -1,4 +1,4 @@
-﻿"""
+"""
 Semantic Memory:結合向量搜尋與知識圖譜的語義記憶實作
 - 負責儲存抽象概念、規則、知識
 - 需要建立實體和關系的圖譜結構，並與向量資料庫結合
@@ -21,7 +21,22 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 class Entity:
-    """語義記憶中的實體節點。"""
+    """
+    負責在 memory.types.semantic 中封裝 Entity，管理記憶圖、任務紀錄、檢索結果或跨任務經驗的狀態與操作。
+    
+    Args:
+        entity_id: 記憶系統提供的檢索結果、寫入資料或操作介面。
+        name: 記憶系統提供的檢索結果、寫入資料或操作介面。
+        entity_type: 記憶系統提供的檢索結果、寫入資料或操作介面。
+        description: 記憶系統提供的檢索結果、寫入資料或操作介面。
+        properties: 記憶系統提供的檢索結果、寫入資料或操作介面。
+    
+    Returns:
+        類別本身不直接回傳值；建立實例後可透過其方法操作狀態與流程。
+    
+    限制或副作用:
+        方法可能更新內部狀態、讀寫檔案、呼叫外部服務或產生日誌，需依使用情境確認。
+    """
     
     def __init__(
         self,
@@ -31,6 +46,22 @@ class Entity:
         description: str = "",
         properties: Dict[str, Any] = None
     ):
+        """
+        負責執行 Entity 中的 __init__ 流程，初始化物件所需的設定、依賴與內部狀態，讓後續方法可以沿用同一份執行上下文。
+        
+        Args:
+            entity_id: 記憶系統提供的檢索結果、寫入資料或操作介面。
+            name: 記憶系統提供的檢索結果、寫入資料或操作介面。
+            entity_type: 記憶系統提供的檢索結果、寫入資料或操作介面。
+            description: 記憶系統提供的檢索結果、寫入資料或操作介面。
+            properties: 記憶系統提供的檢索結果、寫入資料或操作介面。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 未標註。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         self.entity_id = entity_id
         self.name = name
         self.entity_type = entity_type  # PERSON, ORG, PRODUCT, SKILL, CONCEPT等
@@ -41,6 +72,18 @@ class Entity:
         self.frequency = 1  # 出現頻率
     
     def to_dict(self) -> Dict[str, Any]:
+        """
+        負責執行 Entity 中的 to_dict 流程，將內部資料整理成日誌、提示詞、摘要或指定的輸出格式。
+        
+        Args:
+            無。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 Dict[str, Any]。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         return {
             "entity_id": self.entity_id,
             "name": self.name,
@@ -51,7 +94,23 @@ class Entity:
         }
 
 class Relation:
-    """語義記憶中的關聯邊。"""
+    """
+    負責在 memory.types.semantic 中封裝 Relation，管理記憶圖、任務紀錄、檢索結果或跨任務經驗的狀態與操作。
+    
+    Args:
+        from_entity: 記憶系統提供的檢索結果、寫入資料或操作介面。
+        to_entity: 記憶系統提供的檢索結果、寫入資料或操作介面。
+        relation_type: 記憶系統提供的檢索結果、寫入資料或操作介面。
+        strength: 記憶系統提供的檢索結果、寫入資料或操作介面。
+        evidence: 記憶系統提供的檢索結果、寫入資料或操作介面。
+        properties: 記憶系統提供的檢索結果、寫入資料或操作介面。
+    
+    Returns:
+        類別本身不直接回傳值；建立實例後可透過其方法操作狀態與流程。
+    
+    限制或副作用:
+        方法可能更新內部狀態、讀寫檔案、呼叫外部服務或產生日誌，需依使用情境確認。
+    """
     
     def __init__(
         self,
@@ -62,6 +121,23 @@ class Relation:
         evidence: str = "",
         properties: Dict[str, Any] = None
     ):
+        """
+        負責執行 Relation 中的 __init__ 流程，初始化物件所需的設定、依賴與內部狀態，讓後續方法可以沿用同一份執行上下文。
+        
+        Args:
+            from_entity: 記憶系統提供的檢索結果、寫入資料或操作介面。
+            to_entity: 記憶系統提供的檢索結果、寫入資料或操作介面。
+            relation_type: 記憶系統提供的檢索結果、寫入資料或操作介面。
+            strength: 記憶系統提供的檢索結果、寫入資料或操作介面。
+            evidence: 記憶系統提供的檢索結果、寫入資料或操作介面。
+            properties: 記憶系統提供的檢索結果、寫入資料或操作介面。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 未標註。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         self.from_entity = from_entity
         self.to_entity = to_entity
         self.relation_type = relation_type
@@ -72,6 +148,18 @@ class Relation:
         self.frequency = 1  # 關系出現頻率
     
     def to_dict(self) -> Dict[str, Any]:
+        """
+        負責執行 Relation 中的 to_dict 流程，將內部資料整理成日誌、提示詞、摘要或指定的輸出格式。
+        
+        Args:
+            無。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 Dict[str, Any]。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         return {
             "from_entity": self.from_entity,
             "to_entity": self.to_entity,
@@ -84,9 +172,34 @@ class Relation:
 
 
 class SemanticMemory(BaseMemory):
-    """以向量搜尋搭配圖譜推理的混合式語義記憶。"""
+    """
+    負責在 memory.types.semantic 中封裝 SemanticMemory，管理記憶圖、任務紀錄、檢索結果或跨任務經驗的狀態與操作。
+    
+    Args:
+        config: 控制此流程行為的設定資料。
+        storage_backend: 記憶系統提供的檢索結果、寫入資料或操作介面。
+    
+    Returns:
+        類別本身不直接回傳值；建立實例後可透過其方法操作狀態與流程。
+    
+    限制或副作用:
+        方法可能更新內部狀態、讀寫檔案、呼叫外部服務或產生日誌，需依使用情境確認。
+    """
     
     def __init__(self, config: MemoryConfig, storage_backend=None):
+        """
+        負責執行 SemanticMemory 中的 __init__ 流程，初始化物件所需的設定、依賴與內部狀態，讓後續方法可以沿用同一份執行上下文。
+        
+        Args:
+            config: 控制此流程行為的設定資料。
+            storage_backend: 記憶系統提供的檢索結果、寫入資料或操作介面。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 未標註。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         super().__init__(config, storage_backend)
         
         # 嵌入模型（統一提供）
@@ -113,7 +226,18 @@ class SemanticMemory(BaseMemory):
         logger.info("語義記憶初始化完成，已接上 Qdrant 與 Neo4j")
     
     def _init_embedding_model(self):
-        """初始化統一嵌入模型（由 embedding_provider 管理）。"""
+        """
+        負責執行 SemanticMemory 中的 _init_embedding_model 流程，依照 SemanticMemory 的流程需求處理 _init_embedding_model 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            無。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 未標註。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         try:
             self.embedding_model = get_text_embedder()
             # 輕量健康檢查與日誌
@@ -128,7 +252,18 @@ class SemanticMemory(BaseMemory):
             raise
     
     def _init_databases(self):
-        """初始化專業資料庫儲存"""
+        """
+        負責執行 SemanticMemory 中的 _init_databases 流程，依照 SemanticMemory 的流程需求處理 _init_databases 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            無。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 未標註。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         try:
             from core.database_config import get_database_config
             # 取得資料庫設定
@@ -169,7 +304,18 @@ class SemanticMemory(BaseMemory):
             raise
     
     def _init_nlp(self):
-        """初始化NLP處理器 - 智慧多語言支援"""
+        """
+        負責執行 SemanticMemory 中的 _init_nlp 流程，依照 SemanticMemory 的流程需求處理 _init_nlp 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            無。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 未標註。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         try:
             self.nlp_models = {}
             
@@ -209,7 +355,18 @@ class SemanticMemory(BaseMemory):
             self.nlp_models = {}
     
     def add(self, memory_item: MemoryItem) -> str:
-        """添加語義記憶"""
+        """
+        負責執行 SemanticMemory 中的 add 流程，更新記憶圖、互動狀態、節點邊關係或追蹤紀錄。
+        
+        Args:
+            memory_item: 記憶系統提供的檢索結果、寫入資料或操作介面。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 str。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         try:
             # 1. 生成文字嵌入
             embedding = self.embedding_model.encode(memory_item.content)
@@ -265,7 +422,20 @@ class SemanticMemory(BaseMemory):
             raise
     
     def retrieve(self, query: str, limit: int = 5, **kwargs) -> List[MemoryItem]:
-        """搜尋語義記憶"""
+        """
+        負責執行 SemanticMemory 中的 retrieve 流程，從記憶圖、向量索引或任務關聯中取回相關案例與策略提醒。
+        
+        Args:
+            query: 目前要處理的任務、問題或查詢文字。
+            limit: 控制檢索、篩選或輸出數量的數值參數。
+            **kwargs: 記憶系統提供的檢索結果、寫入資料或操作介面。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 List[MemoryItem]。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         try:
             user_id = kwargs.get("user_id")
 
@@ -339,7 +509,20 @@ class SemanticMemory(BaseMemory):
             return []
     
     def _vector_search(self, query: str, limit: int, user_id: Optional[str] = None) -> List[Dict[str, Any]]:
-        """Qdrant向量搜尋"""
+        """
+        負責執行 SemanticMemory 中的 _vector_search 流程，依照 SemanticMemory 的流程需求處理 _vector_search 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            query: 目前要處理的任務、問題或查詢文字。
+            limit: 控制檢索、篩選或輸出數量的數值參數。
+            user_id: 已整理好的搜尋結果、共享資料包或可重用證據內容。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 List[Dict[str, Any]]。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         try:
             # 生成查詢向量
             query_embedding = self.embedding_model.encode(query)
@@ -374,7 +557,20 @@ class SemanticMemory(BaseMemory):
             return []
 
     def _graph_search(self, query: str, limit: int, user_id: Optional[str] = None) -> List[Dict[str, Any]]:
-        """Neo4j圖搜尋"""
+        """
+        負責執行 SemanticMemory 中的 _graph_search 流程，依照 SemanticMemory 的流程需求處理 _graph_search 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            query: 目前要處理的任務、問題或查詢文字。
+            limit: 控制檢索、篩選或輸出數量的數值參數。
+            user_id: 已整理好的搜尋結果、共享資料包或可重用證據內容。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 List[Dict[str, Any]]。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         try:
             # 從查詢中提取實體
             query_entities = self._extract_entities(query)
@@ -478,7 +674,21 @@ class SemanticMemory(BaseMemory):
         query: str,
         limit: int
     ) -> List[Dict[str, Any]]:
-        """混合排序結果 - 僅基於向量與圖分數的簡單融合"""
+        """
+        負責執行 SemanticMemory 中的 _combine_and_rank_results 流程，依照 SemanticMemory 的流程需求處理 _combine_and_rank_results 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            vector_results: 記憶系統提供的檢索結果、寫入資料或操作介面。
+            graph_results: 記憶系統提供的檢索結果、寫入資料或操作介面。
+            query: 目前要處理的任務、問題或查詢文字。
+            limit: 控制檢索、篩選或輸出數量的數值參數。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 List[Dict[str, Any]]。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         # 合併結果，按內容去重
         combined = {}
         content_seen = set()  # 用於內容去重
@@ -570,7 +780,18 @@ class SemanticMemory(BaseMemory):
         return sorted_results[:limit]
     
     def _detect_language(self, text: str) -> str:
-        """簡單的語言檢測"""
+        """
+        負責執行 SemanticMemory 中的 _detect_language 流程，依照 SemanticMemory 的流程需求處理 _detect_language 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            text: 記憶系統提供的檢索結果、寫入資料或操作介面。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 str。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         # 統計中文字符比例（無正則，逐字符判斷范圍）
         chinese_chars = sum(1 for ch in text if '\u4e00' <= ch <= '\u9fff')
         total_chars = len(text.replace(' ', ''))
@@ -582,7 +803,18 @@ class SemanticMemory(BaseMemory):
         return "zh" if chinese_ratio > 0.3 else "en"
     
     def _extract_entities(self, text: str) -> List[Entity]:
-        """智慧多語言實體提取"""
+        """
+        負責執行 SemanticMemory 中的 _extract_entities 流程，依照 SemanticMemory 的流程需求處理 _extract_entities 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            text: 記憶系統提供的檢索結果、寫入資料或操作介面。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 List[Entity]。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         entities = []
         
         # 檢測文字語言
@@ -643,7 +875,19 @@ class SemanticMemory(BaseMemory):
         return entities
     
     def _store_linguistic_analysis(self, doc, text: str):
-        """儲存spaCy詞法分析結果到Neo4j"""
+        """
+        負責執行 SemanticMemory 中的 _store_linguistic_analysis 流程，依照 SemanticMemory 的流程需求處理 _store_linguistic_analysis 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            doc: 記憶系統提供的檢索結果、寫入資料或操作介面。
+            text: 記憶系統提供的檢索結果、寫入資料或操作介面。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 未標註。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         if not self.graph_store:
             return
             
@@ -721,7 +965,19 @@ class SemanticMemory(BaseMemory):
             logger.warning("[WARN] 儲存詞法分析結果失敗：%s", e)
     
     def _extract_relations(self, text: str, entities: List[Entity]) -> List[Relation]:
-        """提取關系"""
+        """
+        負責執行 SemanticMemory 中的 _extract_relations 流程，依照 SemanticMemory 的流程需求處理 _extract_relations 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            text: 記憶系統提供的檢索結果、寫入資料或操作介面。
+            entities: 記憶系統提供的檢索結果、寫入資料或操作介面。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 List[Relation]。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         relations = []
         # 僅保留簡單共現關系，不做任何正則/關鍵詞匹配
         for i, entity1 in enumerate(entities):
@@ -736,7 +992,19 @@ class SemanticMemory(BaseMemory):
         return relations
     
     def _add_entity_to_graph(self, entity: Entity, memory_item: MemoryItem):
-        """添加實體到Neo4j圖形資料庫"""
+        """
+        負責執行 SemanticMemory 中的 _add_entity_to_graph 流程，依照 SemanticMemory 的流程需求處理 _add_entity_to_graph 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            entity: 記憶系統提供的檢索結果、寫入資料或操作介面。
+            memory_item: 記憶系統提供的檢索結果、寫入資料或操作介面。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 未標註。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         try:
             # 準備實體屬性
             properties = {
@@ -772,7 +1040,19 @@ class SemanticMemory(BaseMemory):
             return False
     
     def _add_relation_to_graph(self, relation: Relation, memory_item: MemoryItem):
-        """添加關系到Neo4j圖形資料庫"""
+        """
+        負責執行 SemanticMemory 中的 _add_relation_to_graph 流程，依照 SemanticMemory 的流程需求處理 _add_relation_to_graph 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            relation: 記憶系統提供的檢索結果、寫入資料或操作介面。
+            memory_item: 記憶系統提供的檢索結果、寫入資料或操作介面。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 未標註。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         try:
             # 準備關系屬性
             properties = {
@@ -802,7 +1082,19 @@ class SemanticMemory(BaseMemory):
             return False
     
     def _calculate_graph_relevance_neo4j(self, memory_metadata: Dict[str, Any], query_entities: List[Entity]) -> float:
-        """計算Neo4j圖相關性分數"""
+        """
+        負責執行 SemanticMemory 中的 _calculate_graph_relevance_neo4j 流程，依照 SemanticMemory 的流程需求處理 _calculate_graph_relevance_neo4j 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            memory_metadata: 記憶系統提供的檢索結果、寫入資料或操作介面。
+            query_entities: 記憶系統提供的檢索結果、寫入資料或操作介面。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 float。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         try:
             memory_entities = memory_metadata.get("entities", [])
             if not memory_entities or not query_entities:
@@ -835,7 +1127,18 @@ class SemanticMemory(BaseMemory):
             return 0.0
 
     def _add_or_update_entity(self, entity: Entity):
-        """添加或更新實體"""
+        """
+        負責執行 SemanticMemory 中的 _add_or_update_entity 流程，依照 SemanticMemory 的流程需求處理 _add_or_update_entity 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            entity: 記憶系統提供的檢索結果、寫入資料或操作介面。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 未標註。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         if entity.entity_id in self.entities:
             # 更新現有實體
             existing = self.entities[entity.entity_id]
@@ -846,7 +1149,18 @@ class SemanticMemory(BaseMemory):
             self.entities[entity.entity_id] = entity
     
     def _add_or_update_relation(self, relation: Relation):
-        """添加或更新關系"""
+        """
+        負責執行 SemanticMemory 中的 _add_or_update_relation 流程，依照 SemanticMemory 的流程需求處理 _add_or_update_relation 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            relation: 記憶系統提供的檢索結果、寫入資料或操作介面。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 未標註。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         # 檢查是否已存在相同關系
         existing_relation = None
         for r in self.relations:
@@ -866,7 +1180,18 @@ class SemanticMemory(BaseMemory):
     
     
     def _find_memory_by_id(self, memory_id: str) -> Optional[MemoryItem]:
-        """根據ID查找記憶"""
+        """
+        負責執行 SemanticMemory 中的 _find_memory_by_id 流程，依照 SemanticMemory 的流程需求處理 _find_memory_by_id 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            memory_id: 記憶系統提供的檢索結果、寫入資料或操作介面。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 Optional[MemoryItem]。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         logger.debug(f"[DEBUG] 查找記憶ID: {memory_id}, 目前記憶數: {len(self.semantic_memories)}")
         for memory in self.semantic_memories:
             if memory.id == memory_id:
@@ -882,7 +1207,21 @@ class SemanticMemory(BaseMemory):
         importance: float = None,
         metadata: Dict[str, Any] = None
     ) -> bool:
-        """更新語義記憶"""
+        """
+        負責執行 SemanticMemory 中的 update 流程，更新記憶圖、互動狀態、節點邊關係或追蹤紀錄。
+        
+        Args:
+            memory_id: 記憶系統提供的檢索結果、寫入資料或操作介面。
+            content: 記憶系統提供的檢索結果、寫入資料或操作介面。
+            importance: 記憶系統提供的檢索結果、寫入資料或操作介面。
+            metadata: 目前流程所需的上下文、狀態或附加資訊。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 bool。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         memory = self._find_memory_by_id(memory_id)
         if not memory:
             return False
@@ -927,7 +1266,18 @@ class SemanticMemory(BaseMemory):
         return False
     
     def remove(self, memory_id: str) -> bool:
-        """刪除語義記憶"""
+        """
+        負責執行 SemanticMemory 中的 remove 流程，清除或移除指定資源、狀態或註冊資料，維持後續流程的一致性。
+        
+        Args:
+            memory_id: 記憶系統提供的檢索結果、寫入資料或操作介面。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 bool。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         memory = self._find_memory_by_id(memory_id)
         if not memory:
             return False
@@ -952,17 +1302,52 @@ class SemanticMemory(BaseMemory):
         return False
     
     def _cleanup_entities_and_relations(self, entity_ids: List[str]):
-        """清理實體和關系"""
+        """
+        負責執行 SemanticMemory 中的 _cleanup_entities_and_relations 流程，依照 SemanticMemory 的流程需求處理 _cleanup_entities_and_relations 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            entity_ids: 記憶系統提供的檢索結果、寫入資料或操作介面。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 未標註。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         # 這裡可以實現更智慧的清理邏輯
         # 例如，如果實體不再被任何記憶引用，則刪除它
         pass
     
     def has_memory(self, memory_id: str) -> bool:
-        """檢查記憶是否存在"""
+        """
+        負責執行 SemanticMemory 中的 has_memory 流程，檢查目前輸入、狀態或條件是否符合流程繼續執行的要求。
+        
+        Args:
+            memory_id: 記憶系統提供的檢索結果、寫入資料或操作介面。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 bool。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         return self._find_memory_by_id(memory_id) is not None
     
     def forget(self, strategy: str = "importance_based", threshold: float = 0.1, max_age_days: int = 30) -> int:
-        """語義記憶遺忘機制（硬刪除）"""
+        """
+        負責執行 SemanticMemory 中的 forget 流程，依照 SemanticMemory 的流程需求處理 forget 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            strategy: 記憶系統提供的檢索結果、寫入資料或操作介面。
+            threshold: 控制檢索、篩選或輸出數量的數值參數。
+            max_age_days: 控制檢索、篩選或輸出數量的數值參數。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 int。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         forgotten_count = 0
         current_time = datetime.now()
         
@@ -1000,7 +1385,18 @@ class SemanticMemory(BaseMemory):
         return forgotten_count
 
     def clear(self):
-        """清空所有語義記憶 - 包括專業資料庫"""
+        """
+        負責執行 SemanticMemory 中的 clear 流程，清除或移除指定資源、狀態或註冊資料，維持後續流程的一致性。
+        
+        Args:
+            無。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 未標註。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         try:
             # 清空Qdrant向量資料庫
             if self.vector_store:
@@ -1035,11 +1431,33 @@ class SemanticMemory(BaseMemory):
         self.relations.clear()
 
     def get_all(self) -> List[MemoryItem]:
-        """取得所有語義記憶"""
+        """
+        負責執行 SemanticMemory 中的 get_all 流程，依照 SemanticMemory 的流程需求處理 get_all 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            無。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 List[MemoryItem]。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         return self.semantic_memories.copy()
     
     def get_stats(self) -> Dict[str, Any]:
-        """取得語義記憶統計資訊"""
+        """
+        負責執行 SemanticMemory 中的 get_stats 流程，依照 SemanticMemory 的流程需求處理 get_stats 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            無。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 Dict[str, Any]。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         graph_stats = {}
         try:
             if self.graph_store:
@@ -1063,11 +1481,34 @@ class SemanticMemory(BaseMemory):
         }
     
     def get_entity(self, entity_id: str) -> Optional[Entity]:
-        """取得實體"""
+        """
+        負責執行 SemanticMemory 中的 get_entity 流程，依照 SemanticMemory 的流程需求處理 get_entity 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            entity_id: 記憶系統提供的檢索結果、寫入資料或操作介面。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 Optional[Entity]。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         return self.entities.get(entity_id)
     
     def search_entities(self, query: str, limit: int = 10) -> List[Entity]:
-        """搜尋實體"""
+        """
+        負責執行 SemanticMemory 中的 search_entities 流程，從記憶圖、向量索引或任務關聯中取回相關案例與策略提醒。
+        
+        Args:
+            query: 目前要處理的任務、問題或查詢文字。
+            limit: 控制檢索、篩選或輸出數量的數值參數。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 List[Entity]。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         query_lower = query.lower()
         scored_entities = []
         
@@ -1101,7 +1542,20 @@ class SemanticMemory(BaseMemory):
         relation_types: List[str] = None,
         max_hops: int = 2
     ) -> List[Dict[str, Any]]:
-        """取得相關實體 - 使用Neo4j圖形資料庫"""
+        """
+        負責執行 SemanticMemory 中的 get_related_entities 流程，依照 SemanticMemory 的流程需求處理 get_related_entities 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            entity_id: 記憶系統提供的檢索結果、寫入資料或操作介面。
+            relation_types: 記憶系統提供的檢索結果、寫入資料或操作介面。
+            max_hops: 控制檢索、篩選或輸出數量的數值參數。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 List[Dict[str, Any]]。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         
         related = []
         
@@ -1147,7 +1601,18 @@ class SemanticMemory(BaseMemory):
         return related
     
     def export_knowledge_graph(self) -> Dict[str, Any]:
-        """匯出知識圖譜 - 從Neo4j取得統計資訊"""
+        """
+        負責執行 SemanticMemory 中的 export_knowledge_graph 流程，依照 SemanticMemory 的流程需求處理 export_knowledge_graph 對應的資料轉換、狀態操作或結果產生。
+        
+        Args:
+            無。
+        
+        Returns:
+            執行結果；若函式標註回傳型別，預期型別為 Dict[str, Any]。
+        
+        限制或副作用:
+            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        """
         try:
             # 從Neo4j取得統計資訊
             stats = {}
