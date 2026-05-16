@@ -1,10 +1,12 @@
 from __future__ import annotations
 
+import os
+from concurrent.futures import ThreadPoolExecutor
 from typing import Any
 
 from builder import DecisionTraceBuilder
 from parser import DecisionParser
-from network.slm_agent import SLM_4b_Agent
+from network.slm_agent import SLM_Agent
 from prompt.decision_prompt_builder import DecisionPromptBuilder
 from utils.network_utils import answer_equivalence
 
@@ -31,6 +33,7 @@ class VerticalSolverFirstDecisionMaker(BaseDecisionMaker):
         self,
         fallback_model_name: str = "gpt-oss:20b",
         max_inner_turns: int = 1,
+        critic_parallel_workers: int | None = None,
     ):
         """
         負責執行 VerticalSolverFirstDecisionMaker 中的 __init__ 流程，初始化物件所需的設定、依賴與內部狀態，讓後續方法可以沿用同一份執行上下文。
@@ -47,6 +50,7 @@ class VerticalSolverFirstDecisionMaker(BaseDecisionMaker):
         """
         super().__init__(max_inner_turns=max_inner_turns)
         self.fallback_model_name = fallback_model_name
+        self.critic_parallel_workers = critic_parallel_workers
         self.decision_parser = DecisionParser()
         self.message_builder = DecisionPromptBuilder()
         self.trace_builder = DecisionTraceBuilder()
@@ -59,6 +63,8 @@ class VerticalSolverFirstDecisionMaker(BaseDecisionMaker):
         top_k_indices: list[int],
         importance_scores: list[float] | None = None,
         memory_context: str = "",
+        prompt_contract: Any | None = None,
+        task_context: Any | None = None,
     ) -> dict[str, Any]:
         """
         負責執行 VerticalSolverFirstDecisionMaker 中的 decide 流程，依照 VerticalSolverFirstDecisionMaker 的流程需求處理 decide 對應的資料轉換、狀態操作或結果產生。
@@ -90,6 +96,8 @@ class VerticalSolverFirstDecisionMaker(BaseDecisionMaker):
             stage1_result=stage1_result,
             successful_outputs=successful,
             memory_context=memory_context,
+            prompt_contract=prompt_contract,
+            task_context=task_context,
         )
         solver_output = self._select_solver_output(judged_outputs, importance_scores)
         if solver_output is None:
@@ -141,6 +149,8 @@ class VerticalSolverFirstDecisionMaker(BaseDecisionMaker):
                 solver_answer=current_answer,
                 critics=critics,
                 memory_context=memory_context,
+                prompt_contract=prompt_contract,
+                task_context=task_context,
             )
             prompt_tokens += round_prompt_tokens
             completion_tokens += round_completion_tokens
@@ -169,6 +179,8 @@ class VerticalSolverFirstDecisionMaker(BaseDecisionMaker):
                 critiques=actionable_critiques,
                 solver_model_name=solver_model_name,
                 memory_context=memory_context,
+                prompt_contract=prompt_contract,
+                task_context=task_context,
             )
             prompt_tokens += revision_prompt_tokens
             completion_tokens += revision_completion_tokens
@@ -264,6 +276,8 @@ class VerticalSolverFirstDecisionMaker(BaseDecisionMaker):
         stage1_result: str | None,
         successful_outputs: list[dict[str, Any]],
         memory_context: str = "",
+        prompt_contract: Any | None = None,
+        task_context: Any | None = None,
     ) -> tuple[list[dict[str, Any]], dict[str, Any], int, int]:
         """
         負責執行 VerticalSolverFirstDecisionMaker 中的 _judge_stage2_outputs 流程，依照 VerticalSolverFirstDecisionMaker 的流程需求處理 _judge_stage2_outputs 對應的資料轉換、狀態操作或結果產生。
@@ -434,7 +448,7 @@ Rules:
         """.strip()
 
         try:
-            judge_agent = SLM_4b_Agent(model_name=self.fallback_model_name)
+            judge_agent = SLM_Agent(model_name=self.fallback_model_name)
             raw, prompt_tokens, completion_tokens = self._invoke_with_usage(
                 judge_agent,
                 [
@@ -505,6 +519,8 @@ Rules:
         solver_answer: str,
         critics: list[dict[str, Any]],
         memory_context: str = "",
+        prompt_contract: Any | None = None,
+        task_context: Any | None = None,
     ) -> tuple[list[dict[str, Any]], int, int]:
         """
         負責執行 VerticalSolverFirstDecisionMaker 中的 _collect_critiques 流程，依照 VerticalSolverFirstDecisionMaker 的流程需求處理 _collect_critiques 對應的資料轉換、狀態操作或結果產生。
@@ -525,6 +541,8 @@ Rules:
         critiques: list[dict[str, Any]] = []
         prompt_tokens = 0
         completion_tokens = 0
+        work_items: list[dict[str, Any]] = []
+        ordered_entries: list[tuple[str, int | tuple[dict[str, Any], int, int]]] = []
 
         for critic in critics:
             critic_answer = str(critic.get("answer", "")).strip()
@@ -534,49 +552,122 @@ Rules:
                 continue
 
             if answer_equivalence(solver_answer, critic_answer):
-                critiques.append(
-                    {
-                        "critic_agent_idx": critic_idx,
-                        "agree": True,
-                        "critique": "",
-                        "revised_answer": critic_answer,
-                    }
+                ordered_entries.append(
+                    (
+                        "result",
+                        (
+                            {
+                                "critic_agent_idx": critic_idx,
+                                "agree": True,
+                                "critique": "",
+                                "revised_answer": critic_answer,
+                            },
+                            0,
+                            0,
+                        ),
+                    )
                 )
                 continue
 
-            messages = self.message_builder.build_critic_messages(
-                question=question,
-                stage1_result=stage1_result,
-                solver_answer=solver_answer,
-                critic_answer=critic_answer,
-                memory_context=memory_context,
+            work_index = len(work_items)
+            work_items.append(
+                {
+                    "critic_idx": critic_idx,
+                    "critic_answer": critic_answer,
+                    "critic_model_name": critic_model_name,
+                    "question": question,
+                    "stage1_result": stage1_result,
+                    "solver_answer": solver_answer,
+                    "memory_context": memory_context,
+                    "prompt_contract": prompt_contract,
+                    "task_context": task_context,
+                }
             )
+            ordered_entries.append(("work", work_index))
 
-            try:
-                critic_agent = SLM_4b_Agent(model_name=critic_model_name)
-                raw, used_prompt_tokens, used_completion_tokens = self._invoke_with_usage(
-                    critic_agent,
-                    messages,
-                )
-                prompt_tokens += used_prompt_tokens
-                completion_tokens += used_completion_tokens
-                critiques.append(
-                    self.decision_parser.parse_critique(
-                        raw_reply=raw,
-                        critic_agent_idx=critic_idx,
-                        fallback_answer=critic_answer,
-                    )
-                )
-            except Exception as e:
-                critiques.append(
-                    self.trace_builder.build_critic_fallback(
-                        critic_agent_idx=critic_idx,
-                        critique=f"Critique generation failed: {e}",
-                        revised_answer=critic_answer,
-                    )
-                )
+        work_results: list[tuple[dict[str, Any], int, int]] = []
+        if work_items:
+            worker_count = self._critic_worker_count(len(work_items))
+            if worker_count <= 1 or len(work_items) <= 1:
+                work_results = [self._run_critic_item(item) for item in work_items]
+            else:
+                with ThreadPoolExecutor(max_workers=worker_count, thread_name_prefix="final-critic") as executor:
+                    futures = [(item, executor.submit(self._run_critic_item, item)) for item in work_items]
+                    for item, future in futures:
+                        try:
+                            work_results.append(future.result())
+                        except BaseException as exc:
+                            work_results.append(
+                                (
+                                    self.trace_builder.build_critic_fallback(
+                                        critic_agent_idx=item.get("critic_idx"),
+                                        critique=f"Critique generation failed: {exc}",
+                                        revised_answer=item.get("critic_answer", ""),
+                                    ),
+                                    0,
+                                    0,
+                                )
+                            )
+
+        for kind, payload in ordered_entries:
+            if kind == "work":
+                critique, used_prompt_tokens, used_completion_tokens = work_results[int(payload)]
+            else:
+                critique, used_prompt_tokens, used_completion_tokens = payload
+            critiques.append(critique)
+            prompt_tokens += used_prompt_tokens
+            completion_tokens += used_completion_tokens
 
         return critiques, prompt_tokens, completion_tokens
+
+    def _run_critic_item(self, item: dict[str, Any]) -> tuple[dict[str, Any], int, int]:
+        critic_idx = item.get("critic_idx")
+        critic_answer = str(item.get("critic_answer", "") or "")
+        try:
+            messages = self.message_builder.build_critic_messages(
+                question=item.get("question", ""),
+                stage1_result=item.get("stage1_result"),
+                solver_answer=item.get("solver_answer", ""),
+                critic_answer=critic_answer,
+                memory_context=item.get("memory_context", ""),
+                contract=item.get("prompt_contract"),
+                task_context=item.get("task_context"),
+            )
+            critic_agent = SLM_Agent(model_name=item.get("critic_model_name") or self.fallback_model_name)
+            raw, used_prompt_tokens, used_completion_tokens = self._invoke_with_usage(
+                critic_agent,
+                messages,
+            )
+            critique = self.decision_parser.parse_critique(
+                raw_reply=raw,
+                critic_agent_idx=critic_idx,
+                fallback_answer=critic_answer,
+            )
+            return critique, used_prompt_tokens, used_completion_tokens
+        except Exception as e:
+            return (
+                self.trace_builder.build_critic_fallback(
+                    critic_agent_idx=critic_idx,
+                    critique=f"Critique generation failed: {e}",
+                    revised_answer=critic_answer,
+                ),
+                0,
+                0,
+            )
+
+    def _critic_worker_count(self, task_count: int) -> int:
+        configured = self.critic_parallel_workers
+        if configured is None:
+            configured = os.getenv("FINAL_DECISION_CRITIC_WORKERS")
+
+        try:
+            worker_count = int(configured) if configured not in (None, "") else task_count
+        except (TypeError, ValueError):
+            worker_count = task_count
+
+        if worker_count <= 0:
+            worker_count = task_count
+        return max(1, min(task_count, worker_count))
 
     def _revise_with_solver(
         self,
@@ -586,6 +677,8 @@ Rules:
         critiques: list[dict[str, Any]],
         solver_model_name: str,
         memory_context: str = "",
+        prompt_contract: Any | None = None,
+        task_context: Any | None = None,
     ) -> tuple[str | None, str, int, int]:
         """
         負責執行 VerticalSolverFirstDecisionMaker 中的 _revise_with_solver 流程，依照 VerticalSolverFirstDecisionMaker 的流程需求處理 _revise_with_solver 對應的資料轉換、狀態操作或結果產生。
@@ -604,13 +697,15 @@ Rules:
         限制或副作用:
             可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
         """
-        solver_agent = SLM_4b_Agent(model_name=solver_model_name)
+        solver_agent = SLM_Agent(model_name=solver_model_name)
         messages = self.message_builder.build_solver_revision_messages(
             question=question,
             stage1_result=stage1_result,
             solver_answer=solver_answer,
             critiques=critiques,
             memory_context=memory_context,
+            contract=prompt_contract,
+            task_context=task_context,
         )
         raw, prompt_tokens, completion_tokens = self._invoke_with_usage(
             solver_agent,
@@ -626,7 +721,7 @@ Rules:
 
     def _invoke_with_usage(
         self,
-        agent: SLM_4b_Agent,
+        agent: SLM_Agent,
         messages: list[dict[str, str]],
     ) -> tuple[str, int, int]:
         """

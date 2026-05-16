@@ -250,7 +250,7 @@ class BFCLToolCallParser(BaseParser):
         if not isinstance(parsed, dict):
             return None
 
-        for key in ("tool_calls", "function_calls", "calls", "call", "final_calls", "final_answer", "answer"):
+        for key in ("tool_calls", "function_calls", "function_call", "calls", "call", "final_calls", "final_answer", "answer"):
             if key in parsed:
                 value = parsed.get(key)
                 if isinstance(value, str) and self._is_empty_call(value):
@@ -299,10 +299,29 @@ class BFCLToolCallParser(BaseParser):
         """
         normalized: list[dict[str, Any]] = []
         for call in calls or []:
+            if isinstance(call, dict):
+                wrapped_calls = self._normalize_wrapper_call(call)
+                if wrapped_calls is not None:
+                    normalized.extend(wrapped_calls)
+                    continue
             normalized_call = self._normalize_single_call(call)
             if normalized_call is not None:
                 normalized.append(normalized_call)
         return normalized
+
+    def _normalize_wrapper_call(self, call: dict[str, Any]) -> list[dict[str, Any]] | None:
+        for key in ("tool_calls", "function_calls", "function_call", "calls", "call"):
+            if key not in call:
+                continue
+            value = call.get(key)
+            if isinstance(value, list):
+                return self._normalize_calls(value)
+            if isinstance(value, dict):
+                return self._normalize_calls([value])
+            if isinstance(value, str):
+                parsed = self.parse(value)
+                return parsed if parsed or value.strip() == "[]" else None
+        return None
 
     def _normalize_single_call(self, call: Any) -> dict[str, Any] | None:
         """

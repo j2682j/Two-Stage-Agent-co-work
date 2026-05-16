@@ -3,6 +3,7 @@ from __future__ import annotations
 from typing import Any
 
 from .builder import PromptBuilder, PromptPacket
+from .contracts import resolve_prompt_contract
 
 
 class RepairPromptBuilder(PromptBuilder):
@@ -109,23 +110,8 @@ class RepairPromptBuilder(PromptBuilder):
             可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
         """
         expected_weight_count = int(compressed.get("expected_weight_count", 0))
-        return f"""
-Your previous reply did not follow the required output format.
-
-Return plain text only.
-Do not include markdown fences.
-Do not include any extra text outside the required format.
-
-Required format:
-REASONING=<brief key steps and correction checks only>
-FINAL_ANSWER=<your final answer as a string>
-WEIGHTS=[w1, w2, ..., w{expected_weight_count}]
-
-Requirements:
-- REASONING must be a short string with only the essential correction/checking steps.
-- FINAL_ANSWER must be a string, even if the answer is numeric.
-- WEIGHTS must contain exactly {expected_weight_count} integers.
-- If there are no previous agents, WEIGHTS must be [].
-- If previous agents made mistakes, correct them briefly in REASONING before giving FINAL_ANSWER.
-- The WEIGHTS line must be the final line of your reply.
-        """.strip()
+        contract = kwargs.get("contract") or resolve_prompt_contract(
+            kwargs.get("task_context"),
+            question=str(kwargs.get("question", "") or ""),
+        )
+        return contract.repair_contract(expected_weight_count)

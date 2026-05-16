@@ -17,7 +17,7 @@ from evaluation.benchmarks.bfcl.bfcl_logging import (
 from evaluation.benchmarks.bfcl.dataset import BFCLDataset
 from evaluation.benchmarks.bfcl.evaluator import BFCLEvaluator
 from evaluation.benchmarks.bfcl_adapter import BFCLAdapter
-from network.agent_network import AgentNetwork
+from network.core.agent_network import AgentNetwork
 from utils.project_paths import PROJECT_ROOT, ensure_runtime_dirs, get_eval_output_path, get_log_file_path
 
 
@@ -25,18 +25,14 @@ DEFAULT_BFCL_DATA_DIR = PROJECT_ROOT / "temp_gorilla" / "berkeley-function-call-
 
 
 def create_bfcl_network(args: Any, *, memory_namespace: str) -> AgentNetwork:
-    """
-    負責建立 BFCL 評估使用的 AgentNetwork。
-
-    Args:
-        args: CLI 或呼叫端傳入的評估參數物件。
-        memory_namespace: 本次 BFCL 評估使用的 GraphMemory 命名空間。
-
-    Returns:
-        已初始化的 AgentNetwork。
-
-    限制或副作用:
-        會初始化 NetworkRuntime 與 GraphMemory；若外部儲存服務不可用，GraphMemory 會依 runtime fallback 行為處理。
+    """建立 create_bfcl_network 所需的物件。
+    
+    參數:
+        args: 此流程需要使用的輸入資料。
+        memory_namespace: 此流程需要使用的輸入資料。
+    
+    回傳:
+        此函式的處理結果。
     """
     return AgentNetwork(
         agents=int(getattr(args, "agents", 3) or 3),
@@ -50,20 +46,19 @@ def create_bfcl_network(args: Any, *, memory_namespace: str) -> AgentNetwork:
 
 
 def clear_runtime_sample_state(network: AgentNetwork) -> None:
-    """
-    負責在每一題開始前清空 runtime 中與單題相關的 trace。
-
-    Args:
-        network: BFCL 評估使用的 AgentNetwork。
-
-    Returns:
-        無。
-
-    限制或副作用:
-        會清空 shared tool trace、memory read/write trace 與 token usage trace，避免上一題污染下一題 log。
+    """清除 clear_runtime_sample_state 相關狀態。
+    
+    參數:
+        network: 此流程需要使用的輸入資料。
+    
+    回傳:
+        此函式的處理結果。
     """
     runtime = getattr(network, "runtime", None)
     if runtime is None:
+        return
+    if hasattr(runtime, "clear_observability_records"):
+        runtime.clear_observability_records()
         return
     runtime.shared_tool_traces.clear()
     runtime.shared_memory_reads.clear()
@@ -72,17 +67,13 @@ def clear_runtime_sample_state(network: AgentNetwork) -> None:
 
 
 def resolve_bfcl_paths(args: Any) -> dict[str, Path]:
-    """
-    負責解析 BFCL 評估需要輸出的 full log、compact log、analysis 與 result 路徑。
-
-    Args:
-        args: CLI 或呼叫端傳入的評估參數物件。
-
-    Returns:
-        包含 log_file、compact_log_file、analysis_file 與 result_file 的路徑字典。
-
-    限制或副作用:
-        若呼叫端未提供路徑，會依 log_name 在 result 目錄下建立預設輸出位置。
+    """處理 resolve_bfcl_paths 流程並回傳結果。
+    
+    參數:
+        args: 此流程需要使用的輸入資料。
+    
+    回傳:
+        此函式的處理結果。
     """
     base_name = str(getattr(args, "log_name", "test_bfcl") or "test_bfcl").strip()
     category = str(getattr(args, "category", "simple_python") or "simple_python").strip()
@@ -107,20 +98,16 @@ def build_results(
     detailed_results: list[dict[str, Any]],
     category: str,
 ) -> dict[str, Any]:
-    """
-    負責將逐題結果彙整成 BFCL 評估總結果。
-
-    Args:
-        agent: 包裝 AgentNetwork 的 BFCLAdapter。
-        evaluator: 負責解析與評分的 BFCLEvaluator。
-        detailed_results: 每題 evaluate_sample 回傳的結果列表。
-        category: 本次評估的 BFCL category。
-
-    Returns:
-        包含總題數、答對題數、正確率與詳細結果的字典。
-
-    限制或副作用:
-        只彙整資料，不會呼叫模型或寫入檔案。
+    """建立 build_results 所需的資料或輸出。
+    
+    參數:
+        agent: 此流程需要使用的輸入資料。
+        evaluator: 此流程需要使用的輸入資料。
+        detailed_results: 此流程需要使用的輸入資料。
+        category: 此流程需要使用的輸入資料。
+    
+    回傳:
+        此函式的處理結果。
     """
     total_samples = len(detailed_results)
     correct_samples = sum(1 for result in detailed_results if result.get("success", False))
@@ -137,17 +124,13 @@ def build_results(
 
 
 def _ensure_ollama_timeout(min_timeout: int = 180) -> None:
-    """
-    負責確保 OLLAMA_TIMEOUT 至少達到 BFCL 評估需要的最低秒數。
-
-    Args:
-        min_timeout: 最低 timeout 秒數，預設為 180。
-
-    Returns:
-        無。
-
-    限制或副作用:
-        若目前環境變數較小，會直接更新 os.environ["OLLAMA_TIMEOUT"]。
+    """處理 ensure_ollama_timeout 流程並回傳結果。
+    
+    參數:
+        min_timeout: 此流程需要使用的輸入資料。
+    
+    回傳:
+        此函式的處理結果。
     """
     current_timeout = int(os.getenv("OLLAMA_TIMEOUT", "60") or "60")
     if current_timeout < min_timeout:
@@ -155,17 +138,13 @@ def _ensure_ollama_timeout(min_timeout: int = 180) -> None:
 
 
 def run_bfcl_evaluation(args: Any) -> dict[str, Any]:
-    """
-    負責執行 BFCL 評估並輸出 full log、compact log、analysis report 與結果 JSON。
-
-    Args:
-        args: CLI 或呼叫端傳入的評估參數物件，至少可包含 category、max_samples、log_name 與 bfcl_data_dir。
-
-    Returns:
-        BFCL 評估總結果字典。
-
-    限制或副作用:
-        會呼叫模型、寫入 result/log 檔案，並可能觸發 GraphMemory retrieval 與記憶寫入 trace。
+    """執行 run_bfcl_evaluation 流程並回傳結果。
+    
+    參數:
+        args: 此流程需要使用的輸入資料。
+    
+    回傳:
+        此函式的處理結果。
     """
     ensure_runtime_dirs()
     paths = resolve_bfcl_paths(args)

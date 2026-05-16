@@ -431,7 +431,12 @@ class InteractionGraphBuilder:
         task_id = str(sample.get("task_id", "") or "").strip()
         if task_id:
             return task_id
-        context = getattr(getattr(network, "runtime", None), "current_context", {}) or {}
+        runtime = getattr(network, "runtime", None)
+        if hasattr(runtime, "get_task_context"):
+            task_context = runtime.get_task_context()
+            if task_context.task_id:
+                return task_context.task_id
+        context = getattr(runtime, "current_context", {}) or {}
         return str(context.get("task_id", "") or context.get("id", "") or "unknown_task")
 
     def _question(self, sample: dict[str, Any], network: Any) -> str:

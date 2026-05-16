@@ -172,7 +172,7 @@ def _lexical_similarity(a: str, b: str) -> float:
     return len(left & right) / len(left | right)
 
 
-def _make_insight_id(task_type: str, strategy: str) -> str:
+def _make_insight_id(task_type: str, strategy: str, *, prefix: str = "memory") -> str:
     """
     負責執行 memory.graph.insight_graph 中的 _make_insight_id 流程，依照 memory.graph.insight_graph 的流程需求處理 _make_insight_id 對應的資料轉換、狀態操作或結果產生。
     
@@ -189,7 +189,20 @@ def _make_insight_id(task_type: str, strategy: str) -> str:
     digest = hashlib.sha1(
         f"{_slug(task_type)}|{_clean_text(strategy).lower()}".encode("utf-8", errors="ignore")
     ).hexdigest()[:12]
-    return f"gaia_insight_{_slug(task_type)}_{digest}"
+    return f"{_slug(prefix)}_insight_{_slug(task_type)}_{digest}"
+
+
+def _insight_prefix_from_namespace(namespace: Any) -> str:
+    text = _slug(namespace, default="memory")
+    if text.startswith("bfcl"):
+        return "bfcl"
+    if text.startswith("gaia"):
+        return "gaia"
+    if text.startswith("data_generation"):
+        return "data_generation"
+    if text.startswith("llm_judge"):
+        return "llm_judge"
+    return text.split("_", 1)[0] or "memory"
 
 
 @dataclass(slots=True)
@@ -242,7 +255,8 @@ class InsightRecord:
         task_type = _slug(data.get("task_type"))
         rule = _clean_text(data.get("rule") or data.get("strategy"))
         strategy = _clean_text(data.get("strategy") or rule)
-        insight_id = _clean_text(data.get("insight_id")) or _make_insight_id(task_type, rule or strategy)
+        prefix = _clean_text(data.get("insight_prefix") or (data.get("metadata") or {}).get("insight_prefix") or "memory")
+        insight_id = _clean_text(data.get("insight_id")) or _make_insight_id(task_type, rule or strategy, prefix=prefix)
         policy = data.get("tool_policy") or {}
         return cls(
             insight_id=insight_id,
@@ -459,6 +473,7 @@ class InsightGraph:
             可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
         """
         self.namespace = namespace
+        self.insight_prefix = _insight_prefix_from_namespace(namespace)
         self.graph_store = graph_store
         self._memory_insights: dict[str, InsightRecord] = {}
         if self.graph_store is None and auto_connect:
@@ -496,7 +511,7 @@ class InsightGraph:
             可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
         """
         try:
-            from core.database_config import get_database_config
+            from memory.database_config import get_database_config
             from memory.storage.neo4j_store import Neo4jGraphStore
 
             store = Neo4jGraphStore(**get_database_config().get_neo4j_config())
@@ -539,6 +554,7 @@ class InsightGraph:
             "CREATE INDEX memory_insight_score_index IF NOT EXISTS FOR (i:MemoryInsight) ON (i.score)",
             "CREATE INDEX memory_insight_rule_index IF NOT EXISTS FOR (i:MemoryInsight) ON (i.rule)",
             "CREATE INDEX memory_insight_status_index IF NOT EXISTS FOR (i:MemoryInsight) ON (i.status)",
+            "CREATE INDEX memory_insight_namespace_index IF NOT EXISTS FOR (i:MemoryInsight) ON (i.namespace)",
             "CREATE INDEX memory_checklist_id_index IF NOT EXISTS FOR (c:MemoryChecklistItem) ON (c.id)",
         ]
         with store.driver.session(database=store.database) as session:
@@ -624,9 +640,75 @@ class InsightGraph:
         限制或副作用:
             可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
         """
+        prefix = self.insight_prefix
+        if prefix == "bfcl":
+            return [
+                {
+                    "insight_id": f"{prefix}_insight_function_call_schema_exactness",
+                    "rule": "For BFCL tasks, select only listed functions and preserve exact function names and argument schema.",
+                    "task_type": "function_calling",
+                    "trigger_terms": ["function", "parameters", "arguments", "schema", "required"],
+                    "strategy": "For BFCL tasks, select only listed functions and preserve exact function names and argument schema.",
+                    "checklist": [
+                        "Use exactly one of the available function names.",
+                        "Include all required arguments.",
+                        "Do not invent argument keys or computed return values.",
+                    ],
+                    "tool_policy": {
+                        "prefer": [],
+                        "optional": [],
+                        "avoid": ["search", "memory_as_answer_lookup"],
+                    },
+                    "failure_modes": ["wrong_function_name", "argument_schema_mismatch"],
+                    "score": 3.0,
+                    "metadata": {"benchmark_scope": "BFCL", "insight_prefix": prefix},
+                },
+                {
+                    "insight_id": f"{prefix}_insight_json_call_format",
+                    "rule": "For BFCL tasks, the final answer must be a JSON list of calls with name and arguments only.",
+                    "task_type": "function_calling",
+                    "trigger_terms": ["json", "function_call", "tool_calls", "final_answer", "arguments"],
+                    "strategy": "For BFCL tasks, keep the final answer as a compact JSON list of function calls.",
+                    "checklist": [
+                        "Return a JSON list, not a wrapper object.",
+                        "Use double quotes.",
+                        "Use [] when no function should be called.",
+                    ],
+                    "tool_policy": {
+                        "prefer": [],
+                        "optional": [],
+                        "avoid": ["wrapper_object", "markdown_fence"],
+                    },
+                    "failure_modes": ["invalid_json", "wrapper_format"],
+                    "score": 2.8,
+                    "metadata": {"benchmark_scope": "BFCL", "insight_prefix": prefix},
+                },
+                {
+                    "insight_id": f"{prefix}_insight_python_expression_arguments",
+                    "rule": "For BFCL Python-expression arguments, preserve expression strings and use Python syntax such as ** for exponentiation.",
+                    "task_type": "function_calling",
+                    "trigger_terms": ["python", "expression", "function", "x^", "x**", "derivative", "integral"],
+                    "strategy": "For BFCL Python-expression arguments, preserve expression strings and use Python syntax such as ** for exponentiation.",
+                    "checklist": [
+                        "Convert caret exponentiation to ** only when the argument is a Python expression string.",
+                        "Keep numeric arguments numeric.",
+                        "Do not solve the function result when BFCL expects a call.",
+                    ],
+                    "tool_policy": {
+                        "prefer": [],
+                        "optional": [],
+                        "avoid": ["calculator_on_raw_question"],
+                    },
+                    "failure_modes": ["expression_syntax_mismatch", "computed_result_instead_of_call"],
+                    "score": 2.5,
+                    "metadata": {"benchmark_scope": "BFCL", "insight_prefix": prefix},
+                },
+            ]
+
+        benchmark_scope = "GAIA" if prefix == "gaia" else prefix.upper()
         return [
             {
-                "insight_id": "gaia_insight_stochastic_process_state_transition",
+                "insight_id": f"{prefix}_insight_stochastic_process_state_transition",
                 "rule": "For stochastic process puzzles, define states and transition rules before selecting a numeric answer.",
                 "task_type": "stochastic_process",
                 "trigger_terms": ["random", "randomly", "probability", "odds", "position", "advance"],
@@ -644,9 +726,10 @@ class InsightGraph:
                 },
                 "failure_modes": ["surface_numeric_guess", "missing_state_transition_model"],
                 "score": 3.0,
+                "metadata": {"benchmark_scope": benchmark_scope, "insight_prefix": prefix},
             },
             {
-                "insight_id": "gaia_insight_counting_scope_boundaries",
+                "insight_id": f"{prefix}_insight_counting_scope_boundaries",
                 "rule": "For counting tasks, define the inclusion scope before trusting repeated candidate answers.",
                 "task_type": "counting_scope",
                 "trigger_terms": ["count", "how many", "number of", "between", "during"],
@@ -663,9 +746,10 @@ class InsightGraph:
                 },
                 "failure_modes": ["scope_filter_mismatch", "boundary_condition_slip"],
                 "score": 2.5,
+                "metadata": {"benchmark_scope": benchmark_scope, "insight_prefix": prefix},
             },
             {
-                "insight_id": "gaia_insight_spreadsheet_attachment_first",
+                "insight_id": f"{prefix}_insight_spreadsheet_attachment_first",
                 "rule": "For spreadsheet tasks, inspect the attachment structure before answering from surface text.",
                 "task_type": "spreadsheet_reasoning",
                 "trigger_terms": ["xlsx", "xls", "spreadsheet", "sheet", "cell", "color"],
@@ -683,9 +767,10 @@ class InsightGraph:
                 },
                 "failure_modes": ["table_scope_mismatch", "missed_attachment_evidence"],
                 "score": 2.5,
+                "metadata": {"benchmark_scope": benchmark_scope, "insight_prefix": prefix},
             },
             {
-                "insight_id": "gaia_insight_factual_search_evidence",
+                "insight_id": f"{prefix}_insight_factual_search_evidence",
                 "rule": "For factual lookup tasks, base the answer on structured search evidence and cite the specific fact used.",
                 "task_type": "factual_search",
                 "trigger_terms": ["who", "when", "where", "website", "latest", "published"],
@@ -702,9 +787,10 @@ class InsightGraph:
                 },
                 "failure_modes": ["insufficient_evidence", "outdated_fact"],
                 "score": 2.2,
+                "metadata": {"benchmark_scope": benchmark_scope, "insight_prefix": prefix},
             },
             {
-                "insight_id": "gaia_insight_audio_attachment_transcribe",
+                "insight_id": f"{prefix}_insight_audio_attachment_transcribe",
                 "rule": "For audio tasks, transcribe the attachment first and answer only after checking the transcript against the question.",
                 "task_type": "audio_understanding",
                 "trigger_terms": ["audio", "mp3", "transcribe", "listen"],
@@ -721,9 +807,10 @@ class InsightGraph:
                 },
                 "failure_modes": ["missed_audio_evidence", "transcription_error"],
                 "score": 2.2,
+                "metadata": {"benchmark_scope": benchmark_scope, "insight_prefix": prefix},
             },
             {
-                "insight_id": "gaia_insight_image_attachment_vision",
+                "insight_id": f"{prefix}_insight_image_attachment_vision",
                 "rule": "For image tasks, convert visual evidence into concise text before reasoning.",
                 "task_type": "image_understanding",
                 "trigger_terms": ["image", "png", "jpg", "screenshot", "visual"],
@@ -740,6 +827,7 @@ class InsightGraph:
                 },
                 "failure_modes": ["missed_visual_evidence", "weak_ocr_or_caption"],
                 "score": 2.2,
+                "metadata": {"benchmark_scope": benchmark_scope, "insight_prefix": prefix},
             },
         ]
 
@@ -756,7 +844,16 @@ class InsightGraph:
         限制或副作用:
             可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
         """
-        record = insight if isinstance(insight, InsightRecord) else InsightRecord.from_dict(insight)
+        if isinstance(insight, InsightRecord):
+            record = insight
+        else:
+            data = dict(insight or {})
+            metadata = dict(data.get("metadata") or {})
+            metadata.setdefault("insight_prefix", self.insight_prefix)
+            metadata.setdefault("namespace", self.namespace)
+            data["metadata"] = metadata
+            data.setdefault("insight_prefix", self.insight_prefix)
+            record = InsightRecord.from_dict(data)
         self._memory_insights[record.insight_id] = record
         self._write(
             """
@@ -776,6 +873,7 @@ class InsightGraph:
                 insight.confidence = $confidence,
                 insight.created_from = $created_from,
                 insight.evidence_task_ids = $evidence_task_ids,
+                insight.metadata_json = $metadata_json,
                 insight.namespace = $namespace,
                 insight.updated_at = $updated_at
             MERGE (type:MemoryTaskType {name: $task_type})
@@ -797,6 +895,7 @@ class InsightGraph:
             confidence=record.confidence,
             created_from=record.created_from,
             evidence_task_ids=record.evidence_task_ids,
+            metadata_json=str(record.metadata),
             namespace=self.namespace,
             updated_at=_now_iso(),
         )
@@ -954,6 +1053,7 @@ class InsightGraph:
                 MATCH (insight:MemoryInsight)
                 WHERE coalesce(insight.status, 'active') = 'active'
                   AND coalesce(insight.score, 0.0) > 0
+                  AND (insight.namespace = $namespace OR ($namespace = 'system' AND insight.namespace IS NULL))
                   AND (
                     insight.task_type = $task_type
                     OR any(term IN coalesce(insight.trigger_terms, []) WHERE term IN $trigger_terms)
@@ -979,6 +1079,7 @@ class InsightGraph:
                 task_type=task_type_slug,
                 trigger_terms=list(triggers),
                 failure_modes=list(failures),
+                namespace=self.namespace,
                 limit=max(limit * 2, 6),
             )
             for row in rows:
@@ -1069,6 +1170,7 @@ class InsightGraph:
                 WHERE positive_hits > 0
                   AND coalesce(insight.status, 'active') = 'active'
                   AND coalesce(insight.score, 0.0) > 0
+                  AND (insight.namespace = $namespace OR ($namespace = 'system' AND insight.namespace IS NULL))
                 RETURN insight.id AS insight_id,
                        insight.rule AS rule,
                        insight.task_type AS task_type,
@@ -1091,6 +1193,7 @@ class InsightGraph:
                 LIMIT $limit
                 """,
                 task_ids=list(related),
+                namespace=self.namespace,
                 limit=max(limit * 2, 6),
             )
             for row in rows:

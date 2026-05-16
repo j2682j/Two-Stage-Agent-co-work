@@ -315,7 +315,15 @@ class BFCLPromptBuilder(PromptBuilder):
         return (
             "Return JSON only. The output must be a JSON list of function calls:\n"
             '[{"name": "function_name", "arguments": {"param1": "value1"}}]\n'
-            "If no function should be called, return an empty JSON list: []"
+            "If no function should be called, return an empty JSON list: []\n\n"
+            "Required BFCL rules:\n"
+            "- Use exactly one of the function names listed in Available functions; preserve dotted module prefixes.\n"
+            "- Do not shorten, rename, or invent function names.\n"
+            "- Put only function parameters inside arguments; do not put computed return values, explanations, or extra keys.\n"
+            "- Use only parameter names from that function's schema; include required parameters and optional parameters only when needed.\n"
+            "- Do not wrap calls in {\"function_call\": ...}, {\"final_answer\": ...}, or any other object.\n"
+            "- For mathematical expression string arguments, use Python-style exponentiation **, never ^.\n"
+            "- Output the JSON list only, with double quotes and no surrounding prose."
         )
 
     def _render_single_function_calling(self, compressed: dict[str, Any]) -> str:

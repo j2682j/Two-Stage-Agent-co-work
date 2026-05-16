@@ -249,7 +249,7 @@ class QueryTaskGraph:
             可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
         """
         try:
-            from core.database_config import get_database_config
+            from memory.database_config import get_database_config
             from memory.storage.neo4j_store import Neo4jGraphStore
 
             store = Neo4jGraphStore(**get_database_config().get_neo4j_config())
@@ -287,6 +287,7 @@ class QueryTaskGraph:
         ]
         queries = [
             "CREATE INDEX memory_task_id_index IF NOT EXISTS FOR (t:MemoryTask) ON (t.id)",
+            "CREATE INDEX memory_task_namespace_index IF NOT EXISTS FOR (t:MemoryTask) ON (t.namespace)",
             "CREATE INDEX memory_task_type_index IF NOT EXISTS FOR (t:MemoryTaskType) ON (t.name)",
             "CREATE INDEX memory_trigger_index IF NOT EXISTS FOR (t:MemoryTriggerTerm) ON (t.name)",
             "CREATE INDEX memory_failure_index IF NOT EXISTS FOR (f:MemoryFailureMode) ON (f.name)",

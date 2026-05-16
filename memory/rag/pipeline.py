@@ -925,8 +925,8 @@ def _prompt_mqe(query: str, n: int) -> List[str]:
         可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
     """
     try:
-        from core.llm import HelloAgentsLLM
-        llm = HelloAgentsLLM()
+        from network.slm_agent import SLM_Agent
+        llm = SLM_Agent(model_name="gpt-oss:20b")
         prompt = [
             {"role": "system", "content": "你是搜尋查詢擴展助手。生成語義等價或互補的多樣化查詢。使用中文，簡短，避免標點。"},
             {"role": "user", "content": f"原始查詢：{query}\n請給出{n}個不同表述的查詢，每行一個。"}
@@ -953,8 +953,8 @@ def _prompt_hyde(query: str) -> Optional[str]:
         可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
     """
     try:
-        from core.llm import HelloAgentsLLM
-        llm = HelloAgentsLLM()
+        from network.slm_agent import SLM_Agent
+        llm = SLM_Agent(model_name="gpt-oss:20b")
         prompt = [
             {"role": "system", "content": "根據使用者問題，先寫一段可能的答案性段落，用於向量搜尋的查詢文檔（不要分析過程）。"},
             {"role": "user", "content": f"問題：{query}\n請直接寫一段中等長度、客觀、包含關鍵術語的段落。"}
@@ -1473,8 +1473,8 @@ def tldr_summarize(text: str, bullets: int = 3) -> Optional[str]:
     try:
         if not text or len(text.strip()) == 0:
             return None
-        from core.llm import HelloAgentsLLM
-        llm = HelloAgentsLLM()
+        from network.slm_agent import SLM_Agent
+        llm = SLM_Agent(model_name="gpt-oss:20b")
         prompt = [
             {"role": "system", "content": "請將以下內容概括為簡潔的要點列表（最多3-5條），用中文，避免重復，突出關鍵資訊。"},
             {"role": "user", "content": f"請用 {max(1, min(5, int(bullets)))} 條要點總結：\n\n{text}"},

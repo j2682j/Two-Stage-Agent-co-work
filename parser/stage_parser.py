@@ -1,9 +1,11 @@
 from __future__ import annotations
 
+import json
 import re
 from typing import Any
 
 from .base_parser import BaseParser
+from .bfcl_tool_call_parser import BFCLToolCallParser
 
 
 class StageParser(BaseParser):
@@ -192,7 +194,14 @@ class Stage1ReplyParser(StageParser):
         weights = self.extract_weights(reply, expected_weight_count)
 
         if final_answer is None or final_answer == "":
-            raise ValueError("Missing FINAL ANSWER in stage1 reply.")
+            bfcl_metadata = BFCLToolCallParser().parse_with_metadata(reply)
+            bfcl_calls = bfcl_metadata.get("calls", [])
+            if bfcl_calls:
+                final_answer = json.dumps(bfcl_calls, ensure_ascii=False)
+                if not reasoning.strip() or reasoning.strip() == reply.strip():
+                    reasoning = "Parsed a bare BFCL function-call JSON answer."
+            else:
+                raise ValueError("Missing FINAL ANSWER in stage1 reply.")
 
         return {
             "reasoning": reasoning.strip(),

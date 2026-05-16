@@ -5,7 +5,7 @@ from typing import Any
 
 from parser import try_parse_json
 
-from .slm_agent import SLM_4b_Agent
+from .slm_agent import SLM_Agent
 
 
 class Stage1Judge:
@@ -124,7 +124,7 @@ class Stage1Judge:
             prompt += f"\n\nCandidate current answer (may be empty in stage 1):\n{answer_text}"
 
         try:
-            judge_agent = SLM_4b_Agent(model_name=self.judge_model_name)
+            judge_agent = SLM_Agent(model_name=self.judge_model_name)
             raw_response, prompt_tokens, completion_tokens = judge_agent.invoke_with_usage(
                 [
                     {"role": "system", "content": "You are a strict JSON-only stage-1 reasoning judge."},

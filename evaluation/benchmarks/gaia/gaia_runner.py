@@ -15,7 +15,7 @@ from evaluation.benchmarks.gaia.gaia_logging import (
     setup_utf8_log,
     write_compact_sample_log,
 )
-from network.agent_network import AgentNetwork
+from network.core.agent_network import AgentNetwork
 from utils.project_paths import ensure_runtime_dirs, get_eval_output_path
 
 
@@ -23,18 +23,14 @@ ROOT = Path(__file__).resolve().parents[1]
 
 
 def create_gaia_network(args, *, memory_namespace: str) -> AgentNetwork:
-    """
-    負責執行 evaluation.benchmarks.gaia.gaia_runner 中的 create_gaia_network 流程，建立後續流程需要的物件、資料結構或輸出區塊。
+    """建立 create_gaia_network 所需的物件。
     
-    Args:
+    參數:
         args: 此流程需要使用的輸入資料。
-        memory_namespace: 記憶系統提供的檢索結果、寫入資料或操作介面。
+        memory_namespace: 此流程需要使用的輸入資料。
     
-    Returns:
-        執行結果；若函式標註回傳型別，預期型別為 AgentNetwork。
-    
-    限制或副作用:
-        可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+    回傳:
+        此函式的處理結果。
     """
     return AgentNetwork(
         agents=3,
@@ -48,19 +44,15 @@ def create_gaia_network(args, *, memory_namespace: str) -> AgentNetwork:
 
 
 def update_level_stats(level_stats: dict[Any, dict[str, int]], level: Any, sample_result: dict[str, Any]) -> None:
-    """
-    負責執行 evaluation.benchmarks.gaia.gaia_runner 中的 update_level_stats 流程，將新的輸入資料合併到目前物件狀態或流程紀錄中。
+    """更新 update_level_stats 相關資料。
     
-    Args:
+    參數:
         level_stats: 此流程需要使用的輸入資料。
         level: 此流程需要使用的輸入資料。
-        sample_result: 評估、推理或工具執行後產生的結果與分數資料。
+        sample_result: 此流程需要使用的輸入資料。
     
-    Returns:
-        執行結果；若函式標註回傳型別，預期型別為 None。
-    
-    限制或副作用:
-        可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+    回傳:
+        此函式的處理結果。
     """
     if level not in level_stats:
         level_stats[level] = {"total": 0, "correct": 0, "partial": 0}
@@ -72,17 +64,13 @@ def update_level_stats(level_stats: dict[Any, dict[str, int]], level: Any, sampl
 
 
 def build_level_metrics(level_stats: dict[Any, dict[str, int]]) -> dict[str, Any]:
-    """
-    負責執行 evaluation.benchmarks.gaia.gaia_runner 中的 build_level_metrics 流程，建立後續流程需要的物件、資料結構或輸出區塊。
+    """建立 build_level_metrics 所需的資料或輸出。
     
-    Args:
+    參數:
         level_stats: 此流程需要使用的輸入資料。
     
-    Returns:
-        執行結果；若函式標註回傳型別，預期型別為 dict[str, Any]。
-    
-    限制或副作用:
-        可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+    回傳:
+        此函式的處理結果。
     """
     level_metrics = {}
     for level, stats in level_stats.items():
@@ -104,20 +92,16 @@ def build_results(
     detailed_results: list[dict[str, Any]],
     level_metrics: dict[str, Any],
 ) -> dict[str, Any]:
-    """
-    負責執行 evaluation.benchmarks.gaia.gaia_runner 中的 build_results 流程，建立後續流程需要的物件、資料結構或輸出區塊。
+    """建立 build_results 所需的資料或輸出。
     
-    Args:
+    參數:
         agent: 此流程需要使用的輸入資料。
         evaluator: 此流程需要使用的輸入資料。
         detailed_results: 此流程需要使用的輸入資料。
         level_metrics: 此流程需要使用的輸入資料。
     
-    Returns:
-        執行結果；若函式標註回傳型別，預期型別為 dict[str, Any]。
-    
-    限制或副作用:
-        可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+    回傳:
+        此函式的處理結果。
     """
     total_samples = len(detailed_results)
     exact_matches = sum(1 for result in detailed_results if result.get("exact_match", False))
@@ -139,20 +123,19 @@ def build_results(
 
 
 def clear_runtime_sample_state(network: AgentNetwork) -> None:
-    """
-    負責執行 evaluation.benchmarks.gaia.gaia_runner 中的 clear_runtime_sample_state 流程，清除或移除指定資源、狀態或註冊資料，維持後續流程的一致性。
+    """清除 clear_runtime_sample_state 相關狀態。
     
-    Args:
+    參數:
         network: 此流程需要使用的輸入資料。
     
-    Returns:
-        執行結果；若函式標註回傳型別，預期型別為 None。
-    
-    限制或副作用:
-        可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+    回傳:
+        此函式的處理結果。
     """
     runtime = getattr(network, "runtime", None)
     if runtime is None:
+        return
+    if hasattr(runtime, "clear_observability_records"):
+        runtime.clear_observability_records()
         return
     runtime.shared_tool_traces.clear()
     runtime.shared_memory_reads.clear()
@@ -161,17 +144,13 @@ def clear_runtime_sample_state(network: AgentNetwork) -> None:
 
 
 def run_gaia_evaluation(args) -> dict[str, Any]:
-    """
-    負責執行 evaluation.benchmarks.gaia.gaia_runner 中的 run_gaia_evaluation 流程，依照 evaluation.benchmarks.gaia.gaia_runner 的流程需求處理 run_gaia_evaluation 對應的資料轉換、狀態操作或結果產生。
+    """執行 run_gaia_evaluation 流程並回傳結果。
     
-    Args:
+    參數:
         args: 此流程需要使用的輸入資料。
     
-    Returns:
-        執行結果；若函式標註回傳型別，預期型別為 dict[str, Any]。
-    
-    限制或副作用:
-        可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+    回傳:
+        此函式的處理結果。
     """
     ensure_runtime_dirs()
     log_file_path = Path(args.log_file).resolve()
@@ -218,7 +197,7 @@ def run_gaia_evaluation(args) -> dict[str, Any]:
         level_stats = {args.level: {"total": 0, "correct": 0, "partial": 0}}
 
         for sample_index, sample in enumerate(samples, 1):
-            print(f"\n========== 第 {sample_index} 題 / 共 {len(samples)} 題 ==========")
+            print(f"\n========== 蝚?{sample_index} 憿?/ ??{len(samples)} 憿?==========")
             print(f"[INFO] task_id={sample.get('task_id', '')}")
             clear_runtime_sample_state(network)
 

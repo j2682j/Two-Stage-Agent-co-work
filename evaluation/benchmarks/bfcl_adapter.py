@@ -5,25 +5,15 @@ import json
 from typing import Any
 
 from evaluation.benchmark_adapter import BaseBenchmarkAdapter
+from network.core.task_context import TaskContext
 from parser.bfcl_tool_call_parser import BFCLToolCallParser
 from prompt.bfcl_prompt_builder import BFCLPromptBuilder
 
 
 class BFCLAdapter(BaseBenchmarkAdapter):
-    """
-    負責把 BFCL function calling 樣本轉成 AgentNetwork 可執行的任務，並整理回評估器可使用的結構化結果。
-
-    Args:
-        agent: 實際執行推理的 AgentNetwork 或相容物件。
-        use_two_stage: 是否使用 AgentNetwork.forward_two_stage()。
-        include_reasoning: run() 相容路徑是否附加 stage1 reasoning。
-        name: 對外顯示的 adapter 名稱。
-
-    Returns:
-        BFCLAdapter 實例。
-
-    限制或副作用:
-        run_sample() 會呼叫模型與 AgentNetwork workflow，並可能觸發 GraphMemory retrieval、token usage 紀錄與工具 trace。
+    """BFCLAdapter 類別。
+    
+    封裝此類別負責的狀態、設定與操作流程。
     """
 
     def __init__(
@@ -33,20 +23,13 @@ class BFCLAdapter(BaseBenchmarkAdapter):
         include_reasoning: bool = False,
         name: str | None = None,
     ):
-        """
-        負責初始化 BFCLAdapter 的 AgentNetwork、prompt builder 與 tool call parser。
-
-        Args:
-            agent: 實際執行推理的 AgentNetwork 或相容物件。
-            use_two_stage: 是否使用 two-stage workflow。
-            include_reasoning: run() 是否把 stage1 reasoning 附加到回覆中。
-            name: adapter 名稱。
-
-        Returns:
-            無。
-
-        限制或副作用:
-            只初始化內部依賴，不會立即呼叫模型。
+        """初始化 BFCLAdapter 實例。
+        
+        參數:
+            agent: 此流程需要使用的輸入資料。
+            use_two_stage: 此流程需要使用的輸入資料。
+            include_reasoning: 此流程需要使用的輸入資料。
+            name: 此流程需要使用的輸入資料。
         """
         super().__init__(agent=agent, name=name or "AgentNetwork")
         self.use_two_stage = use_two_stage
@@ -55,32 +38,24 @@ class BFCLAdapter(BaseBenchmarkAdapter):
         self.tool_call_parser = BFCLToolCallParser()
 
     def normalize_question(self, question: str) -> str:
-        """
-        負責正規化 BFCL 題目文字或 evaluator 傳入的 prompt。
-
-        Args:
-            question: 原始題目或 prompt。
-
-        Returns:
-            去除頭尾空白後的字串；若輸入為空則回傳空字串。
-
-        限制或副作用:
-            不會修改題目內容中的 function schema 或 JSON 指令。
+        """處理 normalize_question 流程並回傳結果。
+        
+        參數:
+            question: 此流程需要使用的輸入資料。
+        
+        回傳:
+            此函式的處理結果。
         """
         return question.strip() if question else ""
 
     def run(self, prompt: str) -> str:
-        """
-        負責提供舊版 evaluator 相容入口，將單一 prompt 交給 AgentNetwork 執行並回傳最終答案文字。
-
-        Args:
-            prompt: 已組好的 BFCL function calling prompt。
-
-        Returns:
-            AgentNetwork 的 final_result 字串；若 include_reasoning=True，會附加 stage1_result。
-
-        限制或副作用:
-            會呼叫模型；此方法不會額外解析 function call，正式 BFCL 評估應優先使用 run_sample()。
+        """執行 run 流程並回傳結果。
+        
+        參數:
+            prompt: 此流程需要使用的輸入資料。
+        
+        回傳:
+            此函式的處理結果。
         """
         normalized_prompt = self.normalize_question(prompt)
 
@@ -104,19 +79,15 @@ class BFCLAdapter(BaseBenchmarkAdapter):
         prompt_builder: BFCLPromptBuilder | None = None,
         parser: BFCLToolCallParser | None = None,
     ) -> dict[str, Any]:
-        """
-        負責執行單一 BFCL 樣本的 two-stage workflow，並回傳 function call 解析結果與完整 trace。
-
-        Args:
-            sample: BFCL dataset 的單題資料，包含 question、function、id、category 等欄位。
-            prompt_builder: 可選的 BFCLPromptBuilder；若未提供會使用 adapter 內建 builder。
-            parser: 可選的 BFCLToolCallParser；若未提供會使用 adapter 內建 parser。
-
-        Returns:
-            包含 final_response、predicted_calls、parse_metadata、stage1_result、stage2_outputs、final_decision 與 context 的字典。
-
-        限制或副作用:
-            會呼叫 AgentNetwork.forward_two_stage() 或 forward()；現階段不修改 AgentNetwork 核心 prompt 流程，而是把 BFCL 指令包進輸入 prompt。
+        """執行 run_sample 流程並回傳結果。
+        
+        參數:
+            sample: 此流程需要使用的輸入資料。
+            prompt_builder: 此流程需要使用的輸入資料。
+            parser: 此流程需要使用的輸入資料。
+        
+        回傳:
+            此函式的處理結果。
         """
         builder = prompt_builder or self.prompt_builder
         tool_parser = parser or self.tool_call_parser
@@ -125,18 +96,21 @@ class BFCLAdapter(BaseBenchmarkAdapter):
         task_id = str(sample.get("id", sample.get("task_id", "")) or "")
 
         prompt = self._build_workflow_prompt(builder, question=question, functions=functions)
-        context = {
-            "benchmark": "BFCL",
-            "task_id": task_id,
-            "task_type": "function_calling",
-            "category": sample.get("category", ""),
-            "functions": functions,
-        }
+        context = TaskContext(
+            benchmark="BFCL",
+            task_id=task_id,
+            task_type="function_calling",
+            category=str(sample.get("category", "") or ""),
+            question=question,
+            functions=functions,
+        )
 
         if self.use_two_stage:
             result = self.agent.forward_two_stage(prompt, context=context)
             final_response = str(result.get("final_result", "") or "")
         else:
+            if hasattr(self.agent, "set_task_context"):
+                self.agent.set_task_context(context)
             final_response, *_ = self.agent.forward(prompt)
             result = {
                 "final_result": final_response,
@@ -145,15 +119,18 @@ class BFCLAdapter(BaseBenchmarkAdapter):
                 "stage2_outputs": [],
             }
 
-        final_response = self._normalize_bfcl_json_response(final_response)
-        parse_metadata = tool_parser.parse_with_metadata(final_response)
+        final_decision = getattr(self.agent, "last_final_decision", None) or {}
+        final_response, parse_metadata = self._select_best_bfcl_response(
+            final_response,
+            final_decision=final_decision,
+            parser=tool_parser,
+        )
         stage2_outputs = list(result.get("stage2_outputs", []) or [])
         parsed_stage2_outputs = self._parse_stage2_outputs(stage2_outputs, tool_parser)
-        final_decision = getattr(self.agent, "last_final_decision", None) or {}
 
         return {
             "prompt": prompt,
-            "context": context,
+            "context": context.to_dict(),
             "raw_result": result,
             "raw_response": final_response,
             "final_response": final_response,
@@ -166,37 +143,49 @@ class BFCLAdapter(BaseBenchmarkAdapter):
         }
 
     def _build_workflow_prompt(self, builder: BFCLPromptBuilder, *, question: str, functions: list[dict[str, Any]]) -> str:
+        """建立 build_workflow_prompt 所需的資料或輸出。
+        
+        參數:
+            builder: 此流程需要使用的輸入資料。
+            question: 此流程需要使用的輸入資料。
+            functions: 此流程需要使用的輸入資料。
+        
+        回傳:
+            此函式的處理結果。
         """
-        負責建立目前 AgentNetwork 可直接執行的 BFCL function calling prompt。
-
-        Args:
-            builder: BFCLPromptBuilder。
-            question: BFCL 題目文字。
-            functions: BFCL function schema 列表。
-
-        Returns:
-            要交給 AgentNetwork 的 prompt 字串。
-
-        限制或副作用:
-            目前使用 single function-calling prompt 包住完整 BFCL 指令，讓現有 two-stage network 產生最終 JSON function call list。
-        """
-        prompt = builder.build_function_calling_prompt(question, functions)
+        functions_text = builder._format_functions(functions)
         return (
-            f"{prompt}\n\n"
+            "You are solving a BFCL function-calling task inside a multi-agent workflow.\n\n"
+            "Available functions:\n"
+            f"{functions_text}\n\n"
+            "User question:\n"
+            f"{question}\n\n"
+            "BFCL final answer contract:\n"
+            '- The final answer value must be a JSON list of function calls: '
+            '[{"name": "function_name", "arguments": {"param1": "value1"}}]\n'
+            "- If no function should be called, the final answer value must be [].\n"
+            "- Use exactly one of the function names listed in Available functions; preserve dotted module prefixes.\n"
+            "- Do not shorten, rename, or invent function names.\n"
+            "- Put only function parameters inside arguments; do not put computed return values, explanations, or extra keys.\n"
+            "- Use only parameter names from that function's schema; include required parameters and optional parameters only when needed.\n"
+            '- Do not wrap calls in {"function_call": ...}, {"final_answer": ...}, or any other object.\n'
+            "- For mathematical expression string arguments, use Python-style exponentiation **, never ^.\n"
+            "- Use double quotes inside the BFCL JSON list.\n\n"
             "Workflow requirements:\n"
-            "- Stage1 may reason about which function should be used.\n"
+            "- Stage1 may reason about which function should be used, but it must still follow the AgentNetwork reply format.\n"
             "- Stage2 and final decision must preserve a valid BFCL function-call answer.\n"
-            "- The final answer must be JSON only: a list of calls with name and arguments.\n"
-            "- If no function should be called, the final answer must be []."
+            "- When the AgentNetwork prompt asks for FINAL_ANSWER, put only the BFCL JSON list as the FINAL_ANSWER value.\n"
+            "- Do not output a bare JSON list as the whole reply during Stage1; include REASONING, FINAL_ANSWER, and WEIGHTS when requested."
         )
 
     def _normalize_bfcl_json_response(self, response: str) -> str:
-        """
-        Normalize BFCL final answers into strict JSON without changing non-JSON text.
-
-        Some final decision paths preserve a Python literal representation such as
-        [{'name': 'tool', 'arguments': {'x': 1}}]. BFCL expects JSON, so convert
-        structured list/dict literals with json.dumps instead of replacing quotes.
+        """處理 normalize_bfcl_json_response 流程並回傳結果。
+        
+        參數:
+            response: 此流程需要使用的輸入資料。
+        
+        回傳:
+            此函式的處理結果。
         """
         text = str(response or "").strip()
         if not text:
@@ -220,23 +209,57 @@ class BFCLAdapter(BaseBenchmarkAdapter):
             return json.dumps(parsed, ensure_ascii=False)
         return text
 
+    def _select_best_bfcl_response(
+        self,
+        response: str,
+        *,
+        final_decision: dict[str, Any],
+        parser: BFCLToolCallParser,
+    ) -> tuple[str, dict[str, Any]]:
+        """處理 select_best_bfcl_response 流程並回傳結果。
+        
+        參數:
+            response: 此流程需要使用的輸入資料。
+            final_decision: 此流程需要使用的輸入資料。
+            parser: 此流程需要使用的輸入資料。
+        
+        回傳:
+            此函式的處理結果。
+        """
+        candidates = [
+            response,
+            final_decision.get("final_result", ""),
+            final_decision.get("final_reply", ""),
+        ]
+        seen: set[str] = set()
+        first_response = self._normalize_bfcl_json_response(str(response or ""))
+        first_metadata = parser.parse_with_metadata(first_response)
+
+        for candidate in candidates:
+            normalized = self._normalize_bfcl_json_response(str(candidate or ""))
+            if not normalized or normalized in seen:
+                continue
+            seen.add(normalized)
+            metadata = parser.parse_with_metadata(normalized)
+            if metadata.get("calls"):
+                selected = json.dumps(metadata["calls"], ensure_ascii=False)
+                return selected, parser.parse_with_metadata(selected)
+
+        return first_response, first_metadata
+
     def _parse_stage2_outputs(
         self,
         stage2_outputs: list[dict[str, Any]],
         parser: BFCLToolCallParser,
     ) -> list[dict[str, Any]]:
-        """
-        負責為 stage2 每個候選輸出補上 BFCL tool call 解析資訊。
-
-        Args:
-            stage2_outputs: AgentNetwork 產生的 stage2 output 列表。
-            parser: BFCLToolCallParser。
-
-        Returns:
-            附加 parsed_calls、parse_source 與 parse_error 的 stage2 output 列表。
-
-        限制或副作用:
-            只複製並整理資料，不會修改原始 network.last_stage2_outputs。
+        """解析輸入內容並回傳結構化結果。
+        
+        參數:
+            stage2_outputs: 此流程需要使用的輸入資料。
+            parser: 此流程需要使用的輸入資料。
+        
+        回傳:
+            此函式的處理結果。
         """
         parsed_outputs: list[dict[str, Any]] = []
         for output in stage2_outputs:

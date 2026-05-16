@@ -4,39 +4,25 @@ from pathlib import Path
 from typing import Any
 
 from evaluation.benchmark_adapter import BaseBenchmarkAdapter
+from network.core.task_context import TaskContext
 
 
 def normalize_text(value: Any) -> str:
-    """
-    負責執行 evaluation.gaia_adapter 中的 normalize_text 流程，整理呼叫端傳入的資料，清理格式並轉換為後續流程可使用的內容。
+    """處理 normalize_text 流程並回傳結果。
     
-    Args:
+    參數:
         value: 此流程需要使用的輸入資料。
     
-    Returns:
-        執行結果；若函式標註回傳型別，預期型別為 str。
-    
-    限制或副作用:
-        可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+    回傳:
+        此函式的處理結果。
     """
     return " ".join(str(value or "").split()).strip()
 
 
 class GAIAAdapter(BaseBenchmarkAdapter):
-    """
-    負責在 evaluation.gaia_adapter 中封裝 GAIAAdapter，封裝 benchmark 評估、答案判定、分數計算或報告資料整理流程。
+    """GAIAAdapter 類別。
     
-    Args:
-        agent: 此流程需要使用的輸入資料。
-        use_two_stage: 此流程需要使用的輸入資料。
-        include_reasoning: 控制是否啟用此項資料、功能或處理分支的布林開關。
-        name: 此流程需要使用的輸入資料。
-    
-    Returns:
-        類別本身不直接回傳值；建立實例後可透過其方法操作狀態與流程。
-    
-    限制或副作用:
-        方法可能更新內部狀態、讀寫檔案、呼叫外部服務或產生日誌，需依使用情境確認。
+    封裝此類別負責的狀態、設定與操作流程。
     """
 
     def __init__(
@@ -46,37 +32,26 @@ class GAIAAdapter(BaseBenchmarkAdapter):
         include_reasoning: bool = False,
         name: str | None = None,
     ):
-        """
-        負責執行 GAIAAdapter 中的 __init__ 流程，初始化物件所需的設定、依賴與內部狀態，讓後續方法可以沿用同一份執行上下文。
+        """初始化 GAIAAdapter 實例。
         
-        Args:
+        參數:
             agent: 此流程需要使用的輸入資料。
             use_two_stage: 此流程需要使用的輸入資料。
-            include_reasoning: 控制是否啟用此項資料、功能或處理分支的布林開關。
+            include_reasoning: 此流程需要使用的輸入資料。
             name: 此流程需要使用的輸入資料。
-        
-        Returns:
-            執行結果；若函式標註回傳型別，預期型別為 未標註。
-        
-        限制或副作用:
-            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
         """
         super().__init__(agent=agent, name=name or "AgentNetwork")
         self.use_two_stage = use_two_stage
         self.include_reasoning = include_reasoning
 
     def normalize_question(self, question: str) -> str:
-        """
-        負責執行 GAIAAdapter 中的 normalize_question 流程，整理呼叫端傳入的資料，清理格式並轉換為後續流程可使用的內容。
+        """處理 normalize_question 流程並回傳結果。
         
-        Args:
-            question: 目前要處理的任務、問題或查詢文字。
+        參數:
+            question: 此流程需要使用的輸入資料。
         
-        Returns:
-            執行結果；若函式標註回傳型別，預期型別為 str。
-        
-        限制或副作用:
-            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        回傳:
+            此函式的處理結果。
         """
         if not question:
             return ""
@@ -89,17 +64,13 @@ class GAIAAdapter(BaseBenchmarkAdapter):
         return text
 
     def run(self, prompt: str) -> str:
-        """
-        負責執行 GAIAAdapter 中的 run 流程，啟動主要執行流程，串接輸入準備、核心處理與結果輸出。
+        """執行 run 流程並回傳結果。
         
-        Args:
+        參數:
             prompt: 此流程需要使用的輸入資料。
         
-        Returns:
-            執行結果；若函式標註回傳型別，預期型別為 str。
-        
-        限制或副作用:
-            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        回傳:
+            此函式的處理結果。
         """
         normalized_prompt = self.normalize_question(prompt)
 
@@ -117,32 +88,31 @@ class GAIAAdapter(BaseBenchmarkAdapter):
         return f"FINAL ANSWER: {final_answer}"
 
     def run_sample(self, prompt: str, sample: dict[str, Any]) -> str:
-        """
-        負責執行 GAIAAdapter 中的 run_sample 流程，依照 GAIAAdapter 的流程需求處理 run_sample 對應的資料轉換、狀態操作或結果產生。
+        """執行 run_sample 流程並回傳結果。
         
-        Args:
+        參數:
             prompt: 此流程需要使用的輸入資料。
             sample: 此流程需要使用的輸入資料。
         
-        Returns:
-            執行結果；若函式標註回傳型別，預期型別為 str。
-        
-        限制或副作用:
-            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        回傳:
+            此函式的處理結果。
         """
         normalized_prompt = self.normalize_question(prompt)
-        context = {
-            "benchmark": "GAIA",
-            "task_id": str(sample.get("task_id", "") or ""),
-            "level": sample.get("level"),
-            "attachment": self._build_attachment_context(sample),
-        }
+        context = TaskContext(
+            benchmark="GAIA",
+            task_id=str(sample.get("task_id", "") or ""),
+            question=normalized_prompt,
+            attachment=self._build_attachment_context(sample) or {},
+            metadata={"level": sample.get("level")},
+        )
 
         if self.use_two_stage:
             result = self.agent.forward_two_stage(normalized_prompt, context=context)
             final_answer = result.get("final_result", "")
             reasoning = result.get("stage1_result", "")
         else:
+            if hasattr(self.agent, "set_task_context"):
+                self.agent.set_task_context(context)
             final_answer, *_ = self.agent.forward(normalized_prompt)
             reasoning = ""
 
@@ -152,17 +122,13 @@ class GAIAAdapter(BaseBenchmarkAdapter):
         return f"FINAL ANSWER: {final_answer}"
 
     def _build_attachment_context(self, sample: dict[str, Any]) -> dict[str, Any] | None:
-        """
-        負責執行 GAIAAdapter 中的 _build_attachment_context 流程，依照 GAIAAdapter 的流程需求處理 _build_attachment_context 對應的資料轉換、狀態操作或結果產生。
+        """建立 build_attachment_context 所需的資料或輸出。
         
-        Args:
+        參數:
             sample: 此流程需要使用的輸入資料。
         
-        Returns:
-            執行結果；若函式標註回傳型別，預期型別為 dict[str, Any] | None。
-        
-        限制或副作用:
-            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        回傳:
+            此函式的處理結果。
         """
         file_path_text = str(
             sample.get("file_name") or sample.get("file_path") or ""
@@ -187,19 +153,15 @@ class GAIAAdapter(BaseBenchmarkAdapter):
         sample: dict[str, Any],
         sample_result: dict[str, Any],
     ) -> None:
-        """
-        負責執行 GAIAAdapter 中的 record_evaluation_feedback 流程，將新的輸入資料合併到目前物件狀態或流程紀錄中。
+        """記錄 record_evaluation_feedback 相關追蹤資料。
         
-        Args:
+        參數:
             benchmark: 此流程需要使用的輸入資料。
             sample: 此流程需要使用的輸入資料。
-            sample_result: 評估、推理或工具執行後產生的結果與分數資料。
+            sample_result: 此流程需要使用的輸入資料。
         
-        Returns:
-            執行結果；若函式標註回傳型別，預期型別為 None。
-        
-        限制或副作用:
-            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        回傳:
+            此函式的處理結果。
         """
         if benchmark.upper() != "GAIA":
             return
@@ -284,18 +246,14 @@ class GAIAAdapter(BaseBenchmarkAdapter):
         sample: dict[str, Any],
         sample_result: dict[str, Any],
     ) -> None:
-        """
-        負責執行 GAIAAdapter 中的 _record_interaction_graph 流程，依照 GAIAAdapter 的流程需求處理 _record_interaction_graph 對應的資料轉換、狀態操作或結果產生。
+        """處理 record_interaction_graph 流程並回傳結果。
         
-        Args:
-            sample: 圖結構中的節點、邊或相關識別資料。
-            sample_result: 圖結構中的節點、邊或相關識別資料。
+        參數:
+            sample: 此流程需要使用的輸入資料。
+            sample_result: 此流程需要使用的輸入資料。
         
-        Returns:
-            執行結果；若函式標註回傳型別，預期型別為 None。
-        
-        限制或副作用:
-            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        回傳:
+            此函式的處理結果。
         """
         runtime = getattr(self.agent, "runtime", None)
         graph_memory = getattr(runtime, "graph_memory", None)
@@ -327,30 +285,25 @@ class GAIAAdapter(BaseBenchmarkAdapter):
         partial_match: bool,
         metadata: dict[str, Any],
     ) -> None:
-        """
-        負責執行 GAIAAdapter 中的 _record_graph_feedback 流程，依照 GAIAAdapter 的流程需求處理 _record_graph_feedback 對應的資料轉換、狀態操作或結果產生。
+        """處理 record_graph_feedback 流程並回傳結果。
         
-        Args:
-            task_id: 圖結構中的節點、邊或相關識別資料。
-            question: 目前要處理的任務、問題或查詢文字。
-            exact_match: 圖結構中的節點、邊或相關識別資料。
-            partial_match: 圖結構中的節點、邊或相關識別資料。
-            metadata: 目前流程所需的上下文、狀態或附加資訊。
+        參數:
+            task_id: 此流程需要使用的輸入資料。
+            question: 此流程需要使用的輸入資料。
+            exact_match: 此流程需要使用的輸入資料。
+            partial_match: 此流程需要使用的輸入資料。
+            metadata: 此流程需要使用的輸入資料。
         
-        Returns:
-            執行結果；若函式標註回傳型別，預期型別為 None。
-        
-        限制或副作用:
-            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        回傳:
+            此函式的處理結果。
         """
         runtime = getattr(self.agent, "runtime", None)
         graph_memory = getattr(runtime, "graph_memory", None)
         if runtime is None or graph_memory is None:
             return
 
-        context = getattr(runtime, "current_context", {}) or {}
-        attachment = context.get("attachment") or {}
-        attachment_type = str(attachment.get("extension", "") or "").strip().lower().lstrip(".") or None
+        task_context = runtime.get_task_context() if hasattr(runtime, "get_task_context") else TaskContext.from_dict(getattr(runtime, "current_context", {}) or {})
+        attachment_type = task_context.attachment_type
 
         write_result = graph_memory.record_task_result(
             task_id=task_id,
@@ -383,21 +336,17 @@ class GAIAAdapter(BaseBenchmarkAdapter):
         exact_match: bool,
         partial_match: bool,
     ) -> dict[str, Any]:
-        """
-        負責執行 GAIAAdapter 中的 _build_gaia_reflection_record 流程，依照 GAIAAdapter 的流程需求處理 _build_gaia_reflection_record 對應的資料轉換、狀態操作或結果產生。
+        """建立 build_gaia_reflection_record 所需的資料或輸出。
         
-        Args:
-            question: 目前要處理的任務、問題或查詢文字。
+        參數:
+            question: 此流程需要使用的輸入資料。
             predicted: 此流程需要使用的輸入資料。
             expected: 此流程需要使用的輸入資料。
             exact_match: 此流程需要使用的輸入資料。
             partial_match: 此流程需要使用的輸入資料。
         
-        Returns:
-            執行結果；若函式標註回傳型別，預期型別為 dict[str, Any]。
-        
-        限制或副作用:
-            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        回傳:
+            此函式的處理結果。
         """
         stage2_outputs = getattr(self.agent, "last_stage2_outputs", []) or []
         error_type = self._classify_error_type(
@@ -497,21 +446,17 @@ class GAIAAdapter(BaseBenchmarkAdapter):
         predicted: str,
         expected: str,
     ) -> str:
-        """
-        負責執行 GAIAAdapter 中的 _build_failure_summary 流程，依照 GAIAAdapter 的流程需求處理 _build_failure_summary 對應的資料轉換、狀態操作或結果產生。
+        """建立 build_failure_summary 所需的資料或輸出。
         
-        Args:
+        參數:
             error_type: 此流程需要使用的輸入資料。
             failure_mode: 此流程需要使用的輸入資料。
             failure_stage: 此流程需要使用的輸入資料。
             predicted: 此流程需要使用的輸入資料。
             expected: 此流程需要使用的輸入資料。
         
-        Returns:
-            執行結果；若函式標註回傳型別，預期型別為 str。
-        
-        限制或副作用:
-            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        回傳:
+            此函式的處理結果。
         """
         summaries = {
             "unit_or_scale_mismatch": (
@@ -576,20 +521,16 @@ class GAIAAdapter(BaseBenchmarkAdapter):
         expected: str,
         partial_match: bool,
     ) -> str:
-        """
-        負責執行 GAIAAdapter 中的 _classify_error_type 流程，依照 GAIAAdapter 的流程需求處理 _classify_error_type 對應的資料轉換、狀態操作或結果產生。
+        """處理 classify_error_type 流程並回傳結果。
         
-        Args:
-            question: 目前要處理的任務、問題或查詢文字。
+        參數:
+            question: 此流程需要使用的輸入資料。
             predicted: 此流程需要使用的輸入資料。
             expected: 此流程需要使用的輸入資料。
             partial_match: 此流程需要使用的輸入資料。
         
-        Returns:
-            執行結果；若函式標註回傳型別，預期型別為 str。
-        
-        限制或副作用:
-            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        回傳:
+            此函式的處理結果。
         """
         text = normalize_text(question).lower()
         predicted_key = self._answer_key(predicted)
@@ -618,11 +559,10 @@ class GAIAAdapter(BaseBenchmarkAdapter):
         candidate_collapse: bool,
         overrode_better_candidate: bool,
     ) -> str:
-        """
-        負責執行 GAIAAdapter 中的 _classify_failure_mode 流程，依照 GAIAAdapter 的流程需求處理 _classify_failure_mode 對應的資料轉換、狀態操作或結果產生。
+        """處理 classify_failure_mode 流程並回傳結果。
         
-        Args:
-            question: 目前要處理的任務、問題或查詢文字。
+        參數:
+            question: 此流程需要使用的輸入資料。
             predicted: 此流程需要使用的輸入資料。
             expected: 此流程需要使用的輸入資料。
             error_type: 此流程需要使用的輸入資料。
@@ -631,11 +571,8 @@ class GAIAAdapter(BaseBenchmarkAdapter):
             candidate_collapse: 此流程需要使用的輸入資料。
             overrode_better_candidate: 此流程需要使用的輸入資料。
         
-        Returns:
-            執行結果；若函式標註回傳型別，預期型別為 str。
-        
-        限制或副作用:
-            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        回傳:
+            此函式的處理結果。
         """
         text = normalize_text(question).lower()
         if overrode_better_candidate:
@@ -655,19 +592,15 @@ class GAIAAdapter(BaseBenchmarkAdapter):
         return "insufficient_verification"
 
     def _build_tags(self, error_type: str, question: str, *, failure_mode: str) -> list[str]:
-        """
-        負責執行 GAIAAdapter 中的 _build_tags 流程，依照 GAIAAdapter 的流程需求處理 _build_tags 對應的資料轉換、狀態操作或結果產生。
+        """建立 build_tags 所需的資料或輸出。
         
-        Args:
+        參數:
             error_type: 此流程需要使用的輸入資料。
-            question: 目前要處理的任務、問題或查詢文字。
+            question: 此流程需要使用的輸入資料。
             failure_mode: 此流程需要使用的輸入資料。
         
-        Returns:
-            執行結果；若函式標註回傳型別，預期型別為 list[str]。
-        
-        限制或副作用:
-            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        回傳:
+            此函式的處理結果。
         """
         tags = [error_type, failure_mode]
         text = normalize_text(question).lower()
@@ -685,19 +618,15 @@ class GAIAAdapter(BaseBenchmarkAdapter):
         return sorted({tag for tag in tags if tag})
 
     def _build_applicability(self, error_type: str, *, failure_mode: str, failure_stage: str) -> str:
-        """
-        負責執行 GAIAAdapter 中的 _build_applicability 流程，依照 GAIAAdapter 的流程需求處理 _build_applicability 對應的資料轉換、狀態操作或結果產生。
+        """建立 build_applicability 所需的資料或輸出。
         
-        Args:
+        參數:
             error_type: 此流程需要使用的輸入資料。
             failure_mode: 此流程需要使用的輸入資料。
             failure_stage: 此流程需要使用的輸入資料。
         
-        Returns:
-            執行結果；若函式標註回傳型別，預期型別為 str。
-        
-        限制或副作用:
-            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        回傳:
+            此函式的處理結果。
         """
         return (
             f"Use this feedback for similar GAIA tasks with error_type={error_type}, "
@@ -711,19 +640,15 @@ class GAIAAdapter(BaseBenchmarkAdapter):
         *,
         partial_match: bool,
     ) -> list[str]:
-        """
-        負責執行 GAIAAdapter 中的 _build_correction_checklist 流程，依照 GAIAAdapter 的流程需求處理 _build_correction_checklist 對應的資料轉換、狀態操作或結果產生。
+        """建立 build_correction_checklist 所需的資料或輸出。
         
-        Args:
+        參數:
             error_type: 此流程需要使用的輸入資料。
             failure_mode: 此流程需要使用的輸入資料。
             partial_match: 此流程需要使用的輸入資料。
         
-        Returns:
-            執行結果；若函式標註回傳型別，預期型別為 list[str]。
-        
-        限制或副作用:
-            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        回傳:
+            此函式的處理結果。
         """
         if partial_match or error_type == "format_or_rounding_slip":
             return [
@@ -751,17 +676,13 @@ class GAIAAdapter(BaseBenchmarkAdapter):
         ]
 
     def _numeric_value(self, value: str) -> float | None:
-        """
-        負責執行 GAIAAdapter 中的 _numeric_value 流程，依照 GAIAAdapter 的流程需求處理 _numeric_value 對應的資料轉換、狀態操作或結果產生。
+        """處理 numeric_value 流程並回傳結果。
         
-        Args:
+        參數:
             value: 此流程需要使用的輸入資料。
         
-        Returns:
-            執行結果；若函式標註回傳型別，預期型別為 float | None。
-        
-        限制或副作用:
-            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        回傳:
+            此函式的處理結果。
         """
         normalized = normalize_text(value).replace(",", "")
         try:
@@ -770,17 +691,10 @@ class GAIAAdapter(BaseBenchmarkAdapter):
             return None
 
     def _stage2_changed_stage1_answer(self) -> bool:
-        """
-        負責執行 GAIAAdapter 中的 _stage2_changed_stage1_answer 流程，依照 GAIAAdapter 的流程需求處理 _stage2_changed_stage1_answer 對應的資料轉換、狀態操作或結果產生。
+        """處理 stage2_changed_stage1_answer 流程並回傳結果。
         
-        Args:
-            無。
-        
-        Returns:
-            執行結果；若函式標註回傳型別，預期型別為 bool。
-        
-        限制或副作用:
-            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        回傳:
+            此函式的處理結果。
         """
         stage1_key = self._answer_key(getattr(self.agent, "last_stage1_result", ""))
         decision = getattr(self.agent, "last_final_decision", None) or {}
@@ -788,32 +702,24 @@ class GAIAAdapter(BaseBenchmarkAdapter):
         return bool(stage1_key and final_key and stage1_key != final_key)
 
     def _answer_key(self, answer: str) -> str:
-        """
-        負責執行 GAIAAdapter 中的 _answer_key 流程，依照 GAIAAdapter 的流程需求處理 _answer_key 對應的資料轉換、狀態操作或結果產生。
+        """處理 answer_key 流程並回傳結果。
         
-        Args:
-            answer: 模型、節點或工具產生的候選回覆內容。
+        參數:
+            answer: 此流程需要使用的輸入資料。
         
-        Returns:
-            執行結果；若函式標註回傳型別，預期型別為 str。
-        
-        限制或副作用:
-            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        回傳:
+            此函式的處理結果。
         """
         return normalize_text(answer).lower()
 
     def _successful_stage2_answers(self, stage2_outputs: list[dict[str, Any]]) -> list[str]:
-        """
-        負責執行 GAIAAdapter 中的 _successful_stage2_answers 流程，依照 GAIAAdapter 的流程需求處理 _successful_stage2_answers 對應的資料轉換、狀態操作或結果產生。
+        """處理 successful_stage2_answers 流程並回傳結果。
         
-        Args:
+        參數:
             stage2_outputs: 此流程需要使用的輸入資料。
         
-        Returns:
-            執行結果；若函式標註回傳型別，預期型別為 list[str]。
-        
-        限制或副作用:
-            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        回傳:
+            此函式的處理結果。
         """
         answers: list[str] = []
         for output in stage2_outputs or []:
@@ -830,18 +736,14 @@ class GAIAAdapter(BaseBenchmarkAdapter):
         stage2_outputs: list[dict[str, Any]],
         target_answer: str,
     ) -> bool:
-        """
-        負責執行 GAIAAdapter 中的 _has_stage2_candidate 流程，依照 GAIAAdapter 的流程需求處理 _has_stage2_candidate 對應的資料轉換、狀態操作或結果產生。
+        """處理 has_stage2_candidate 流程並回傳結果。
         
-        Args:
+        參數:
             stage2_outputs: 此流程需要使用的輸入資料。
             target_answer: 此流程需要使用的輸入資料。
         
-        Returns:
-            執行結果；若函式標註回傳型別，預期型別為 bool。
-        
-        限制或副作用:
-            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        回傳:
+            此函式的處理結果。
         """
         target_key = self._answer_key(target_answer)
         if not target_key:
@@ -854,18 +756,14 @@ class GAIAAdapter(BaseBenchmarkAdapter):
         stage2_outputs: list[dict[str, Any]],
         expected: str,
     ) -> bool:
-        """
-        負責執行 GAIAAdapter 中的 _has_candidate_collapse 流程，依照 GAIAAdapter 的流程需求處理 _has_candidate_collapse 對應的資料轉換、狀態操作或結果產生。
+        """處理 has_candidate_collapse 流程並回傳結果。
         
-        Args:
+        參數:
             stage2_outputs: 此流程需要使用的輸入資料。
             expected: 此流程需要使用的輸入資料。
         
-        Returns:
-            執行結果；若函式標註回傳型別，預期型別為 bool。
-        
-        限制或副作用:
-            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        回傳:
+            此函式的處理結果。
         """
         answers = self._successful_stage2_answers(stage2_outputs)
         if not answers:
@@ -883,20 +781,16 @@ class GAIAAdapter(BaseBenchmarkAdapter):
         exact_match: bool,
         stage2_outputs: list[dict[str, Any]],
     ) -> str:
-        """
-        負責執行 GAIAAdapter 中的 _infer_failure_stage 流程，依照 GAIAAdapter 的流程需求處理 _infer_failure_stage 對應的資料轉換、狀態操作或結果產生。
+        """處理 infer_failure_stage 流程並回傳結果。
         
-        Args:
+        參數:
             predicted: 此流程需要使用的輸入資料。
             expected: 此流程需要使用的輸入資料。
             exact_match: 此流程需要使用的輸入資料。
             stage2_outputs: 此流程需要使用的輸入資料。
         
-        Returns:
-            執行結果；若函式標註回傳型別，預期型別為 str。
-        
-        限制或副作用:
-            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
+        回傳:
+            此函式的處理結果。
         """
         if exact_match:
             return "confirmed"

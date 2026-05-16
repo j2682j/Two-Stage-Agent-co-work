@@ -11,7 +11,7 @@ from memory.storage.qdrant_store import QdrantConnectionManager
 
 from .builder import InteractionGraphBuilder
 from .insight_graph import InsightGraph
-from .interaction_graph import InteractionGraph, classify_task_metadata
+from .interaction_graph import InteractionGraph, TaskMetadata, classify_task_metadata
 from .memory_prompt_builder import MemoryPromptBuilder
 from .memory_base import GraphMemoryBase, _clean_text, _task_id_from_text
 from .query_task_graph import QueryTaskGraph
@@ -1038,6 +1038,7 @@ class NetworkMemory(GraphMemoryBase):
         task_id: str | None,
         input_text: str,
         source: str = "system",
+        benchmark: str | None = None,
         attachment_type: str | None = None,
         limit: int = 3,
         injection_target: str = "generic",
@@ -1062,11 +1063,21 @@ class NetworkMemory(GraphMemoryBase):
         normalized = _clean_text(input_text)
         resolved_id = _clean_text(task_id) or _task_id_from_text(normalized)
         classification = classify_task_metadata(normalized, attachment_type=attachment_type)
+        benchmark_value = _clean_text(benchmark)
+        if benchmark_value.upper() == "BFCL":
+            classification = TaskMetadata(
+                task_type="function_calling",
+                trigger_terms=["function", "parameters", "arguments", "json"],
+                attachment_type=attachment_type,
+                failure_modes=["wrong_function_name", "argument_schema_mismatch", "invalid_json"],
+                tool_policy={"prefer": [], "optional": [], "avoid": ["search", "memory_as_answer_lookup"]},
+                confidence=0.95,
+            )
         resolved_id = self._upsert_query_task(
             resolved_id,
             normalized,
             classification=classification,
-            metadata={"source": source, "attachment_type": attachment_type},
+            metadata={"source": source, "benchmark": benchmark_value, "attachment_type": attachment_type},
         )
         retrieval = self._build_retrieval_context(
             task_id=resolved_id,
@@ -1105,6 +1116,7 @@ class NetworkMemory(GraphMemoryBase):
         return {
             "task_id": resolved_id,
             "source": source,
+            "benchmark": benchmark_value,
             "classification": classification.to_dict() if hasattr(classification, "to_dict") else dict(classification),
             "retrieval": retrieval,
             "related_task_ids": related_task_ids,

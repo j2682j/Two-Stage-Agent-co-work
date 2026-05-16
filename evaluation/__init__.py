@@ -1,4 +1,7 @@
-"""?????????"""
+"""evaluation.__init__ 模組。
+
+提供此模組相關的資料結構、流程輔助或整合邏輯。
+"""
 
 
 from importlib import import_module

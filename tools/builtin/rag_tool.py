@@ -25,7 +25,7 @@ import time
 
 from ..base import Tool, ToolParameter, tool_action
 from memory.rag.pipeline import create_rag_pipeline
-from core.llm import HelloAgentsLLM
+from network.slm_agent import SLM_Agent
 
 class RAGTool(Tool):
     """
@@ -115,7 +115,7 @@ class RAGTool(Tool):
             self._pipelines[self.rag_namespace] = default_pipeline
 
             # 初始化 LLM 用於回答生成
-            self.llm = HelloAgentsLLM()
+            self.llm = SLM_Agent(model_name="gpt-oss:20b")
 
             self.initialized = True
             print(f"[OK] RAG工具初始化成功: namespace={self.rag_namespace}, collection={self.collection_name}")

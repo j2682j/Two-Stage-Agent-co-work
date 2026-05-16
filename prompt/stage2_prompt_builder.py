@@ -1,6 +1,7 @@
 from typing import Any
 
 from .builder import PromptBuilder, PromptPacket
+from .contracts import resolve_prompt_contract
 
 
 class Stage2PromptBuilder(PromptBuilder):
@@ -123,6 +124,12 @@ class Stage2PromptBuilder(PromptBuilder):
         限制或副作用:
             可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
         """
+        contract = kwargs.get("contract") or resolve_prompt_contract(
+            kwargs.get("task_context"),
+            question=compressed["question"],
+        )
+        output_contract = contract.stage2_output_contract()
+
         user_prompt = f"""
             Question:
             {compressed["question"]}
@@ -136,17 +143,7 @@ class Stage2PromptBuilder(PromptBuilder):
             Additional tool evidence:
             {compressed["tool_context"] if compressed["tool_context"] else "No tool result available."}
 
-            Task:
-            1. Solve the question again using the tool evidence if it helps.
-            2. Use the most relevant tool evidence instead of repeating everything.
-            3. Before giving the final answer, verify that the answer unit matches the unit requested in the question.
-            4. If needed, convert the result before giving the final answer.
-
-            Return JSON only with:
-            {{
-              "reasoning": "your reasoning",
-              "final_answer": "your final answer"
-            }}
+            {output_contract}
         """.strip()
 
         return [

@@ -8,7 +8,7 @@ from typing import Any
 from parser import try_parse_json
 from utils.network_utils import answer_equivalence
 
-from .slm_agent import SLM_4b_Agent
+from .slm_agent import SLM_Agent
 
 
 class ConsensusJudge:
@@ -179,7 +179,7 @@ Answers:
 {json.dumps(judge_input, ensure_ascii=False, indent=2)}
         """.strip()
 
-        consensus_judge_agent = SLM_4b_Agent(model_name=self.judge_model_name)
+        consensus_judge_agent = SLM_Agent(model_name=self.judge_model_name)
         response = consensus_judge_agent.invoke(
             [
                 {"role": "system", "content": "You are a strict JSON-only consensus judge."},

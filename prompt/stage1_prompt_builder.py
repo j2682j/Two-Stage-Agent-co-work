@@ -3,6 +3,7 @@ from __future__ import annotations
 from typing import Any
 
 from .builder import PromptBuilder, PromptPacket
+from .contracts import resolve_prompt_contract
 
 class Stage1PromptBuilder(PromptBuilder):
     """
@@ -205,6 +206,10 @@ class Stage1PromptBuilder(PromptBuilder):
         reflection_context = compressed["reflection_context"]
         tool_context = compressed["tool_context"]
         formers = compressed["formers"]
+        contract = kwargs.get("contract") or resolve_prompt_contract(
+            kwargs.get("task_context"),
+            question=question,
+        )
 
         if len(formers) == 0:
             content = f"""
@@ -220,29 +225,11 @@ class Stage1PromptBuilder(PromptBuilder):
             if tool_context:
                 content += f"\n\nAvailable tool evidence:\n{tool_context}"
 
-            content += """
-
-                There are no previous agent answers for this question.
-
-                Task:
-                1. Solve the question carefully.
-            2. Check whether your first answer could be wrong.
-            3. Keep the reasoning short and focused on the key checks.
-            4. Make sure the final answer uses exactly the unit requested in the question.
-            5. If relevant reflection rules apply, use them as compact error checks rather than as answer lookup.
-
-                Return plain text only in exactly this format:
-                REASONING=<brief key steps and self-checks only>
-                FINAL_ANSWER=<your final answer>
-                WEIGHTS=[]
-
-                Rules:
-                - REASONING must be short and only include the essential checks.
-                - FINAL_ANSWER must contain only your final answer.
-                - WEIGHTS must be [] because there are no previous agents.
-                - The WEIGHTS line must be the final line of your reply.
-                - Do not include markdown fences or any extra text outside the required format.
-            """
+            content += "\n\nThere are no previous agent answers for this question.\n\n"
+            content += contract.stage1_output_contract(
+                expected_weight_count=0,
+                has_formers=False,
+            )
             content = content.rstrip()
             return {"role": "user", "content": content}
 
@@ -275,38 +262,9 @@ class Stage1PromptBuilder(PromptBuilder):
 
                 Previous Agent {aid} final answer:{previous_final_answer}""".rstrip()
 
-        prefix_string += f"""
-
-            Task:
-            1. First inspect the previous agents' reasoning steps.
-            2. Identify the most important mistake, weak assumption, or wrong calculation.
-            3. Be skeptical of both the previous answers and your own first instinct.
-            4. Correct the most important issue before producing your answer.
-            5. Give your own short reasoning and final answer.
-            6. Make sure the final answer uses exactly the unit requested in the question.
-            7. If relevant reflection rules apply, use them as compact error checks rather than as answer lookup.
-
-            Important rules:
-            - Do not blindly follow previous agents.
-            - If previous agents are wrong, explicitly correct them in your own reasoning.
-            - Keep your own reasoning concise.
-            - In stage 1, you must still give a final answer.
-            - If needed, convert the result before giving the final answer.
-
-            Return plain text only in exactly this format:
-            REASONING=<brief key steps and correction checks only>
-            FINAL_ANSWER=<your final answer>
-            WEIGHTS=[w1, w2, ..., w{len(formers)}]
-
-            Rules:
-            - REASONING must be short and include only the most important checking/correction steps.
-            - FINAL_ANSWER must contain only your final answer.
-            - WEIGHTS must contain exactly {len(formers)} integers.
-            - Each weight corresponds to the previous agents in the same order shown above.
-            - Each weight must be an integer between 1 and 5.
-            - If a previous answer is poor, give it a lower score.
-            - The WEIGHTS line must be the final line of your reply.
-            - Do not include markdown fences or any extra text outside the required format.
-        """.strip()
+        prefix_string += "\n\n" + contract.stage1_output_contract(
+            expected_weight_count=len(formers),
+            has_formers=True,
+        )
 
         return {"role": "user", "content": prefix_string}

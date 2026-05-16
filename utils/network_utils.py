@@ -43,9 +43,9 @@ def answer_equivalence(answer_a: str, answer_b: str) -> bool:
     if cheap_result is not None:
         return cheap_result
 
-    from network.slm_agent import SLM_4b_Agent
+    from network.slm_agent import SLM_Agent
 
-    slm_answer_judge = SLM_4b_Agent(model_name="gpt-oss:20b")
+    slm_answer_judge = SLM_Agent(model_name="gpt-oss:20b")
     if slm_answer_judge is None:
         return False
 

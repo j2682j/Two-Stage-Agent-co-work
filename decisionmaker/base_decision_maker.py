@@ -43,6 +43,8 @@ class BaseDecisionMaker(ABC):
         top_k_indices: list[int],
         importance_scores: list[float] | None = None,
         memory_context: str = "",
+        prompt_contract: Any | None = None,
+        task_context: Any | None = None,
     ) -> dict[str, Any]:
         """
         負責執行 BaseDecisionMaker 中的 decide 流程，依照 BaseDecisionMaker 的流程需求處理 decide 對應的資料轉換、狀態操作或結果產生。

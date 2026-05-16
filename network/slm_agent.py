@@ -1,6 +1,4 @@
-"""
-建立 SLM 實例並提供一致的呼叫介面。
-"""
+"""小型語言模型用戶端封裝。"""
 
 import os
 from typing import Iterator, Optional
@@ -21,18 +19,7 @@ MODEL_ID_MAP = {
 
 
 def estimate_text_tokens(text: str) -> int:
-    """
-    負責執行 network.slm_agent 中的 estimate_text_tokens 流程，依照 network.slm_agent 的流程需求處理 estimate_text_tokens 對應的資料轉換、狀態操作或結果產生。
-    
-    Args:
-        text: 此流程需要使用的輸入資料。
-    
-    Returns:
-        執行結果；若函式標註回傳型別，預期型別為 int。
-    
-    限制或副作用:
-        可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
-    """
+    """估算文字 token 數，供本地模型未回傳 usage 時使用。"""
     normalized = str(text or "")
     if not normalized:
         return 0
@@ -41,18 +28,7 @@ def estimate_text_tokens(text: str) -> int:
 
 
 def estimate_chat_tokens(messages: list[dict[str, str]]) -> int:
-    """
-    負責執行 network.slm_agent 中的 estimate_chat_tokens 流程，依照 network.slm_agent 的流程需求處理 estimate_chat_tokens 對應的資料轉換、狀態操作或結果產生。
-    
-    Args:
-        messages: 此流程需要使用的輸入資料。
-    
-    Returns:
-        執行結果；若函式標註回傳型別，預期型別為 int。
-    
-    限制或副作用:
-        可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
-    """
+    """估算 chat messages 的 token 數。"""
     total = 0
     for message in messages or []:
         total += estimate_text_tokens(str(message.get("role", "")))
@@ -61,25 +37,14 @@ def estimate_chat_tokens(messages: list[dict[str, str]]) -> int:
     return total
 
 
-class SLM_4b_Agent:
+class SLM_Agent:
     """
-    負責在 network.slm_agent 中封裝 SLM_4b_Agent，管理記憶圖、任務紀錄、檢索結果或跨任務經驗的狀態與操作。
-    
-    Args:
-        api_key: 此流程需要使用的輸入資料。
-        base_url: 此流程需要使用的輸入資料。
-        temperature: 此流程需要使用的輸入資料。
-        max_tokens: 控制檢索、篩選或輸出數量的數值參數。
-        timeout: 此流程需要使用的輸入資料。
-        model_name: 用來呼叫模型或外部服務的模型名稱、客戶端或相關設定。
-        **kwargs: 此流程需要使用的輸入資料。
-    
-    Returns:
-        類別本身不直接回傳值；建立實例後可透過其方法操作狀態與流程。
-    
-    限制或副作用:
-        方法可能更新內部狀態、讀寫檔案、呼叫外部服務或產生日誌，需依使用情境確認。
+    OpenAI-compatible 小型語言模型封裝。
+
+    這個類別負責連到本地或遠端的 OpenAI-compatible chat completions API，
+    並依 `model_name` 對應到環境變數中的實際模型 ID。
     """
+
     def __init__(
         self,
         api_key: Optional[str] = None,
@@ -90,24 +55,7 @@ class SLM_4b_Agent:
         model_name: Optional[str] = None,
         **kwargs,
     ):
-        """
-        負責執行 SLM_4b_Agent 中的 __init__ 流程，初始化物件所需的設定、依賴與內部狀態，讓後續方法可以沿用同一份執行上下文。
-        
-        Args:
-            api_key: 此流程需要使用的輸入資料。
-            base_url: 此流程需要使用的輸入資料。
-            temperature: 此流程需要使用的輸入資料。
-            max_tokens: 控制檢索、篩選或輸出數量的數值參數。
-            timeout: 此流程需要使用的輸入資料。
-            model_name: 用來呼叫模型或外部服務的模型名稱、客戶端或相關設定。
-            **kwargs: 此流程需要使用的輸入資料。
-        
-        Returns:
-            執行結果；若函式標註回傳型別，預期型別為 未標註。
-        
-        限制或副作用:
-            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
-        """
+        """初始化模型連線設定與 OpenAI-compatible client。"""
         model_env_key_map = {
             "nemotron-mini:4b": "Nemotron_MODEL_ID",
             "phi3:3.8b": "Phi_MODEL_ID",
@@ -129,18 +77,7 @@ class SLM_4b_Agent:
         self._client = self._create_client()
 
     def _create_client(self) -> OpenAI:
-        """
-        負責執行 SLM_4b_Agent 中的 _create_client 流程，依照 SLM_4b_Agent 的流程需求處理 _create_client 對應的資料轉換、狀態操作或結果產生。
-        
-        Args:
-            無。
-        
-        Returns:
-            執行結果；若函式標註回傳型別，預期型別為 OpenAI。
-        
-        限制或副作用:
-            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
-        """
+        """建立 OpenAI-compatible client。"""
         return OpenAI(
             api_key=self.api_key,
             base_url=self.base_url,
@@ -151,20 +88,8 @@ class SLM_4b_Agent:
         self,
         messages: list[dict[str, str]],
         temperature: Optional[float] = None,
-    ) -> Iterator[str]:
-        """
-        負責執行 SLM_4b_Agent 中的 think 流程，依照 SLM_4b_Agent 的流程需求處理 think 對應的資料轉換、狀態操作或結果產生。
-        
-        Args:
-            messages: 此流程需要使用的輸入資料。
-            temperature: 此流程需要使用的輸入資料。
-        
-        Returns:
-            執行結果；若函式標註回傳型別，預期型別為 Iterator[str]。
-        
-        限制或副作用:
-            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
-        """
+    ):
+        """呼叫 chat completions API 並回傳原始 response。"""
         print(f"正在呼叫 {self.model} 模型...")
         try:
             response = self._client.chat.completions.create(
@@ -177,23 +102,11 @@ class SLM_4b_Agent:
             print("大型語言模型回應成功:")
             return response
         except Exception as e:
-            print(f"呼叫 LLM API 發生錯誤: {e}")
+            print(f"呼叫 LLM API 時發生錯誤: {e}")
             raise AgentsException(f"SLM 呼叫失敗: {str(e)}")
 
     def invoke(self, messages: list[dict[str, str]], **kwargs) -> str:
-        """
-        負責執行 SLM_4b_Agent 中的 invoke 流程，呼叫模型、工具或外部服務並整理回傳結果。
-        
-        Args:
-            messages: 此流程需要使用的輸入資料。
-            **kwargs: 此流程需要使用的輸入資料。
-        
-        Returns:
-            執行結果；若函式標註回傳型別，預期型別為 str。
-        
-        限制或副作用:
-            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
-        """
+        """呼叫模型並回傳 assistant message 文字。"""
         try:
             response = self._client.chat.completions.create(
                 model=self.model,
@@ -207,19 +120,7 @@ class SLM_4b_Agent:
             raise AgentsException(f"SLM 呼叫失敗: {str(e)}")
 
     def invoke_with_usage(self, messages: list[dict[str, str]], **kwargs) -> tuple[str, int, int]:
-        """
-        負責執行 SLM_4b_Agent 中的 invoke_with_usage 流程，呼叫模型、工具或外部服務並整理回傳結果。
-        
-        Args:
-            messages: 此流程需要使用的輸入資料。
-            **kwargs: 此流程需要使用的輸入資料。
-        
-        Returns:
-            執行結果；若函式標註回傳型別，預期型別為 tuple[str, int, int]。
-        
-        限制或副作用:
-            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
-        """
+        """呼叫模型並回傳文字、prompt tokens、completion tokens。"""
         try:
             response = self._client.chat.completions.create(
                 model=self.model,
@@ -229,8 +130,16 @@ class SLM_4b_Agent:
                 **{k: v for k, v in kwargs.items() if k not in ["temperature", "max_tokens"]},
             )
             content = response.choices[0].message.content
-            prompt_tokens = response.usage.prompt_tokens if response.usage and hasattr(response.usage, "prompt_tokens") else 0
-            completion_tokens = response.usage.completion_tokens if response.usage and hasattr(response.usage, "completion_tokens") else 0
+            prompt_tokens = (
+                response.usage.prompt_tokens
+                if response.usage and hasattr(response.usage, "prompt_tokens")
+                else 0
+            )
+            completion_tokens = (
+                response.usage.completion_tokens
+                if response.usage and hasattr(response.usage, "completion_tokens")
+                else 0
+            )
             if prompt_tokens <= 0:
                 prompt_tokens = estimate_chat_tokens(messages)
             if completion_tokens <= 0:
@@ -240,18 +149,6 @@ class SLM_4b_Agent:
             raise AgentsException(f"SLM 呼叫失敗: {str(e)}")
 
     def stream_invoke(self, messages: list[dict[str, str]], **kwargs) -> Iterator[str]:
-        """
-        負責執行 SLM_4b_Agent 中的 stream_invoke 流程，依照 SLM_4b_Agent 的流程需求處理 stream_invoke 對應的資料轉換、狀態操作或結果產生。
-        
-        Args:
-            messages: 此流程需要使用的輸入資料。
-            **kwargs: 此流程需要使用的輸入資料。
-        
-        Returns:
-            執行結果；若函式標註回傳型別，預期型別為 Iterator[str]。
-        
-        限制或副作用:
-            可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
-        """
+        """串流呼叫介面；目前沿用 `think()` 的行為。"""
         temperature = kwargs.get("temperature")
         yield from self.think(messages, temperature)

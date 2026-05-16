@@ -13,7 +13,7 @@ from datetime import datetime
 from hello_agents.tools.base import Tool
 from hello_agents.evaluation.benchmarks.data_generation.dataset import AIDataset
 from hello_agents.evaluation.benchmarks.data_generation.llm_judge import LLMJudgeEvaluator
-from hello_agents.core.llm import HelloAgentsLLM
+from network.slm_agent import SLM_Agent
 
 
 class LLMJudgeTool(Tool):
@@ -30,7 +30,7 @@ class LLMJudgeTool(Tool):
         方法可能更新內部狀態、讀寫檔案、呼叫外部服務或產生日誌，需依使用情境確認。
     """
     
-    def __init__(self, llm: HelloAgentsLLM = None):
+    def __init__(self, llm: SLM_Agent = None):
         """
         負責執行 LLMJudgeTool 中的 __init__ 流程，初始化物件所需的設定、依賴與內部狀態，讓後續方法可以沿用同一份執行上下文。
         

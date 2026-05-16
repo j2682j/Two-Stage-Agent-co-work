@@ -1,8 +1,10 @@
-"""記憶子系統對外匯出的公開介面。"""
+"""memory.__init__ 模組。
+
+提供此模組相關的資料結構、流程輔助或整合邏輯。
+"""
 
 try:
     from .base import BaseMemory, MemoryConfig, MemoryItem
-    from .manager import MemoryManager
     from .policy import (
         build_memory_records,
         should_write_final_memory,
@@ -10,16 +12,7 @@ try:
         should_write_stage2_memory,
     )
     from .storage.document_store import DocumentStore, SQLiteDocumentStore
-    from .types.episodic import EpisodicMemory
-    from .types.perceptual import PerceptualMemory
-    from .types.semantic import SemanticMemory
-    from .types.working import WorkingMemory
 except ModuleNotFoundError:
-    MemoryManager = None
-    WorkingMemory = None
-    EpisodicMemory = None
-    SemanticMemory = None
-    PerceptualMemory = None
     DocumentStore = None
     SQLiteDocumentStore = None
     BaseMemory = None
@@ -31,13 +24,6 @@ except ModuleNotFoundError:
     should_write_stage2_memory = None
 
 __all__ = [
-    "MemoryManager",
-    "Memory",
-    "GlobalMemory",
-    "WorkingMemory",
-    "EpisodicMemory",
-    "SemanticMemory",
-    "PerceptualMemory",
     "DocumentStore",
     "SQLiteDocumentStore",
     "MemoryItem",

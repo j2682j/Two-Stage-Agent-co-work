@@ -4,6 +4,7 @@ import json
 from typing import Any
 
 from .builder import PromptBuilder, PromptPacket
+from .contracts import resolve_prompt_contract
 
 
 class _CriticPromptBuilder(PromptBuilder):
@@ -111,11 +112,12 @@ class _CriticPromptBuilder(PromptBuilder):
         限制或副作用:
             可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
         """
-        system_prompt = (
-            "You are a careful critic reviewing a solver's answer. "
-            "Return plain text only using the required key=value format. "
-            "Do not use JSON."
+        contract = kwargs.get("contract") or resolve_prompt_contract(
+            kwargs.get("task_context"),
+            question=compressed["question"],
         )
+        system_prompt = contract.critic_system_prompt()
+        answer_rules = contract.critic_output_contract()
         user_prompt = f"""
 Question:
 {compressed["question"]}
@@ -146,11 +148,7 @@ AGREE=<true or false>
 CRITIQUE=<brief critique>
 REVISED_ANSWER=<better answer or empty>
 
-Rules:
-- Do not use JSON.
-- Keep CRITIQUE short.
-- REVISED_ANSWER may be empty if you agree.
- - Do not copy old answers from memory unless they are independently supported by the current question.
+{answer_rules}
         """.strip()
         return [
             {"role": "system", "content": system_prompt},
@@ -269,11 +267,13 @@ class _SolverRevisionPromptBuilder(PromptBuilder):
         限制或副作用:
             可能讀取或更新物件狀態、檔案、外部服務或日誌；請依呼叫場景確認副作用。
         """
-        system_prompt = (
-            "You are the final solver. Revise your answer using the critics' feedback. "
-            "Return plain text only using the required key=value format. "
-            "Do not use JSON."
+        contract = kwargs.get("contract") or resolve_prompt_contract(
+            kwargs.get("task_context"),
+            question=compressed["question"],
         )
+        system_prompt = contract.solver_revision_system_prompt()
+        output_instruction = contract.solver_revision_output_instruction()
+        answer_rules = contract.solver_revision_output_contract()
         user_prompt = f"""
 Question:
 {compressed["question"]}
@@ -296,17 +296,12 @@ Instructions:
 3. Use memory as lessons or error-avoidance rules, not as direct answer lookup.
 4. If memory reveals a relevant mistake pattern, make sure your revision addresses that risk explicitly.
 5. If a relevant lesson warns against the current answer pattern, revise away from that pattern unless the current evidence clearly supports it.
-6. Return plain text only in exactly this format:
+6. {output_instruction}
 
 REASONING=<brief revision reasoning only>
 FINAL_ANSWER=<your final answer>
 
-Rules:
-- Do not use JSON.
-- Keep REASONING short.
-- FINAL_ANSWER must contain only the final answer.
-- FINAL_ANSWER should be the last non-empty line if possible.
- - Do not copy a past answer from memory unless it is independently justified for the current question.
+{answer_rules}
         """.strip()
         return [
             {"role": "system", "content": system_prompt},
@@ -351,6 +346,8 @@ class DecisionPromptBuilder:
         solver_answer: str,
         critic_answer: str,
         memory_context: str = "",
+        contract: Any | None = None,
+        task_context: Any | None = None,
     ) -> list[dict[str, str]]:
         """
         負責執行 DecisionPromptBuilder 中的 build_critic_messages 流程，組裝提示詞內容，將任務、記憶、證據或格式要求整理成模型可讀的輸入。
@@ -374,6 +371,8 @@ class DecisionPromptBuilder:
             solver_answer=solver_answer,
             critic_answer=critic_answer,
             memory_context=memory_context,
+            contract=contract,
+            task_context=task_context,
         )
 
     def build_solver_revision_messages(
@@ -383,6 +382,8 @@ class DecisionPromptBuilder:
         solver_answer: str,
         critiques: list[dict[str, Any]],
         memory_context: str = "",
+        contract: Any | None = None,
+        task_context: Any | None = None,
     ) -> list[dict[str, str]]:
         """
         負責執行 DecisionPromptBuilder 中的 build_solver_revision_messages 流程，組裝提示詞內容，將任務、記憶、證據或格式要求整理成模型可讀的輸入。
@@ -406,4 +407,6 @@ class DecisionPromptBuilder:
             solver_answer=solver_answer,
             critiques=critiques,
             memory_context=memory_context,
+            contract=contract,
+            task_context=task_context,
         )
